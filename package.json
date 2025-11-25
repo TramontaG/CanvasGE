@@ -1,0 +1,16 @@
+{
+  "name": "canvasge",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "parcel": "^2.16.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "private": true,
+  "scripts": {
+    "start": "parcel index.html --open",
+    "build": "parcel build index.html --dist-dir build --public-url ./"
+  },
+  "type": "module"
+}
