@@ -54,11 +54,12 @@ export const onClick = <TObj extends GameObject = GameObject>(
     ) {
       if (event.type === "mouseButtonPressed") {
         const hitboxes = this.getHitboxes();
-        for (const hitbox of hitboxes) {
-          if (hitbox.intersectsWithPoint({ x: event.x, y: event.y })) {
-            handler(this, event);
-            break;
-          }
+        if (
+          hitboxes.some((hitbox) =>
+            hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+          )
+        ) {
+          handler(this, event);
         }
       }
 

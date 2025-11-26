@@ -117,6 +117,10 @@ class GameObject {
     const handlers: Array<(obj: GameObject) => void> = [];
 
     let proto = Object.getPrototypeOf(this);
+
+    // acumulate handlers from the prototype chain
+    // this includes this class and all its superclasses
+    // neat JS trick!
     while (proto) {
       const protoHandlers = (proto as Record<symbol, unknown>)[
         KEY_TICK_HANDLERS

@@ -12,7 +12,8 @@ class Button extends GameObject {
     private width: number,
     private height: number,
     private label: string,
-    private color: string
+    private color: string,
+    private onClick: (obj: Button) => void
   ) {
     super("Button", x, y);
     this.setRenderFunction(this.renderButton);
@@ -39,7 +40,7 @@ class Button extends GameObject {
   }
 
   @onClick<Button>((obj, event) => {
-    obj.getContext()?.setCurrentScene("debug2");
+    obj.onClick(obj);
   })
   override handleEvent(event: GameEvent): void {}
 }
