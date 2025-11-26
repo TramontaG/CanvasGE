@@ -3,6 +3,7 @@ import type { Game } from "../Game";
 import type { GameObject } from "../GameObject";
 import type { Scene } from "../Scenes";
 import type { SceneManager } from "../Scenes/SceneManager";
+import { KeyAccumulator } from "../Events/keyAccumulator";
 
 type MessageHandler<TPayload = unknown> = (
   payload: TPayload,
@@ -54,6 +55,7 @@ type GameContextOptions = {
   game: Game;
   canvas: CanvasController;
   sceneManager: SceneManager;
+  keyAccumulator: KeyAccumulator;
 };
 
 class GameContext {
@@ -71,6 +73,10 @@ class GameContext {
 
   getSceneManager(): SceneManager {
     return this.options.sceneManager;
+  }
+
+  getKeyAccumulator(): KeyAccumulator {
+    return this.options.keyAccumulator;
   }
 
   getCurrentScene(): Scene | null {
@@ -106,6 +112,14 @@ class GameContext {
     sender?: GameObject | null
   ): void {
     this.messageBus.publish(channel, payload, sender);
+  }
+
+  getPressedKeys(): string[] {
+    return this.options.keyAccumulator.getPressedKeys();
+  }
+
+  isKeyPressed(key: string): boolean {
+    return this.options.keyAccumulator.isPressed(key);
   }
 
   subscribeToMessage<TPayload>(

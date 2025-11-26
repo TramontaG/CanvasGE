@@ -38,7 +38,7 @@ class Button extends GameObject {
     );
   }
 
-  @onClick((obj, event) => {
+  @onClick<Button>((obj, event) => {
     obj.getContext()?.setCurrentScene("debug2");
   })
   override handleEvent(event: GameEvent): void {}

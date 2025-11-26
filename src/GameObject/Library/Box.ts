@@ -3,6 +3,7 @@ import { SquareHitbox } from "../Hitboxes";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
 import { Vector } from "../../Vector";
+import { onClick, onKeyPressed } from "../../Events/decorators";
 
 class Box extends GameObject {
   private selected: boolean = false;
@@ -32,40 +33,33 @@ class Box extends GameObject {
     );
   }
 
+  @onKeyPressed<Box>("ArrowUp", (obj, event) => {
+    obj.selected ? obj.getPosition().add(new Vector(0, -5)) : null;
+  })
+  @onKeyPressed<Box>("ArrowDown", (obj, event) => {
+    obj.selected ? obj.getPosition().add(new Vector(0, 5)) : null;
+  })
+  @onKeyPressed<Box>("ArrowLeft", (obj, event) => {
+    obj.selected ? obj.getPosition().add(new Vector(-5, 0)) : null;
+  })
+  @onKeyPressed<Box>("ArrowRight", (obj, event) => {
+    obj.selected ? obj.getPosition().add(new Vector(5, 0)) : null;
+  })
+  @onClick<Box>((obj, event) => {
+    obj.selected = !obj.selected;
+  })
   override handleEvent(event: GameEvent): void {
-    // Select
-    if (event.type === "mouseButtonPressed") {
-      this.selected = false;
-      const hiboxes = this.getHitboxes();
-
-      for (const hitbox of hiboxes) {
-        if (hitbox.intersectsWithPoint({ x: event.x, y: event.y })) {
-          this.selected = true;
-          break;
+    if (this.selected) {
+      if (event.type === "mouseButtonPressed") {
+        const pos = this.getPosition();
+        if (
+          event.x < pos.x ||
+          event.x > pos.x + this.width ||
+          event.y < pos.y ||
+          event.y > pos.y + this.height
+        ) {
+          this.selected = false;
         }
-      }
-    }
-
-    if (!this.selected) {
-      return;
-    }
-
-    if (event.type === "keyPressed") {
-      if (event.key === "ArrowUp") {
-        const pos = this.getPosition();
-        this.getPosition().y = pos.y - 5;
-      }
-      if (event.key === "ArrowDown") {
-        const pos = this.getPosition();
-        this.getPosition().y = pos.y + 5;
-      }
-      if (event.key === "ArrowLeft") {
-        const pos = this.getPosition();
-        this.getPosition().x = pos.x - 5;
-      }
-      if (event.key === "ArrowRight") {
-        const pos = this.getPosition();
-        this.getPosition().x = pos.x + 5;
       }
     }
   }

@@ -25,6 +25,7 @@ class GameObject {
 
   tick() {
     if (this.active) {
+      this.runKeyTickHandlers();
       this.tickFn(this);
     }
   }
@@ -100,6 +101,33 @@ class GameObject {
 
   popScene(): Scene | undefined {
     return this.context?.popScene();
+  }
+
+  getPressedKeys(): string[] {
+    return this.context?.getPressedKeys() ?? [];
+  }
+
+  isKeyPressed(key: string): boolean {
+    return this.context?.isKeyPressed(key) ?? false;
+  }
+
+  private runKeyTickHandlers(): void {
+    const KEY_TICK_HANDLERS = Symbol.for("canvasge.keyTickHandlers");
+
+    const handlers: Array<(obj: GameObject) => void> = [];
+
+    let proto = Object.getPrototypeOf(this);
+    while (proto) {
+      const protoHandlers = (proto as Record<symbol, unknown>)[
+        KEY_TICK_HANDLERS
+      ] as Array<(obj: GameObject) => void> | undefined;
+      if (protoHandlers) {
+        handlers.push(...protoHandlers);
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+
+    handlers.forEach((handler) => handler(this));
   }
 }
 

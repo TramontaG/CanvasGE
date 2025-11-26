@@ -22,7 +22,10 @@ const game = new Game({
   ),
 });
 
-const eventsDispatcher = new GameEventsdispatcher(game);
+const eventsDispatcher = new GameEventsdispatcher(
+  game,
+  game.getKeyAccumulator()
+);
 
 game.start();
 

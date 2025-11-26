@@ -1,10 +1,5 @@
-import type { GameEvent, MouseButtonPressedEvent } from ".";
+import type { GameEvent, KeyPressedEvent } from ".";
 import type { GameObject } from "../GameObject";
-
-type EventPredicate = <T extends GameObject = GameObject>(
-  gameObject: T,
-  event: GameEvent
-) => boolean;
 
 type HandleEventMethod<TObj extends GameObject> = (
   this: TObj,
@@ -12,71 +7,117 @@ type HandleEventMethod<TObj extends GameObject> = (
   ...args: unknown[]
 ) => unknown;
 
-function createEventDecorator<TObj extends GameObject>(
-  eventPredicate: EventPredicate,
-  handler: (gameObject: TObj, event: GameEvent) => void
+type KeyTickHandler<TObj extends GameObject = GameObject> = (
+  gameObject: TObj
+) => void;
+
+const KEY_TICK_HANDLERS = Symbol.for("canvasge.keyTickHandlers");
+
+function registerKeyTickHandler<TObj extends GameObject>(
+  target: Object,
+  handler: KeyTickHandler<TObj>
 ) {
-  return function (
-    _target: Object,
-    _propertyKey: string | symbol,
-    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
-  ): TypedPropertyDescriptor<HandleEventMethod<TObj>> | void {
-    const originalMethod = descriptor.value;
+  const record = target as unknown as Record<symbol, KeyTickHandler<TObj>[]>;
+  const existing = record[KEY_TICK_HANDLERS];
 
-    if (!originalMethod) {
-      throw new Error(
-        "createHitboxEventDecorator só pode ser usado em métodos."
-      );
-    }
-
-    const wrapped: HandleEventMethod<TObj> = function (
-      this: TObj,
-      event: GameEvent,
-      ...args: unknown[]
-    ) {
-      if (event && eventPredicate(this, event)) {
-        handler(this, event);
-      }
-
-      return originalMethod.call(this, event, ...args);
-    };
-
-    descriptor.value = wrapped as HandleEventMethod<TObj>;
-    return descriptor;
-  };
+  if (existing) {
+    existing.push(handler);
+  } else {
+    record[KEY_TICK_HANDLERS] = [handler];
+  }
 }
 
+const matchesKeyState = (gameObject: GameObject, keys: string[]): boolean => {
+  const context = gameObject.getContext?.();
+  if (!context) return false;
+  return keys.every((key) => context.isKeyPressed(key));
+};
+
 /**
- * Decorator factory that creates a method decorator for handling click events.
- *
- * @template TObj - The type of the game object that will handle the click event.
- * @param handler - The function to be called when a click event occurs.
- * @returns A method decorator that adds click event handling to the decorated method.
- *
- * @example
- * class MyGameObject extends GameObject {
- *   @onClick((gameObject, event) => {
- *     console.log("Clicked!", gameObject, event);
- *   })
- *   handleEvent(event: GameEvent) {
- *     // Original event handling logic
- *   }
- * }
+ * Decorator for handling mouse clicks on hitboxes.
  */
 export const onClick = <TObj extends GameObject = GameObject>(
   handler: (gameObject: TObj, event: GameEvent) => void
 ) => {
-  const eventPredicate: EventPredicate = (gameObject, event) => {
-    if (event.type === "mouseButtonPressed") {
-      const hitboxes = gameObject.getHitboxes();
-      for (const hitbox of hitboxes) {
-        if (hitbox.intersectsWithPoint({ x: event.x, y: event.y })) {
-          return true;
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseButtonPressed") {
+        const hitboxes = this.getHitboxes();
+        for (const hitbox of hitboxes) {
+          if (hitbox.intersectsWithPoint({ x: event.x, y: event.y })) {
+            handler(this, event);
+            break;
+          }
         }
       }
-    }
-    return false;
-  };
 
-  return createEventDecorator(eventPredicate, handler);
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
 };
+
+/**
+ * Decorator that runs the handler every tick while the key is held.
+ * It also suppresses the keyPressed event from invoking handleEvent.
+ */
+export function onKeyPressed<TObj extends GameObject = GameObject>(
+  key: string,
+  handler: (gameObject: TObj, event: KeyPressedEvent) => void
+) {
+  return onKeyComboPressed([key], handler);
+}
+
+/**
+ * Decorator that runs the handler every tick while all keys in the combo are held.
+ * It also suppresses the keyPressed event from invoking handleEvent.
+ */
+export function onKeyComboPressed<TObj extends GameObject = GameObject>(
+  keys: string[],
+  handler: (gameObject: TObj, event: KeyPressedEvent) => void
+) {
+  return function (
+    target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    // Register tick handler
+    registerKeyTickHandler<TObj>(target, (gameObj) => {
+      if (matchesKeyState(gameObj, keys)) {
+        const lastKey = keys[keys.length - 1] ?? "";
+        handler(gameObj as TObj, { type: "keyPressed", key: lastKey });
+      }
+    });
+
+    // Wrap handleEvent to skip matching key events
+    const original = descriptor.value;
+    if (original) {
+      descriptor.value = function (
+        this: TObj,
+        event: GameEvent,
+        ...args: unknown[]
+      ) {
+        if (event.type === "keyPressed" && keys.includes(event.key)) {
+          return; // Skip original handleEvent; tick handler will run instead
+        }
+        return original.call(this, event, ...args);
+      };
+    }
+
+    return descriptor;
+  };
+}
+
+export { KEY_TICK_HANDLERS, type KeyTickHandler };

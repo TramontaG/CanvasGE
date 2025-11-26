@@ -2,6 +2,7 @@ import type { CanvasController } from "../CanvasController";
 import type { GameEvent } from "../Events";
 import type { SceneManager } from "../Scenes/SceneManager";
 import { GameContext } from "../Context";
+import { KeyAccumulator } from "../Events";
 
 type GameOptions = {
   canvas: CanvasController;
@@ -15,6 +16,7 @@ class Game {
   private ticksPerSecond: number = 10;
   private lastTickTime: number = 0;
   private context: GameContext;
+  private keyAccumulator = new KeyAccumulator();
 
   constructor({ canvas, scenes, ticksPerSecond }: GameOptions) {
     this.canvas = canvas;
@@ -24,6 +26,7 @@ class Game {
       game: this,
       canvas,
       sceneManager: scenes,
+      keyAccumulator: this.keyAccumulator,
     });
     this.scenes.bindContext(this.context);
   }
@@ -71,6 +74,10 @@ class Game {
 
   getContext(): GameContext {
     return this.context;
+  }
+
+  getKeyAccumulator(): KeyAccumulator {
+    return this.keyAccumulator;
   }
 }
 

@@ -1,4 +1,5 @@
 import type { Game } from "../Game";
+import { KeyAccumulator } from "./keyAccumulator";
 
 export type KeyPressedEvent = {
   type: "keyPressed";
@@ -40,17 +41,19 @@ export type GameEvent =
 class GameEventsdispatcher {
   private canvasElement: HTMLCanvasElement;
 
-  constructor(private game: Game) {
+  constructor(private game: Game, private keyAccumulator: KeyAccumulator) {
     this.canvasElement = game.canvas.getCanvas();
 
     // Keyboard events
     window.addEventListener("keydown", (e) => {
       const event: KeyPressedEvent = { type: "keyPressed", key: e.key };
+      this.keyAccumulator.handleKeyDown(e.key);
       this.dispatchEvent(event);
     });
 
     window.addEventListener("keyup", (e) => {
       const event: KeyReleasedEvent = { type: "keyReleased", key: e.key };
+      this.keyAccumulator.handleKeyUp(e.key);
       this.dispatchEvent(event);
     });
 
@@ -95,4 +98,4 @@ class GameEventsdispatcher {
   }
 }
 
-export { GameEventsdispatcher };
+export { GameEventsdispatcher, KeyAccumulator };
