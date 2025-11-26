@@ -13,7 +13,7 @@ type GameOptions = {
 class Game {
   public canvas: CanvasController;
   private scenes: SceneManager;
-  private ticksPerSecond: number = 10;
+  private ticksPerSecond: number = 60;
   private lastTickTime: number = 0;
   private context: GameContext;
   private keyAccumulator = new KeyAccumulator();

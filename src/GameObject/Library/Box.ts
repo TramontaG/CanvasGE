@@ -47,6 +47,7 @@ class Box extends GameObject {
   })
   @onClick<Box>((obj, event) => {
     obj.selected = !obj.selected;
+    event.stopPropagation = true;
   })
   override handleEvent(event: GameEvent): void {
     if (this.selected) {

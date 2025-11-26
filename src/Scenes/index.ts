@@ -32,7 +32,8 @@ class Scene {
   }
 
   handleEvent(event: GameEvent): void {
-    this.gameObjects.forEach((obj) => {
+    this.gameObjects.toReversed().forEach((obj) => {
+      if (event.stopPropagation) return;
       obj.handleEvent(event);
     });
   }

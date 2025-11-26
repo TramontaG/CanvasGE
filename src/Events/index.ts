@@ -4,17 +4,20 @@ import { KeyAccumulator } from "./keyAccumulator";
 export type KeyPressedEvent = {
   type: "keyPressed";
   key: string;
+  stopPropagation?: boolean;
 };
 
 export type KeyReleasedEvent = {
   type: "keyReleased";
   key: string;
+  stopPropagation?: boolean;
 };
 
 export type MouseMovedEvent = {
   type: "mouseMoved";
   x: number;
   y: number;
+  stopPropagation?: boolean;
 };
 
 export type MouseButtonPressedEvent = {
@@ -22,6 +25,7 @@ export type MouseButtonPressedEvent = {
   button: number;
   x: number;
   y: number;
+  stopPropagation?: boolean;
 };
 
 export type MouseButtonReleasedEvent = {
@@ -29,6 +33,7 @@ export type MouseButtonReleasedEvent = {
   button: number;
   x: number;
   y: number;
+  stopPropagation?: boolean;
 };
 
 export type GameEvent =
