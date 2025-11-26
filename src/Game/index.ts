@@ -1,6 +1,7 @@
 import type { CanvasController } from "../CanvasController";
 import type { GameEvent } from "../Events";
 import type { SceneManager } from "../Scenes/SceneManager";
+import { GameContext } from "../Context";
 
 type GameOptions = {
   canvas: CanvasController;
@@ -13,11 +14,18 @@ class Game {
   private scenes: SceneManager;
   private ticksPerSecond: number = 10;
   private lastTickTime: number = 0;
+  private context: GameContext;
 
   constructor({ canvas, scenes, ticksPerSecond }: GameOptions) {
     this.canvas = canvas;
     this.scenes = scenes;
     this.ticksPerSecond = ticksPerSecond || this.ticksPerSecond;
+    this.context = new GameContext({
+      game: this,
+      canvas,
+      sceneManager: scenes,
+    });
+    this.scenes.bindContext(this.context);
   }
 
   setup() {
@@ -59,6 +67,10 @@ class Game {
     this.scenes.getActiveScenes().forEach((scene) => {
       scene.handleEvent(event);
     });
+  }
+
+  getContext(): GameContext {
+    return this.context;
   }
 }
 

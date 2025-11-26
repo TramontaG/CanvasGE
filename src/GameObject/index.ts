@@ -3,11 +3,13 @@ import type { GameEvent } from "../Events";
 import type { Scene } from "../Scenes";
 import { Vector } from "../Vector";
 import type { CircleHitbox, SquareHitbox } from "./Hitboxes";
+import type { GameContext, MessageHandler } from "../Context";
 
 class GameObject {
   private renderFn = (obj: GameObject, canvas: CanvasController) => {};
   private tickFn = (obj: GameObject) => {};
   private position = new Vector(0, 0);
+  private context: GameContext | null = null;
 
   constructor(
     private name: string,
@@ -64,6 +66,41 @@ class GameObject {
   }
 
   handleEvent(event: GameEvent): void {}
+
+  setContext(context: GameContext | null): void {
+    this.context = context;
+  }
+
+  getContext(): GameContext | null {
+    return this.context;
+  }
+
+  onMessage<TPayload>(
+    channel: string,
+    handler: MessageHandler<TPayload>
+  ): () => void {
+    if (!this.context) {
+      return () => {};
+    }
+
+    return this.context.subscribeToMessage(channel, handler);
+  }
+
+  sendMessage<TPayload>(channel: string, payload: TPayload): void {
+    this.context?.sendMessage(channel, payload, this);
+  }
+
+  setCurrentScene(name: string): void {
+    this.context?.setCurrentScene(name);
+  }
+
+  pushScene(name: string): void {
+    this.context?.pushScene(name);
+  }
+
+  popScene(): Scene | undefined {
+    return this.context?.popScene();
+  }
 }
 
 export { GameObject };

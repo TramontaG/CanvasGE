@@ -1,7 +1,9 @@
 import type { Scene } from "..";
+import type { GameContext } from "../../Context";
 
 class SceneManager {
   private activeScenes: Scene[] = [];
+  private context: GameContext | null = null;
 
   constructor(
     private scenes: Record<string, Scene>,
@@ -19,6 +21,8 @@ class SceneManager {
   setSceneAsCurrent(name: string): void {
     const scene = this.getScene(name);
     if (scene) {
+      scene.setContext(this.context);
+      scene.setup();
       this.activeScenes = [scene];
       this.currentScene = scene;
     }
@@ -37,12 +41,18 @@ class SceneManager {
   }
 
   pushSceneToActive(scene: Scene): void {
+    scene.setContext(this.context);
     scene.setup();
     this.activeScenes.push(scene);
   }
 
   popSceneFromActive(): Scene | undefined {
     return this.activeScenes.pop();
+  }
+
+  bindContext(context: GameContext): void {
+    this.context = context;
+    this.getAllScenes().forEach((scene) => scene.setContext(context));
   }
 }
 
