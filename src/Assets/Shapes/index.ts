@@ -1,0 +1,7 @@
+import type { Vector } from "../../Vector";
+
+export type ShapeRendererFn = (
+  context: CanvasRenderingContext2D,
+  position: Vector,
+  size: Vector
+) => void;

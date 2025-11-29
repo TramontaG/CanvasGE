@@ -15,7 +15,7 @@ class Game {
   private scenes: SceneManager;
   private ticksPerSecond: number = 60;
   private lastTickTime: number = 0;
-  private context: GameContext;
+  public context: GameContext;
   private keyAccumulator = new KeyAccumulator();
 
   constructor({ canvas, scenes, ticksPerSecond }: GameOptions) {
@@ -67,9 +67,12 @@ class Game {
   }
 
   handleEvent(event: GameEvent) {
-    this.scenes.getActiveScenes().forEach((scene) => {
-      scene.handleEvent(event);
-    });
+    this.scenes
+      .getActiveScenes()
+      .toReversed()
+      .forEach((scene) => {
+        scene.handleEvent(event);
+      });
   }
 
   getContext(): GameContext {

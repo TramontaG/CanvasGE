@@ -2,12 +2,14 @@ import type { CanvasController } from "../CanvasController";
 import type { GameEvent } from "../Events";
 import type { GameObject } from "../GameObject";
 import type { GameContext } from "../Context";
+import { Vector } from "../Vector";
 
 class Scene {
   private gameObjects: GameObject[] = [];
   private context: GameContext | null = null;
+  private offset: Vector = new Vector(0, 0);
 
-  constructor(private name: string) {}
+  constructor(private name: string, private backgroundColor?: string) {}
 
   setup() {
     console.log(`Setting up scene: ${this.name}`);
@@ -20,9 +22,22 @@ class Scene {
   }
 
   render(canvas: CanvasController) {
+    if (this.backgroundColor) {
+      this.context
+        ?.getCanvas()
+        .getShapeDrawer()
+        .drawBackground(this.backgroundColor);
+    }
+
+    this.context
+      ?.getCanvas()
+      .applyTranslation(new Vector(this.offset.x / 2, this.offset.y / 2));
+
     this.gameObjects.forEach((obj) => {
-      obj.render(canvas);
+      obj.render(canvas, this);
     });
+
+    this.context?.getCanvas().reset();
   }
 
   addGameObject(obj: GameObject): void {
@@ -43,6 +58,14 @@ class Scene {
     this.gameObjects.forEach((obj) => {
       obj.setContext(context);
     });
+  }
+
+  getOffset(): Vector {
+    return this.offset;
+  }
+
+  setOffset(offset: Vector): void {
+    this.offset = offset;
   }
 }
 

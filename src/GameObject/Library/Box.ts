@@ -8,17 +8,11 @@ import { onClick, onKeyPressed } from "../../Events/decorators";
 class Box extends GameObject {
   private selected: boolean = false;
 
-  constructor(
-    x: number,
-    y: number,
-    private width: number,
-    private height: number,
-    private color: string
-  ) {
-    super("Box", x, y);
+  constructor(position: Vector, private size: Vector, private color: string) {
+    super("Box", position);
     this.setRenderFunction(this.renderBox);
 
-    this.addHitbox(new SquareHitbox(0, 0, this.width, this.height, this));
+    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this));
   }
 
   private renderBox(obj: GameObject, canvas: CanvasController): void {
@@ -27,8 +21,8 @@ class Box extends GameObject {
     shapeDrawer.drawRectangle(
       pos.x,
       pos.y,
-      this.width,
-      this.height,
+      this.size.x,
+      this.size.y,
       this.selected ? "pink" : this.color
     );
   }
@@ -55,9 +49,9 @@ class Box extends GameObject {
         const pos = this.getPosition();
         if (
           event.x < pos.x ||
-          event.x > pos.x + this.width ||
+          event.x > pos.x + this.size.x ||
           event.y < pos.y ||
-          event.y > pos.y + this.height
+          event.y > pos.y + this.size.y
         ) {
           this.selected = false;
         }

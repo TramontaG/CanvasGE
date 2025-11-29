@@ -1,5 +1,11 @@
+import type { Vector } from "../Vector";
+import { SpriteLibrary } from "./SpriteLibrary";
+
 class ShapeDrawer {
-  constructor(private context: CanvasRenderingContext2D) {}
+  constructor(
+    private context: CanvasRenderingContext2D,
+    private spriteLibrary: SpriteLibrary
+  ) {}
 
   drawRectangle(
     x: number,
@@ -38,11 +44,35 @@ class ShapeDrawer {
     this.context.textAlign = align;
     this.context.fillText(text, x, y);
   }
+
+  drawBackground(color: string = "white"): void {
+    this.context.fillStyle = color;
+    this.context.fillRect(
+      0,
+      0,
+      this.context.canvas.width,
+      this.context.canvas.height
+    );
+  }
+
+  drawSprite(
+    spriteName: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): void {
+    const sprite = this.spriteLibrary.getSprite(spriteName);
+    if (sprite) {
+      this.context.drawImage(sprite, x, y, width, height);
+    }
+  }
 }
 
 class CanvasController {
   private canvas: HTMLCanvasElement;
   private context: CanvasRenderingContext2D;
+  private spriteLibrary: SpriteLibrary = new SpriteLibrary();
   private shapeDrawer: ShapeDrawer;
 
   constructor(width: number, height: number) {
@@ -50,8 +80,13 @@ class CanvasController {
     this.canvas.width = width;
     this.canvas.height = height;
     this.context = this.canvas.getContext("2d")!;
-    this.shapeDrawer = new ShapeDrawer(this.context);
-    document.body.appendChild(this.canvas);
+    this.shapeDrawer = new ShapeDrawer(this.context, this.spriteLibrary);
+    const canvasContainer = document.getElementById("canvas-container");
+    if (canvasContainer) {
+      canvasContainer.appendChild(this.canvas);
+    } else {
+      document.body.appendChild(this.canvas);
+    }
   }
 
   clearCanvas(): void {
@@ -68,6 +103,22 @@ class CanvasController {
 
   getShapeDrawer(): ShapeDrawer {
     return this.shapeDrawer;
+  }
+
+  getSpriteLibrary(): SpriteLibrary {
+    return this.spriteLibrary;
+  }
+
+  applyTranslation(translationVector: Vector): void {
+    this.context.translate(translationVector.x, translationVector.y);
+  }
+
+  reset(): void {
+    this.context.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  applyRotation(angle: number): void {
+    this.context.rotate(angle);
   }
 }
 

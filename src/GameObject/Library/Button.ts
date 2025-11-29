@@ -2,23 +2,22 @@ import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
 import { onClick } from "../../Events/decorators";
-import type { Game } from "../../Game";
+import { Vector } from "../../Vector";
 import { SquareHitbox } from "../Hitboxes";
 
 class Button extends GameObject {
   constructor(
-    x: number,
-    y: number,
-    private width: number,
-    private height: number,
+    name: string,
+    position: Vector,
+    private size: Vector,
     private label: string,
     private color: string,
     private onClick: (obj: Button) => void
   ) {
-    super("Button", x, y);
+    super(name, position);
     this.setRenderFunction(this.renderButton);
 
-    this.addHitbox(new SquareHitbox(0, 0, this.width, this.height, this));
+    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this));
   }
 
   private renderButton(obj: GameObject, canvas: CanvasController): void {
@@ -27,15 +26,15 @@ class Button extends GameObject {
     shapeDrawer.drawRectangle(
       pos.x,
       pos.y,
-      this.width,
-      this.height,
+      this.size.x,
+      this.size.y,
       this.color
     );
 
     shapeDrawer.drawText(
       this.label,
-      pos.x + this.width / 2,
-      pos.y + this.height / 2
+      pos.x + this.size.x / 2,
+      pos.y + this.size.y / 2
     );
   }
 

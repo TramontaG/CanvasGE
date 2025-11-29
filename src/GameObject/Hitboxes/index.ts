@@ -1,19 +1,19 @@
+import type { Vector } from "../../Vector";
 import { GameObject } from "../index";
 
 class SquareHitbox {
   constructor(
-    private xOffset: number,
-    private yOffset: number,
-    private width: number,
-    private height: number,
+    private offset: Vector,
+    private size: Vector,
     private gameObject: GameObject
   ) {}
 
   public getAbsolutePosition(): { x: number; y: number } {
     const gameObjectPosition = this.gameObject.getPosition();
+
     return {
-      x: gameObjectPosition.x + this.xOffset,
-      y: gameObjectPosition.y + this.yOffset,
+      x: gameObjectPosition.x + this.offset.x,
+      y: gameObjectPosition.y + this.offset.y,
     };
   }
 
@@ -22,28 +22,28 @@ class SquareHitbox {
     const otherPos = other.getAbsolutePosition();
 
     return !(
-      thisPos.x + this.width < otherPos.x ||
-      thisPos.x > otherPos.x + other.width ||
-      thisPos.y + this.height < otherPos.y ||
-      thisPos.y > otherPos.y + other.height
+      thisPos.x + this.size.x < otherPos.x ||
+      thisPos.x > otherPos.x + other.size.x ||
+      thisPos.y + this.size.y < otherPos.y ||
+      thisPos.y > otherPos.y + other.size.y
     );
   }
 
   public intersectsWithPoint(point: { x: number; y: number }): boolean {
     const thisPos = this.getAbsolutePosition();
+
     return !(
       point.x < thisPos.x ||
-      point.x > thisPos.x + this.width ||
+      point.x > thisPos.x + this.size.x ||
       point.y < thisPos.y ||
-      point.y > thisPos.y + this.height
+      point.y > thisPos.y + this.size.y
     );
   }
 }
 
 class CircleHitbox {
   constructor(
-    private xOffset: number,
-    private yOffset: number,
+    private offset: Vector,
     private radius: number,
     private gameObject: GameObject
   ) {}
@@ -51,8 +51,8 @@ class CircleHitbox {
   public getAbsolutePosition(): { x: number; y: number } {
     const gameObjectPosition = this.gameObject.getPosition();
     return {
-      x: gameObjectPosition.x + this.xOffset,
-      y: gameObjectPosition.y + this.yOffset,
+      x: gameObjectPosition.x + this.offset.x,
+      y: gameObjectPosition.y + this.offset.y,
     };
   }
 

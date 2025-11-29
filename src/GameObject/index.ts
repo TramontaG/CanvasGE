@@ -8,20 +8,16 @@ import type { GameContext, MessageHandler } from "../Context";
 class GameObject {
   private renderFn = (obj: GameObject, canvas: CanvasController) => {};
   private tickFn = (obj: GameObject) => {};
-  private position = new Vector(0, 0);
   private context: GameContext | null = null;
 
   constructor(
-    private name: string,
-    private x: number,
-    private y: number,
-    private visible: boolean = true,
-    private active: boolean = true,
-    private hitboxes: (CircleHitbox | SquareHitbox)[] = [],
+    public name: string,
+    public position: Vector,
+    public visible: boolean = true,
+    public active: boolean = true,
+    public hitboxes: (CircleHitbox | SquareHitbox)[] = [],
     public scene: Scene | null = null
-  ) {
-    this.position = new Vector(x, y);
-  }
+  ) {}
 
   tick() {
     if (this.active) {
@@ -38,13 +34,20 @@ class GameObject {
     return this.hitboxes;
   }
 
-  render(canvas: CanvasController): void {
+  render(canvas: CanvasController, scene: Scene): void {
     if (this.visible) {
       this.renderFn(this, canvas);
     }
   }
 
   getPosition(): Vector {
+    const sceneOffset = this.scene ? this.scene.getOffset() : Vector.zero();
+
+    return new Vector(
+      this.position.x + sceneOffset.x,
+      this.position.y + sceneOffset.y
+    );
+
     return this.position;
   }
 
