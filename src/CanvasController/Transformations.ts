@@ -7,11 +7,8 @@ export const withRotation = (
 ): ShapeRendererFn => {
   return (ctx, position, size) => {
     ctx.save();
-    // Translate to the center of the object
     ctx.translate(position.x + size.x / 2, position.y + size.y / 2);
-    // Rotate around the center
     ctx.rotate(angle);
-    // Translate back to the original position
     ctx.translate(-(position.x + size.x / 2), -(position.y + size.y / 2));
     shape(ctx, position, size);
     ctx.restore();

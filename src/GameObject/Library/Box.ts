@@ -28,16 +28,16 @@ class Box extends GameObject {
   }
 
   @onKeyPressed<Box>("ArrowUp", (obj, event) => {
-    obj.selected ? obj.getPosition().add(new Vector(0, -5)) : null;
+    obj.selected ? obj.position.add(new Vector(0, -5)) : null;
   })
   @onKeyPressed<Box>("ArrowDown", (obj, event) => {
-    obj.selected ? obj.getPosition().add(new Vector(0, 5)) : null;
+    obj.selected ? obj.position.add(new Vector(0, 5)) : null;
   })
   @onKeyPressed<Box>("ArrowLeft", (obj, event) => {
-    obj.selected ? obj.getPosition().add(new Vector(-5, 0)) : null;
+    obj.selected ? obj.position.add(new Vector(-5, 0)) : null;
   })
   @onKeyPressed<Box>("ArrowRight", (obj, event) => {
-    obj.selected ? obj.getPosition().add(new Vector(5, 0)) : null;
+    obj.selected ? obj.position.add(new Vector(5, 0)) : null;
   })
   @onClick<Box>((obj, event) => {
     obj.selected = !obj.selected;

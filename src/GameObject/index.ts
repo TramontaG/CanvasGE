@@ -4,11 +4,14 @@ import type { Scene } from "../Scenes";
 import { Vector } from "../Vector";
 import type { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
+import { onHover, onStopHovering } from "../Events/decorators";
 
 class GameObject {
   private renderFn = (obj: GameObject, canvas: CanvasController) => {};
   private tickFn = (obj: GameObject) => {};
   private context: GameContext | null = null;
+  public hovering?: boolean = false;
+  private motherShip?: GameObject = undefined;
 
   constructor(
     public name: string,
@@ -16,7 +19,8 @@ class GameObject {
     public visible: boolean = true,
     public active: boolean = true,
     public hitboxes: (CircleHitbox | SquareHitbox)[] = [],
-    public scene: Scene | null = null
+    public scene: Scene | null = null,
+    public children: GameObject[] = []
   ) {}
 
   tick() {
@@ -24,6 +28,16 @@ class GameObject {
       this.runKeyTickHandlers();
       this.tickFn(this);
     }
+  }
+
+  setMotherShip<Class extends GameObject = GameObject>(
+    motherShip: Class
+  ): void {
+    this.motherShip = motherShip as Class;
+  }
+
+  getMotherShip<Class extends GameObject = GameObject>(): Class | undefined {
+    return this.motherShip as Class | undefined;
   }
 
   addHitbox(hitbox: CircleHitbox | SquareHitbox): void {
@@ -37,7 +51,22 @@ class GameObject {
   render(canvas: CanvasController, scene: Scene): void {
     if (this.visible) {
       this.renderFn(this, canvas);
+      this.children.forEach((child) => child.render(canvas, scene));
     }
+  }
+
+  addChild(child: GameObject): void {
+    child.setMotherShip(this);
+    console.log("Adding child", child.name, "to", this.name);
+    this.children.push(child);
+  }
+
+  getChildren(): GameObject[] {
+    return this.children;
+  }
+
+  getChildByName(name: string): GameObject | null {
+    return this.children.find((child) => child.name === name) || null;
   }
 
   getPosition(): Vector {
@@ -47,8 +76,6 @@ class GameObject {
       this.position.x + sceneOffset.x,
       this.position.y + sceneOffset.y
     );
-
-    return this.position;
   }
 
   isVisible(): boolean {
@@ -69,6 +96,12 @@ class GameObject {
     this.tickFn = fn;
   }
 
+  @onHover<GameObject>((obj, event) => {
+    obj.hovering = true;
+  })
+  @onStopHovering<GameObject>((obj, event) => {
+    obj.hovering = false;
+  })
   handleEvent(event: GameEvent): void {}
 
   setContext(context: GameContext | null): void {

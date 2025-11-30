@@ -29,10 +29,6 @@ class Scene {
         .drawBackground(this.backgroundColor);
     }
 
-    this.context
-      ?.getCanvas()
-      .applyTranslation(new Vector(this.offset.x / 2, this.offset.y / 2));
-
     this.gameObjects.forEach((obj) => {
       obj.render(canvas, this);
     });

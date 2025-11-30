@@ -2,16 +2,17 @@ import { GameObject } from "..";
 import type { ShapeRendererFn } from "../../Assets/Shapes";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
-import { onClick, onHover } from "../../Events/decorators";
+import { onClick, onHover, onStopHovering } from "../../Events/decorators";
 import { Vector } from "../../Vector";
 import { SquareHitbox } from "../Hitboxes";
 
-class ClickableShape extends GameObject {
+class HoverableShape extends GameObject {
   constructor(
     position: Vector,
     private size: Vector,
     private shapeRenderFn: ShapeRendererFn,
-    private onClick: (obj: ClickableShape) => void
+    private onHover?: (obj: HoverableShape) => void,
+    private onStopHover?: (obj: HoverableShape) => void
   ) {
     super("ClickableShape", position);
     this.setRenderFunction(this.renderShape);
@@ -24,10 +25,13 @@ class ClickableShape extends GameObject {
     this.shapeRenderFn(context, pos, this.size);
   }
 
-  @onClick<ClickableShape>((obj, event) => {
-    obj.onClick(obj);
+  @onHover<HoverableShape>((obj, event) => {
+    obj.onHover ? obj.onHover(obj) : null;
+  })
+  @onStopHovering<HoverableShape>((obj, event) => {
+    obj.onStopHover ? obj.onStopHover(obj) : null;
   })
   override handleEvent(event: GameEvent): void {}
 }
 
-export { ClickableShape };
+export { HoverableShape };

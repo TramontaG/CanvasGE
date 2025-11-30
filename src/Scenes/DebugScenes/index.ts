@@ -8,6 +8,7 @@ import { withRotation } from "../../CanvasController/Transformations";
 import { Box } from "../../GameObject/Library/Box";
 import { Button } from "../../GameObject/Library/Button";
 import { ClickableShape } from "../../GameObject/Library/Clickableshape";
+import { SceneTranslator } from "../../GameObject/Library/SceneTranslator";
 import { Vector } from "../../Vector";
 
 const debugScene1 = new Scene("Debug Scene", "lightgray");
@@ -27,98 +28,6 @@ const debugButton1 = new Button(
   }
 );
 
-const arrow1 = new ClickableShape(
-  new Vector(750, 300),
-  new Vector(50, 50),
-  withRotation(
-    0,
-    shapeWithParams(renderChevron, {
-      color: "purple",
-      strokeWidth: 6,
-      lineCap: "round",
-      lineJoin: "round",
-    })
-  ),
-  (obj) => {
-    const oneSceneUp = obj
-      .getContext()
-      ?.getSceneManager()
-      .getActiveScenes()[0]!;
-    const currOffset = oneSceneUp.getOffset();
-    const setOffset = new Vector(currOffset.x + 10, currOffset.y);
-    oneSceneUp.setOffset(setOffset);
-  }
-);
-
-const arrow2 = new ClickableShape(
-  new Vector(400, 550),
-  new Vector(50, 50),
-  withRotation(
-    Math.PI / 2,
-    shapeWithParams(renderChevron, {
-      color: "purple",
-      strokeWidth: 6,
-      lineCap: "round",
-      lineJoin: "round",
-    })
-  ),
-  (obj) => {
-    const oneSceneUp = obj
-      .getContext()
-      ?.getSceneManager()
-      .getActiveScenes()[0]!;
-    const currOffset = oneSceneUp.getOffset();
-    const setOffset = new Vector(currOffset.x, currOffset.y + 10);
-    oneSceneUp.setOffset(setOffset);
-  }
-);
-
-const arrow3 = new ClickableShape(
-  new Vector(0, 300),
-  new Vector(50, 50),
-  withRotation(
-    Math.PI,
-    shapeWithParams(renderChevron, {
-      color: "purple",
-      strokeWidth: 6,
-      lineCap: "round",
-      lineJoin: "round",
-    })
-  ),
-  (obj) => {
-    const oneSceneUp = obj
-      .getContext()
-      ?.getSceneManager()
-      .getActiveScenes()[0]!;
-    const currOffset = oneSceneUp.getOffset();
-    const setOffset = new Vector(currOffset.x - 10, currOffset.y);
-    oneSceneUp.setOffset(setOffset);
-  }
-);
-
-const arrow4 = new ClickableShape(
-  new Vector(400, 0),
-  new Vector(50, 50),
-  withRotation(
-    (3 * Math.PI) / 2,
-    shapeWithParams(renderChevron, {
-      color: "purple",
-      strokeWidth: 6,
-      lineCap: "round",
-      lineJoin: "round",
-    })
-  ),
-  (obj) => {
-    const oneSceneUp = obj
-      .getContext()
-      ?.getSceneManager()
-      .getActiveScenes()[0]!;
-    const currOffset = oneSceneUp.getOffset();
-    const setOffset = new Vector(currOffset.x, currOffset.y - 10);
-    oneSceneUp.setOffset(setOffset);
-  }
-);
-
 const dedbugButton2 = new Button(
   "Back Button",
   new Vector(0, 0),
@@ -131,10 +40,7 @@ const dedbugButton2 = new Button(
 );
 
 debugScene1.addGameObject(debugButton1);
-debugScene2.addGameObject(arrow1);
-debugScene2.addGameObject(arrow2);
-debugScene2.addGameObject(arrow3);
-debugScene2.addGameObject(arrow4);
+debugScene2.addGameObject(new SceneTranslator(debugScene1));
 debugScene1.addGameObject(debugBox1);
 // debugScene2.addGameObject(debugBox2);
 // debugScene2.addGameObject(dedbugButton2);

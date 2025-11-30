@@ -121,4 +121,112 @@ export function onKeyComboPressed<TObj extends GameObject = GameObject>(
   };
 }
 
+export function onChildrenEvents<TObj extends GameObject = GameObject>() {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (this: TObj, event: GameEvent) {
+      const result = original.call(this, event);
+
+      if (this.children) {
+        for (const child of this.children) {
+          if (typeof child.handleEvent === "function") {
+            child.handleEvent(event);
+          }
+        }
+      }
+
+      return result;
+    };
+
+    return descriptor;
+  };
+}
+
+/**
+ * Decorator for handling hover events on hitboxes.
+ */
+export const onHover = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: GameEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseMoved") {
+        const hitboxes = this.getHitboxes();
+        const isHovering = hitboxes.some((hitbox) =>
+          hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+        );
+        const gameObject = this as unknown as GameObject;
+        const objectWasHovering = !!gameObject.hovering;
+
+        if (isHovering && !objectWasHovering) {
+          gameObject.hovering = true;
+          handler(this, event);
+        }
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
+/**
+ * Decorator for handling stop hovering events on hitboxes.
+ */
+export const onStopHovering = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: GameEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseMoved") {
+        const hitboxes = this.getHitboxes();
+        const isHovering = hitboxes.some((hitbox) =>
+          hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+        );
+
+        const gameObject = this as unknown as GameObject;
+        const objectWasHovering = !!gameObject.hovering;
+
+        if (!isHovering && objectWasHovering) {
+          gameObject.hovering = false;
+          handler(this, event);
+        }
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
 export { KEY_TICK_HANDLERS, type KeyTickHandler };
