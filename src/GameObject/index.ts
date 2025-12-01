@@ -27,6 +27,7 @@ class GameObject {
     if (this.active) {
       this.runKeyTickHandlers();
       this.tickFn(this);
+      this.context?.incrementTickCount();
     }
   }
 
@@ -52,6 +53,9 @@ class GameObject {
     if (this.visible) {
       this.renderFn(this, canvas);
       this.children.forEach((child) => child.render(canvas, scene));
+      this.hitboxes.forEach((hitbox) => {
+        hitbox.renderDebug(canvas);
+      });
     }
   }
 

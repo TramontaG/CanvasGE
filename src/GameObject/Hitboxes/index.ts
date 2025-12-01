@@ -1,3 +1,4 @@
+import type { CanvasController } from "../../CanvasController";
 import type { Vector } from "../../Vector";
 import { GameObject } from "../index";
 
@@ -5,7 +6,8 @@ class SquareHitbox {
   constructor(
     private offset: Vector,
     private size: Vector,
-    private gameObject: GameObject
+    private gameObject: GameObject,
+    private debug: boolean = false
   ) {}
 
   public getAbsolutePosition(): { x: number; y: number } {
@@ -39,13 +41,23 @@ class SquareHitbox {
       point.y > thisPos.y + this.size.y
     );
   }
+
+  public renderDebug(canvas: CanvasController): void {
+    if (this.debug) {
+      const pos = this.getAbsolutePosition();
+      canvas
+        .getShapeDrawer()
+        .drawRectangle(pos.x, pos.y, this.size.x, this.size.y, "red", false);
+    }
+  }
 }
 
 class CircleHitbox {
   constructor(
     private offset: Vector,
     private radius: number,
-    private gameObject: GameObject
+    private gameObject: GameObject,
+    private debug: boolean = false
   ) {}
 
   public getAbsolutePosition(): { x: number; y: number } {
@@ -71,6 +83,15 @@ class CircleHitbox {
     const dy = point.y - thisPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     return distance < this.radius;
+  }
+
+  public renderDebug(canvas: CanvasController): void {
+    if (this.debug) {
+      const pos = this.getAbsolutePosition();
+      canvas
+        .getShapeDrawer()
+        .drawCircle(pos.x, pos.y, this.radius * 2, "red", false);
+    }
   }
 }
 

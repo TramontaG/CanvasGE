@@ -60,11 +60,29 @@ type GameContextOptions = {
 
 class GameContext {
   private messageBus = new MessageBus();
+  private frameCount: number = 0;
+  private tickCount: number = 0;
 
   constructor(private options: GameContextOptions) {}
 
   getGame(): Game {
     return this.options.game;
+  }
+
+  incrementFrameCount(): void {
+    this.frameCount++;
+  }
+
+  getFrameCount(): number {
+    return this.frameCount;
+  }
+
+  getTickCount(): number {
+    return this.tickCount;
+  }
+
+  incrementTickCount(): void {
+    this.tickCount++;
   }
 
   getCanvas(): CanvasController {

@@ -9,6 +9,9 @@ class Group extends GameObject {
 
     children.forEach((child) => {
       this.addChild(child);
+      if (this.getMotherShip()) {
+        child.setMotherShip(this.getMotherShip()!);
+      }
     });
   }
 

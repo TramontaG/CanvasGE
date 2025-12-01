@@ -13,16 +13,28 @@ class Vector {
     return this;
   }
 
+  toAdded(other: Vector): Vector {
+    return new Vector(this.x + other.x, this.y + other.y);
+  }
+
   subtract(other: Vector): Vector {
     this.x -= other.x;
     this.y -= other.y;
     return this;
   }
 
+  toSubtracted(other: Vector): Vector {
+    return new Vector(this.x - other.x, this.y - other.y);
+  }
+
   multiply(scalar: number): Vector {
     this.x *= scalar;
     this.y *= scalar;
     return this;
+  }
+
+  toMultiplied(scalar: number): Vector {
+    return new Vector(this.x * scalar, this.y * scalar);
   }
 
   dotProduct(other: Vector): number {
@@ -48,6 +60,10 @@ class Vector {
       this.y /= length;
     }
     return this;
+  }
+
+  toNormalized(): Vector {
+    return this.clone().normalize();
   }
 }
 

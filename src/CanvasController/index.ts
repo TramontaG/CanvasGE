@@ -2,6 +2,8 @@ import type { Vector } from "../Vector";
 import { SpriteLibrary } from "./SpriteLibrary";
 
 class ShapeDrawer {
+  private defaultFont: string = "Arial";
+
   constructor(
     private context: CanvasRenderingContext2D,
     private spriteLibrary: SpriteLibrary
@@ -12,22 +14,49 @@ class ShapeDrawer {
     y: number,
     width: number,
     height: number,
-    color: string = "black"
+    color: string = "black",
+    filled: boolean = true
   ): void {
     this.context.fillStyle = color;
-    this.context.fillRect(x, y, width, height);
+    if (filled) {
+      this.context.fillRect(x, y, width, height);
+    } else {
+      this.context.strokeStyle = color;
+      this.context.strokeRect(x, y, width, height);
+    }
+  }
+
+  setDefaultFont(font: string): void {
+    this.defaultFont = font;
   }
 
   drawCircle(
     x: number,
     y: number,
     radius: number,
-    color: string = "black"
+    color: string = "black",
+    filled: boolean = true,
+    centerDot: boolean = true,
+    centerDotColor: string = "red",
+    centerDotRadius: number = 2
   ): void {
-    this.context.fillStyle = color;
     this.context.beginPath();
-    this.context.arc(x, y, radius / 2, 0, Math.PI * 2);
-    this.context.fill();
+    this.context.arc(x, y, radius, 0, Math.PI * 2);
+    if (filled) {
+      this.context.fillStyle = color;
+      this.context.fill();
+    } else {
+      this.context.strokeStyle = color;
+      this.context.stroke();
+    }
+
+    if (centerDot) {
+      this.context.beginPath();
+      this.context.arc(x, y, centerDotRadius, 0, Math.PI * 2);
+      this.context.fillStyle = centerDotColor;
+      this.context.fill();
+    }
+
     this.context.closePath();
   }
 
@@ -35,12 +64,13 @@ class ShapeDrawer {
     text: string,
     x: number,
     y: number,
-    font: string = "16px Arial",
     color: string = "black",
-    align: CanvasTextAlign = "center"
+    size: string = "16px",
+    align: CanvasTextAlign = "center",
+    font: string = this.defaultFont
   ): void {
     this.context.fillStyle = color;
-    this.context.font = font;
+    this.context.font = `${size} ${font}`;
     this.context.textAlign = align;
     this.context.fillText(text, x, y);
   }
@@ -66,6 +96,13 @@ class ShapeDrawer {
     if (sprite) {
       this.context.drawImage(sprite, x, y, width, height);
     }
+  }
+
+  loadFont(fontName: string, url: string): void {
+    const newFont = new FontFace(fontName, `url(${url})`);
+    newFont.load().then((loadedFont) => {
+      document.fonts.add(loadedFont);
+    });
   }
 }
 

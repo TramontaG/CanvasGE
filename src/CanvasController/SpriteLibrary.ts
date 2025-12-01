@@ -1,7 +1,18 @@
+import type { Vector } from "../Vector";
+
 class SpriteLibrary {
   private sprites: Map<string, HTMLImageElement> = new Map();
+  private spriteSheets: Map<
+    string,
+    {
+      image: HTMLImageElement;
+      frameWidth: number;
+      frameHeight: number;
+      columns: number;
+    }
+  > = new Map();
 
-  async loadSprite(name: string, url: string): Promise<void> {
+  async loadSprite(name: string, url: URL): Promise<void> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -9,7 +20,7 @@ class SpriteLibrary {
         resolve();
       };
       img.onerror = reject;
-      img.src = url;
+      img.src = url.toString();
     });
   }
 
@@ -33,8 +44,103 @@ class SpriteLibrary {
     });
   }
 
+  /**
+   * Carrega uma spritesheet com sprites de tamanho fixo
+   */
+  async loadSpriteSheet(
+    name: string,
+    url: URL,
+    frameWidth: number,
+    frameHeight: number
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const columns = Math.floor(img.width / frameWidth);
+
+        this.spriteSheets.set(name, {
+          image: img,
+          frameWidth,
+          frameHeight,
+          columns,
+        });
+
+        resolve();
+      };
+      img.onerror = reject;
+      img.src = url.toString();
+    });
+  }
+
   getSprite(name: string): HTMLImageElement | undefined {
     return this.sprites.get(name);
+  }
+
+  /**
+   * Renderiza um frame específico da spritesheet usando índice linear
+   */
+  drawSpriteFrame(
+    ctx: CanvasRenderingContext2D,
+    sheetName: string,
+    index: number,
+    position: Vector,
+    scale = 1
+  ): void {
+    const sheet = this.spriteSheets.get(sheetName);
+    if (!sheet) return;
+
+    const { image, frameWidth, frameHeight, columns } = sheet;
+
+    const sx = (index % columns) * frameWidth;
+    const sy = Math.floor(index / columns) * frameHeight;
+
+    ctx.imageSmoothingEnabled = false; // nearest neighbor
+
+    ctx.drawImage(
+      image,
+      sx,
+      sy,
+      frameWidth,
+      frameHeight,
+      position.x,
+      position.y,
+      frameWidth * scale,
+      frameHeight * scale
+    );
+  }
+
+  /**
+   * Renderiza um frame passando col & row ao invés de index
+   */
+  drawSpriteGrid(
+    ctx: CanvasRenderingContext2D,
+    sheetName: string,
+    col: number,
+    row: number,
+    position: Vector,
+    scale = 1
+  ): void {
+    const sheet = this.spriteSheets.get(sheetName);
+    if (!sheet) return;
+
+    const { image, frameWidth, frameHeight } = sheet;
+
+    const sx = col * frameWidth;
+    const sy = row * frameHeight;
+
+    ctx.imageSmoothingEnabled = false;
+
+    ctx.drawImage(
+      image,
+      sx,
+      sy,
+      frameWidth,
+      frameHeight,
+      position.x,
+      position.y,
+      frameWidth * scale,
+      frameHeight * scale
+    );
   }
 }
 
