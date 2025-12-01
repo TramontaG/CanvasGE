@@ -45,7 +45,7 @@ class SpriteLibrary {
   }
 
   /**
-   * Carrega uma spritesheet com sprites de tamanho fixo
+   * Load a fixed size sprite sheet
    */
   async loadSpriteSheet(
     name: string,
@@ -77,14 +77,17 @@ class SpriteLibrary {
   }
 
   /**
-   * Renderiza um frame específico da spritesheet usando índice linear
+   * Render the sprite frame by its index in the sheet
+   * Indexes grow from left to right, top to bottom
    */
   drawSpriteFrame(
     ctx: CanvasRenderingContext2D,
     sheetName: string,
     index: number,
     position: Vector,
-    scale = 1
+    scale = 1,
+    mirrorHorizontal = false,
+    mirrorVertical = false
   ): void {
     const sheet = this.spriteSheets.get(sheetName);
     if (!sheet) return;
@@ -96,6 +99,31 @@ class SpriteLibrary {
 
     ctx.imageSmoothingEnabled = false; // nearest neighbor
 
+    // Save the current context state
+    ctx.save();
+
+    // Apply transformations if needed
+    if (mirrorHorizontal || mirrorVertical) {
+      // Calculate the center of the sprite
+      const centerX = position.x + (frameWidth * scale) / 2;
+      const centerY = position.y + (frameHeight * scale) / 2;
+
+      // Translate to the center of the sprite
+      ctx.translate(centerX, centerY);
+
+      // Apply mirroring
+      if (mirrorHorizontal) {
+        ctx.scale(-1, 1);
+      }
+      if (mirrorVertical) {
+        ctx.scale(1, -1);
+      }
+
+      // Translate back to the original position
+      ctx.translate(-centerX, -centerY);
+    }
+
+    // Draw the image with the applied transformations
     ctx.drawImage(
       image,
       sx,
@@ -107,10 +135,13 @@ class SpriteLibrary {
       frameWidth * scale,
       frameHeight * scale
     );
+
+    // Restore the context state
+    ctx.restore();
   }
 
   /**
-   * Renderiza um frame passando col & row ao invés de index
+   * Render a specific cell from the sprite sheet grid
    */
   drawSpriteGrid(
     ctx: CanvasRenderingContext2D,

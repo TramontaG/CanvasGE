@@ -22,7 +22,7 @@ const prepareGame = async () => {
     ),
   });
 
-  initialScene.addGameObject(new Client("sample player", 4));
+  initialScene.addGameObject(new Client("sample player", 4, 4));
 
   //   game.canvas
   //     .getShapeDrawer()

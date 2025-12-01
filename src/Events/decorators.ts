@@ -83,7 +83,6 @@ export function onKeyPressed<TObj extends GameObject = GameObject>(
 
 /**
  * Decorator that runs the handler every tick while all keys in the combo are held.
- * It also suppresses the keyPressed event from invoking handleEvent.
  */
 export function onKeyComboPressed<TObj extends GameObject = GameObject>(
   keys: string[],
@@ -102,7 +101,7 @@ export function onKeyComboPressed<TObj extends GameObject = GameObject>(
       }
     });
 
-    // Wrap handleEvent to skip matching key events
+    // Wrap handleEvent so it still receives keyPressed while the tick handler handles the held state
     const original = descriptor.value;
     if (original) {
       descriptor.value = function (
@@ -110,9 +109,6 @@ export function onKeyComboPressed<TObj extends GameObject = GameObject>(
         event: GameEvent,
         ...args: unknown[]
       ) {
-        if (event.type === "keyPressed" && keys.includes(event.key)) {
-          return; // Skip original handleEvent; tick handler will run instead
-        }
         return original.call(this, event, ...args);
       };
     }
