@@ -67,10 +67,11 @@ class ShapeDrawer {
     color: string = "black",
     size: string = "16px",
     align: CanvasTextAlign = "center",
-    font: string = this.defaultFont
+    font?: string
   ): void {
+    const fontToUse = font ?? this.defaultFont;
     this.context.fillStyle = color;
-    this.context.font = `${size} ${font}`;
+    this.context.font = `${size} ${fontToUse}`;
     this.context.textAlign = align;
     this.context.fillText(text, x, y);
   }
@@ -98,11 +99,27 @@ class ShapeDrawer {
     }
   }
 
-  loadFont(fontName: string, url: string): void {
+  async loadFont(fontName: string, url: string): Promise<void> {
+    // Google Fonts endpoints return CSS, so inject the stylesheet first and wait for the font to be available
+    if (url.includes("fonts.googleapis.com")) {
+      await new Promise<void>((resolve, reject) => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = url;
+        link.onload = () => {
+          document.fonts.load(`1em ${fontName}`).then(() => resolve());
+        };
+        link.onerror = () =>
+          reject(new Error(`Failed to load font stylesheet: ${fontName}`));
+        document.head.appendChild(link);
+      });
+      return;
+    }
+
     const newFont = new FontFace(fontName, `url(${url})`);
-    newFont.load().then((loadedFont) => {
-      document.fonts.add(loadedFont);
-    });
+    const loadedFont = await newFont.load();
+    document.fonts.add(loadedFont);
+    await document.fonts.load(`1em ${fontName}`);
   }
 }
 
