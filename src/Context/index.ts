@@ -3,6 +3,7 @@ import type { Game } from "../Game";
 import type { GameObject } from "../GameObject";
 import type { Scene } from "../Scenes";
 import type { SceneManager } from "../Scenes/SceneManager";
+import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 import { KeyAccumulator } from "../Events/keyAccumulator";
 
 type MessageHandler<TPayload = unknown> = (
@@ -122,6 +123,18 @@ class GameContext {
 
   popScene(): Scene | undefined {
     return this.options.sceneManager.popSceneFromActive();
+  }
+
+  transitionToScene(
+    name: string,
+    transition?: SceneTransition,
+    mode: "replace" | "push" = "replace"
+  ): Promise<void> {
+    return this.options.sceneManager.transitionToScene(
+      name,
+      transition,
+      mode
+    );
   }
 
   sendMessage<TPayload>(

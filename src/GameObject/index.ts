@@ -5,6 +5,7 @@ import { Vector } from "../Vector";
 import type { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
 import { onHover, onStopHovering } from "../Events/decorators";
+import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 
 class GameObject {
   private renderFn = (obj: GameObject, canvas: CanvasController) => {};
@@ -27,7 +28,6 @@ class GameObject {
     if (this.active) {
       this.runKeyTickHandlers();
       this.tickFn(this);
-      this.context?.incrementTickCount();
     }
   }
 
@@ -141,6 +141,14 @@ class GameObject {
 
   popScene(): Scene | undefined {
     return this.context?.popScene();
+  }
+
+  transitionToScene(
+    name: string,
+    transition?: SceneTransition,
+    mode: "replace" | "push" = "replace"
+  ): Promise<void> {
+    return this.context?.transitionToScene(name, transition, mode) ?? Promise.resolve();
   }
 
   getPressedKeys(): string[] {

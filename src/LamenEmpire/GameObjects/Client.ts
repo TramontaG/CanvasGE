@@ -35,7 +35,7 @@ class Client extends GameObject {
     this.scale = scale;
     this.speed = speed;
 
-    this.ticksPerFrame = 1 / (speed / 16);
+    this.ticksPerFrame = 1 / (speed / 8);
 
     this.addHitbox(
       new SquareHitbox(
@@ -88,6 +88,7 @@ class Client extends GameObject {
 
   override tick(): void {
     super.tick();
+
     const walking = !this.velocity.equals(Vector.zero());
 
     if (walking) {
@@ -97,11 +98,11 @@ class Client extends GameObject {
     }
 
     if (walking && this.animationTimer % Math.floor(20 / this.speed) === 0) {
-      this.position.add(this.velocity.toMultiplied(this.speed / 3));
+      this.position.add(this.velocity.toMultiplied(this.speed));
       return;
     }
     if (walking && this.animationTimer % Math.floor(10 / this.speed) === 0) {
-      this.position.add(this.velocity.toMultiplied(this.speed / 2));
+      this.position.add(this.velocity.toMultiplied(this.speed * 1.2));
       return;
     }
   }

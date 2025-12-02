@@ -33,12 +33,15 @@ export const renderSprite = <TObj extends GameObject = GameObject>(
       const context = canvas.getContext();
       const mirroring =
         typeof _mirroring === "function" ? _mirroring(this) : _mirroring;
+      const position = overridePosition
+        ? overridePosition(this)
+        : this.getPosition();
 
       spriteLib.drawSpriteFrame(
         context,
         spriteSheetName,
         typeof index === "function" ? index(this) : index,
-        overridePosition ? overridePosition(this) : this.position,
+        position,
         typeof scale === "function" ? scale(this) : scale,
         mirroring === "horizontal" || mirroring === "both",
         mirroring === "vertical" || mirroring === "both"
@@ -85,6 +88,9 @@ export const renderSpriteAnimation = <TObj extends GameObject = GameObject>(
         typeof _ticksPerFrame === "number"
           ? _ticksPerFrame
           : _ticksPerFrame(this);
+      const position = overridePosition
+        ? overridePosition(this)
+        : this.getPosition();
 
       const frameIndex =
         Math.floor(gameContext.getTickCount() / ticksPerFrame) % indexes.length;
@@ -98,7 +104,7 @@ export const renderSpriteAnimation = <TObj extends GameObject = GameObject>(
         context,
         spriteSheetName,
         spriteIndex,
-        overridePosition ? overridePosition(this) : this.position,
+        position,
         typeof scale === "function" ? scale(this) : scale,
         mirroring === "horizontal" || mirroring === "both",
         mirroring === "vertical" || mirroring === "both"

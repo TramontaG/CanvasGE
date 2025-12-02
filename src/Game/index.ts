@@ -49,9 +49,7 @@ class Game {
       const tickInterval = 1000 / this.ticksPerSecond;
       const lastTickTime = this.lastTickTime || 0;
       if (now - lastTickTime >= tickInterval) {
-        this.scenes.getActiveScenes().forEach((scene) => {
-          scene.tick();
-        });
+        this.scenes.tick();
         this.lastTickTime = now;
       }
     });
