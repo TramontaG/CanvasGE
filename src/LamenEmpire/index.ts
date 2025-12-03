@@ -11,6 +11,7 @@ import {
 } from "../Scenes/SceneManager/Transitions";
 import { Vector } from "../Vector";
 import { Client } from "./GameObjects/Client";
+import { Walker } from "./GameObjects/Walker";
 
 const prepareGame = async () => {
   const gameConfig = {
@@ -39,7 +40,25 @@ const prepareGame = async () => {
     ),
   });
 
-  initialScene.addGameObject(new Client("sample player", 4, 1));
+  const exampleClient = new Client("sample player", 4, 12);
+
+  exampleClient.setWalker(
+    new Walker(
+      exampleClient,
+      [
+        new Vector(50, 300),
+        new Vector(300, 300),
+        new Vector(300, 50),
+        new Vector(50, 50),
+      ],
+      4
+      // true
+    )
+  );
+
+  exampleClient.walker?.toggle();
+
+  initialScene.addGameObject(exampleClient);
 
   await game.canvas
     .getShapeDrawer()
@@ -59,6 +78,7 @@ const prepareGame = async () => {
       buttonSize,
       "Fade to Playground",
       "blue",
+      "white",
       (btn) =>
         btn.transitionToScene(
           "transitionPlayground",
@@ -75,6 +95,7 @@ const prepareGame = async () => {
       buttonSize,
       "Slide Right (push)",
       "purple",
+      "white",
       (btn) =>
         btn.transitionToScene(
           "transitionPlayground",
@@ -91,6 +112,7 @@ const prepareGame = async () => {
       buttonSize,
       "Slide Down (replace)",
       "darkgreen",
+      "white",
       (btn) =>
         btn.transitionToScene(
           "transitionPlayground",
@@ -107,6 +129,7 @@ const prepareGame = async () => {
       buttonSize,
       "Color Flash (Blue)",
       "crimson",
+      "white",
       (btn) =>
         btn.transitionToScene(
           "transitionPlayground",
@@ -123,6 +146,7 @@ const prepareGame = async () => {
       buttonSize,
       "Back (Fade)",
       "teal",
+      "white",
       (btn) =>
         btn.transitionToScene("initialScene", fadeTransition(300), "replace")
     )
@@ -141,6 +165,7 @@ const prepareGame = async () => {
       buttonSize,
       "Back (Slide Left)",
       "brown",
+      "white",
       (btn) =>
         btn.transitionToScene(
           "initialScene",
@@ -157,6 +182,7 @@ const prepareGame = async () => {
       buttonSize,
       "Back (Slide Up / push)",
       "orange",
+      "white",
       (btn) =>
         btn.transitionToScene(
           "initialScene",

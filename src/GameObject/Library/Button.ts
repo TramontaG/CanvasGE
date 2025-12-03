@@ -11,8 +11,9 @@ class Button extends GameObject {
     position: Vector,
     private size: Vector,
     private label: string,
-    private color: string,
-    private onClick: (obj: Button) => void
+    private color: string = "red",
+    private textcolor: string = "black",
+    private onClick: (obj: Button) => void = () => {}
   ) {
     super(name, position);
     this.setRenderFunction(this.renderButton);
@@ -34,7 +35,8 @@ class Button extends GameObject {
     shapeDrawer.drawText(
       this.label,
       pos.x + this.size.x / 2,
-      pos.y + this.size.y / 2
+      pos.y + this.size.y / 2,
+      this.textcolor
     );
   }
 

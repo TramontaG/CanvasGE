@@ -30,6 +30,23 @@ class ShapeDrawer {
     this.defaultFont = font;
   }
 
+  drawLine(
+    start: Vector,
+    end: Vector,
+    width: number,
+    color = "red",
+    lineCap: CanvasLineCap = "round"
+  ) {
+    this.context.beginPath();
+    this.context.lineWidth = width;
+    this.context.strokeStyle = color;
+    this.context.lineCap = lineCap;
+    this.context.moveTo(start.x, start.y);
+    this.context.lineTo(end.x, end.y);
+    this.context.stroke();
+    this.context.closePath();
+  }
+
   drawCircle(
     x: number,
     y: number,

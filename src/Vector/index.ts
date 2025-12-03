@@ -7,6 +7,19 @@ class Vector {
     this.y = y;
   }
 
+  private roundToZero() {
+    if (Math.abs(this.x) < 0.05) this.x = 0;
+    if (Math.abs(this.y) < 0.05) this.y = 0;
+  }
+
+  magnitude() {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
+  }
+
+  squaredMagnitude() {
+    return this.x * this.x + this.y * this.y;
+  }
+
   add(other: Vector): Vector {
     this.x += other.x;
     this.y += other.y;
@@ -14,7 +27,9 @@ class Vector {
   }
 
   toAdded(other: Vector): Vector {
-    return new Vector(this.x + other.x, this.y + other.y);
+    const result = new Vector(this.x + other.x, this.y + other.y);
+    result.roundToZero();
+    return result;
   }
 
   subtract(other: Vector): Vector {
@@ -24,7 +39,9 @@ class Vector {
   }
 
   toSubtracted(other: Vector): Vector {
-    return new Vector(this.x - other.x, this.y - other.y);
+    const result = new Vector(this.x - other.x, this.y - other.y);
+    result.roundToZero();
+    return result;
   }
 
   multiply(scalar: number): Vector {
@@ -34,7 +51,9 @@ class Vector {
   }
 
   toMultiplied(scalar: number): Vector {
-    return new Vector(this.x * scalar, this.y * scalar);
+    const result = new Vector(this.x * scalar, this.y * scalar);
+    result.roundToZero();
+    return result;
   }
 
   dotProduct(other: Vector): number {
@@ -42,7 +61,9 @@ class Vector {
   }
 
   clone(): Vector {
-    return new Vector(this.x, this.y);
+    const result = new Vector(this.x, this.y);
+    result.roundToZero();
+    return result;
   }
 
   equals(other: Vector): boolean {
@@ -50,7 +71,9 @@ class Vector {
   }
 
   static zero(): Vector {
-    return new Vector(0, 0);
+    const result = new Vector(0, 0);
+    result.roundToZero();
+    return result;
   }
 
   normalize(): Vector {
@@ -63,7 +86,9 @@ class Vector {
   }
 
   toNormalized(): Vector {
-    return this.clone().normalize();
+    const result = this.clone().normalize();
+    result.roundToZero();
+    return result;
   }
 }
 
