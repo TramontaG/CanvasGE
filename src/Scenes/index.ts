@@ -24,6 +24,10 @@ class Scene {
     });
   }
 
+  removeGameObject(gameObject: GameObject) {
+    this.gameObjects = this.gameObjects.filter((go) => go !== gameObject);
+  }
+
   render(canvas: CanvasController) {
     const ctx = this.context?.getCanvas().getContext();
     if (!ctx) {

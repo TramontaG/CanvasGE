@@ -1,7 +1,7 @@
 import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
-import { onClick } from "../../Events/decorators";
+import { onClick, onHover, onStopHovering } from "../../Events/decorators";
 import { Vector } from "../../Vector";
 import { SquareHitbox } from "../Hitboxes";
 
@@ -40,10 +40,14 @@ class Button extends GameObject {
     );
   }
 
-  @onClick<Button>((obj, event) => {
+  @onClick<Button>((obj) => {
     obj.onClick(obj);
   })
-  override handleEvent(event: GameEvent): void {}
+  @onHover<Button>(() => {})
+  @onStopHovering<Button>(() => {})
+  override handleEvent(event: GameEvent): void {
+    super.handleEvent(event);
+  }
 }
 
 export { Button };

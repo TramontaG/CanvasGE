@@ -93,10 +93,32 @@ class SceneManager {
       from: this.currentScene,
       to: target,
     };
+    const fromScene = transitionScenes.from;
 
-    // ensure the incoming scene renders during the transition
-    if (!this.activeScenes.includes(target)) {
-      this.activeScenes.push(target);
+    const incomingOnTop = transition.incomingOnTop ?? true;
+    const targetIndex = this.activeScenes.indexOf(target);
+    const fromIndex = fromScene ? this.activeScenes.indexOf(fromScene) : -1;
+    const targetIsActive = targetIndex !== -1;
+
+    // Ensure the incoming scene renders during the transition, respecting
+    // whether it should be above or below the outgoing scene.
+    if (!targetIsActive) {
+      if (mode === "push" || incomingOnTop) {
+        this.activeScenes = [...this.activeScenes, target];
+      } else if (fromIndex >= 0) {
+        this.activeScenes = [
+          ...this.activeScenes.slice(0, fromIndex),
+          target,
+          ...this.activeScenes.slice(fromIndex),
+        ];
+      } else {
+        this.activeScenes = [...this.activeScenes, target];
+      }
+    } else if (mode === "push" || incomingOnTop) {
+      this.activeScenes = [
+        ...this.activeScenes.filter((scene) => scene !== target),
+        target,
+      ];
     }
     this.currentScene = target;
 

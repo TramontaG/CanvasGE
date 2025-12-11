@@ -6,6 +6,7 @@ class Walker {
   private waypointIndex: number = 0;
   private active: boolean = false;
   private ciclic: boolean;
+  private onComplete?: () => void;
 
   constructor(
     private gameObject: GameObject,
@@ -42,8 +43,38 @@ class Walker {
     return this.getTargetedWaypoint()!;
   }
 
+  public setWaypoints(waypoints: Vector[], ciclic: boolean = false): void {
+    this.waypoints = waypoints;
+    this.ciclic = ciclic;
+    this.waypointIndex = 0;
+    this.active = false;
+    this.gameObject.speed = Vector.zero();
+  }
+
+  public isActive(): boolean {
+    return this.active;
+  }
+
+  public setOnComplete(callback: () => void) {
+    this.onComplete = callback;
+    return this;
+  }
+
   public toggle() {
     this.active = !this.active;
+    if (!this.active) {
+      this.gameObject.speed = Vector.zero(); //stop moving
+    }
+  }
+
+  public start() {
+    this.active = true;
+    return this;
+  }
+
+  private stop() {
+    this.active = false;
+    this.gameObject.speed = Vector.zero();
   }
 
   public reset() {
@@ -67,7 +98,10 @@ class Walker {
 
     const currentPosition = this.gameObject.getPosition();
     const targetedWaypoint = this.getTargetedWaypoint();
-    if (!targetedWaypoint) return;
+    if (!targetedWaypoint) {
+      this.onComplete?.();
+      return;
+    }
 
     const movementVector = targetedWaypoint.toSubtracted(currentPosition);
     const movementDirection = movementVector.toNormalized();
@@ -78,15 +112,21 @@ class Walker {
     const shouldClipMovement =
       intendedMovementVector.squaredMagnitude() >= maxMovement;
 
-    const movement = shouldClipMovement ? movementVector : intendedMovementVector;
+    const movement = shouldClipMovement
+      ? movementVector
+      : intendedMovementVector;
 
     if (shouldClipMovement) {
       const isAtLastWaypoint =
         !this.ciclic && this.waypointIndex >= this.waypoints.length - 1;
 
       if (isAtLastWaypoint) {
+        // Snap to the final waypoint, stop, and notify listeners.
+        this.gameObject.setPosition(targetedWaypoint);
         this.gameObject.speed = Vector.zero();
         this.active = false;
+        this.onComplete?.();
+
         return;
       }
 

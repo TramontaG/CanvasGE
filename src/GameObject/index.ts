@@ -13,12 +13,14 @@ class GameObject {
   private tickFn = (obj: GameObject) => {};
   private context: GameContext | null = null;
   public hovering?: boolean = false;
-  private motherShip?: GameObject = undefined;
+  private motherShip: GameObject | null = null;
   public walker: Walker | null = null;
   public speed: Vector = Vector.zero();
   public showOriginDebug: boolean = false;
   private lastDominantDirection: "up" | "down" | "left" | "right" | null =
     "down";
+
+  public id: string = Math.floor(Math.random() * 0xffffffff).toString(16);
 
   constructor(
     public name: string,
@@ -40,10 +42,21 @@ class GameObject {
 
       this.walker?.tick();
       this.position.add(this.speed);
+
+      for (const child of this.children) {
+        child.tick();
+      }
+
+      // Using this way messes up with the 'this' keyword
+      // this.children.forEach((child) => child.tick());
     }
   }
 
-  setWalker(walker: Walker) {
+  destroy() {
+    this.scene?.removeGameObject(this);
+  }
+
+  setWalker(walker: Walker | null) {
     this.walker = walker;
   }
 
@@ -51,10 +64,10 @@ class GameObject {
     this.position = position;
   }
 
-  setMotherShip<Class extends GameObject = GameObject>(
+  setMotherShip<Class extends GameObject | null = GameObject>(
     motherShip: Class
   ): void {
-    this.motherShip = motherShip as Class;
+    this.motherShip = motherShip;
   }
 
   getMotherShip<Class extends GameObject = GameObject>(): Class | undefined {
@@ -93,8 +106,13 @@ class GameObject {
 
   addChild(child: GameObject): void {
     child.setMotherShip(this);
-    console.log("Adding child", child.name, "to", this.name);
+    child.scene = this.scene;
+    child.setContext(this.context);
     this.children.push(child);
+  }
+
+  removeChild(gameObject: GameObject): void {
+    this.children = this.children.filter((child) => child !== gameObject);
   }
 
   getDominantDirection(): "up" | "down" | "left" | "right" | null {

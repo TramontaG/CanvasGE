@@ -113,25 +113,8 @@ class Client extends GameObject {
     }
   }
 
-  @onKeyPressed<Client>("ArrowLeft", (obj, _ev) => {
-    const movement = new Vector(-3, 0).multiply(obj.scale);
-    obj.facingDirection = "left";
-    obj.speed = movement;
-  })
-  @onKeyPressed<Client>("ArrowRight", (obj, _ev) => {
-    const movement = new Vector(3, 0).multiply(obj.scale);
-    obj.facingDirection = "right";
-    obj.speed = movement;
-  })
-  @onKeyPressed<Client>("ArrowUp", (obj, _ev) => {
-    const movement = new Vector(0, -3).multiply(obj.scale);
-    obj.facingDirection = "up";
-    obj.speed = movement;
-  })
-  @onKeyPressed<Client>("ArrowDown", (obj, _ev) => {
-    const movement = new Vector(0, 3).multiply(obj.scale);
-    obj.facingDirection = "down";
-    obj.speed = movement;
+  @onClick((obj) => {
+    obj.walker?.toggle();
   })
   override handleEvent(event: GameEvent): void {
     super.handleEvent(event);

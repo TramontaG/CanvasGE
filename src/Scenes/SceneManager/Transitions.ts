@@ -14,6 +14,12 @@ export type SceneTransitionFunction = (
 export type SceneTransition = {
   duration: number;
   easing?: (t: number) => number;
+  /**
+   * If false, keep the outgoing scene on top during the transition.
+   * Useful for pop-like transitions where the previous scene should slide away
+   * while revealing the target beneath it.
+   */
+  incomingOnTop?: boolean;
   setup?: SceneTransitionFunction;
   step: SceneTransitionFunction;
   cleanup?: SceneTransitionFunction;
@@ -28,12 +34,14 @@ const createSceneTransition = (
   options?: {
     duration?: number;
     easing?: (t: number) => number;
+    incomingOnTop?: boolean;
     setup?: SceneTransitionFunction;
     cleanup?: SceneTransitionFunction;
   }
 ): SceneTransition => ({
   duration: options?.duration ?? 500,
   easing: options?.easing,
+  incomingOnTop: options?.incomingOnTop,
   setup: options?.setup,
   step,
   cleanup: options?.cleanup,
@@ -63,7 +71,7 @@ const fadeTransition = (duration: number = 450): SceneTransition =>
 
 type SlideDirection = "left" | "right" | "up" | "down";
 
-const slideFrom = (
+const slideReplace = (
   direction: SlideDirection,
   distance: number = 400,
   duration: number = 500
@@ -96,6 +104,76 @@ const slideFrom = (
       },
       cleanup: (_, { from, to }) => {
         to.setOffset(Vector.zero());
+        if (from) {
+          from.setOffset(Vector.zero());
+        }
+      },
+    }
+  );
+};
+
+const slidePush = (
+  direction: SlideDirection,
+  distance: number = 400,
+  duration: number = 500
+): SceneTransition => {
+  const directionVectorMap: Record<SlideDirection, Vector> = {
+    left: new Vector(-distance, 0),
+    right: new Vector(distance, 0),
+    up: new Vector(0, -distance),
+    down: new Vector(0, distance),
+  };
+
+  const offsetVector = directionVectorMap[direction];
+
+  return createSceneTransition(
+    (progress, { from, to }) => {
+      const incomingOffset = offsetVector.toMultiplied(1 - progress);
+      to.setOffset(incomingOffset);
+    },
+    {
+      duration,
+      easing: easeInOut,
+      setup: (_, { to }) => {
+        to.setOffset(offsetVector);
+        to.setOpacity(1);
+      },
+      cleanup: (_, { from, to }) => {
+        to.setOffset(Vector.zero());
+      },
+    }
+  );
+};
+
+const slidePop = (
+  direction: SlideDirection,
+  distance: number = 400,
+  duration: number = 500
+): SceneTransition => {
+  const directionVectorMap: Record<SlideDirection, Vector> = {
+    left: new Vector(-distance, 0),
+    right: new Vector(distance, 0),
+    up: new Vector(0, -distance),
+    down: new Vector(0, distance),
+  };
+
+  const offsetVector = directionVectorMap[direction];
+
+  return createSceneTransition(
+    (progress, { from, to }) => {
+      if (from) {
+        const outgoingOffset = offsetVector.toMultiplied(-progress);
+        from.setOffset(outgoingOffset);
+      }
+    },
+    {
+      duration,
+      easing: easeInOut,
+      incomingOnTop: false,
+      setup: (_, { to, from }) => {
+        from?.setOpacity(1);
+      },
+      cleanup: (_, { from, to }) => {
         if (from) {
           from.setOffset(Vector.zero());
         }
@@ -149,7 +227,9 @@ const colorFlash = (
 export {
   createSceneTransition,
   fadeTransition,
-  slideFrom,
+  slideReplace,
+  slidePush,
+  slidePop,
   colorFlash,
   easeInOut,
   linearEasing,
