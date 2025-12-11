@@ -4,6 +4,7 @@ import { Panel } from "../../GameObjects/Panel";
 import { CityView } from "../../GameObjects/CityView";
 import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";
 import { RestaurantSimulation } from "../../GameObjects/RestaurantSimulation";
+import { ScrollView } from "../../../GameObject/Library/ScrollView";
 import palette from "../../colors.json";
 
 const createGameplayScene = (dimensions: { width: number; height: number }) => {
@@ -53,31 +54,82 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
 
   const buttonScale = 2;
   const buttonSize = LamenEmpireButton.FRAME_SIZE.toMultiplied(buttonScale);
-  const buttonX = sideMenuX + (sideWidth - buttonSize.x) / 2;
-
-  const incrementButton = new LamenEmpireButton(
-    "IncreaseTierButton",
-    new Vector(buttonX, 24),
-    "Tier +",
-    "green",
-    () => cityView.incrementTier(),
-    { scale: buttonScale, textColor: "white", fontSize: 10 }
+  const scrollPadding = 10;
+  const scrollViewSize = new Vector(
+    sideWidth - scrollPadding * 2,
+    sideMenuHeight - scrollPadding * 2
   );
 
-  const decrementButton = new LamenEmpireButton(
-    "DecreaseTierButton",
-    new Vector(buttonX, 24 + buttonSize.y + 12),
-    "Tier -",
-    "purple",
-    () => cityView.decrementTier(),
-    { scale: buttonScale, textColor: "white", fontSize: 10 }
+  const scrollView = new ScrollView(
+    "SideMenuScrollView",
+    new Vector(sideMenuX + scrollPadding, scrollPadding),
+    scrollViewSize,
+    [],
+    {
+      backgroundColor: palette.DarkGreen,
+      scrollbarColor: palette.Primary,
+      scrollbarTrackColor: palette.PrimaryEvenDarker,
+      scrollStep: buttonSize.y / 1.5,
+    }
   );
+
+  const buttonX = (scrollViewSize.x - buttonSize.x) / 2;
+  const buttonSpacing = 12;
+  const buttonStartY = 12;
+
+  const sideButtons: Array<{
+    label: string;
+    variant: "normal" | "green" | "purple";
+    onClick: () => void;
+  }> = [
+    { label: "Tier +", variant: "green", onClick: () => cityView.incrementTier() },
+    { label: "Tier -", variant: "purple", onClick: () => cityView.decrementTier() },
+  ];
+
+  const fillerLabels = [
+    "Add Worker",
+    "Buy Table",
+    "Upgrade Kitchen",
+    "Advertise",
+    "Hire Chef",
+    "Theme Swap",
+    "Open Late",
+    "Happy Hour",
+    "Menu Edit",
+    "Toggle Debug",
+  ];
+
+  fillerLabels.forEach((label, index) => {
+    const variants: Array<"normal" | "green" | "purple"> = [
+      "normal",
+      "green",
+      "purple",
+    ];
+    sideButtons.push({
+      label,
+      variant: variants[index % variants.length]!,
+      onClick: () => {
+        console.log(`Clicked ${label}`);
+      },
+    });
+  });
+
+  sideButtons.forEach((config, index) => {
+    const btn = new LamenEmpireButton(
+      `SideMenuButton-${config.label}`,
+      new Vector(buttonX, buttonStartY + index * (buttonSize.y + buttonSpacing)),
+      config.label,
+      config.variant,
+      config.onClick,
+      { scale: buttonScale, textColor: "white", fontSize: 10 }
+    );
+    scrollView.addChild(btn);
+  });
 
   scene.addGameObject(restaurantSimulation);
   scene.addGameObject(bottomMenu);
   scene.addGameObject(sideMenu);
-  scene.addGameObject(incrementButton);
-  scene.addGameObject(decrementButton);
+  scene.addGameObject(scrollView);
 
   return scene;
 };

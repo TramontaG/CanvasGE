@@ -9,6 +9,24 @@ class ShapeDrawer {
     private spriteLibrary: SpriteLibrary
   ) {}
 
+  /**
+   * Draws a rectangle on the canvas with configurable fill/stroke behavior.
+   *
+   * @param x - The x-coordinate of the rectangle's top-left corner
+   * @param y - The y-coordinate of the rectangle's top-left corner
+   * @param width - The width of the rectangle
+   * @param height - The height of the rectangle
+   * @param color - The color to use for filling or stroking (default: "black")
+   * @param filled - If true, fills the rectangle; if false, strokes the outline (default: true)
+   *
+   * @example
+   * // Draw a filled red rectangle
+   * shapeDrawer.drawRectangle(10, 10, 100, 50, "red", true);
+   *
+   * @example
+   * // Draw a blue rectangle outline
+   * shapeDrawer.drawRectangle(10, 10, 100, 50, "blue", false);
+   */
   drawRectangle(
     x: number,
     y: number,
@@ -26,10 +44,36 @@ class ShapeDrawer {
     }
   }
 
+  /**
+   * Sets the default font family used for text rendering.
+   *
+   * @param font - The font family name to use as default (e.g., "Arial", "Verdana")
+   *
+   * @example
+   * // Set default font to Arial
+   * shapeDrawer.setDefaultFont("Arial");
+   */
   setDefaultFont(font: string): void {
     this.defaultFont = font;
   }
 
+  /**
+   * Draws a straight line between two points with customizable appearance.
+   *
+   * @param start - The starting point of the line as a Vector
+   * @param end - The ending point of the line as a Vector
+   * @param width - The thickness of the line in pixels
+   * @param color - The color of the line (default: "red")
+   * @param lineCap - The style of the line endings (default: "round")
+   *
+   * @example
+   * // Draw a thick blue line with square caps
+   * shapeDrawer.drawLine(new Vector(10, 10), new Vector(100, 50), 5, "blue", "square");
+   *
+   * @example
+   * // Draw a thin red line with default round caps
+   * shapeDrawer.drawLine(new Vector(0, 0), new Vector(100, 100), 1);
+   */
   drawLine(
     start: Vector,
     end: Vector,
@@ -47,6 +91,30 @@ class ShapeDrawer {
     this.context.closePath();
   }
 
+  /**
+   * Draws a circle with customizable appearance and optional center dot.
+   *
+   * @param x - The x-coordinate of the circle's center
+   * @param y - The y-coordinate of the circle's center
+   * @param radius - The radius of the circle in pixels
+   * @param color - The color to use for filling or stroking the circle (default: "black")
+   * @param filled - If true, fills the circle; if false, strokes the outline (default: true)
+   * @param centerDot - If true, draws a small dot at the center of the circle (default: true)
+   * @param centerDotColor - The color of the center dot (default: "red")
+   * @param centerDotRadius - The radius of the center dot in pixels (default: 2)
+   *
+   * @example
+   * // Draw a filled blue circle with default center dot
+   * shapeDrawer.drawCircle(100, 100, 50, "blue", true);
+   *
+   * @example
+   * // Draw a red circle outline with no center dot
+   * shapeDrawer.drawCircle(100, 100, 50, "red");
+   *
+   * @example
+   * // Draw a green circle with custom center dot
+   * shapeDrawer.drawCircle(100, 100, 50, "green", true, true, "yellow", 3);
+   */
   drawCircle(
     x: number,
     y: number,
@@ -77,6 +145,29 @@ class ShapeDrawer {
     this.context.closePath();
   }
 
+  /**
+   * Renders text at the specified position with customizable styling.
+   *
+   * @param text - The text string to render
+   * @param x - The x-coordinate of the text position
+   * @param y - The y-coordinate of the text position
+   * @param color - The color of the text (default: "black")
+   * @param size - The font size in pixels (default: "16px")
+   * @param align - The text alignment (default: "center")
+   * @param font - Optional font family to override the default font
+   *
+   * @example
+   * // Draw centered black text with default font
+   * shapeDrawer.drawText("Hello", 100, 50);
+   *
+   * @example
+   * // Draw right-aligned red text with custom font
+   * shapeDrawer.drawText("World", 100, 50, "red", "20px", "right", "Verdana");
+   *
+   * @example
+   * // Draw left-aligned text with default font but custom size
+   * shapeDrawer.drawText("Welcome", 100, 50, "black", "12px", "left");
+   */
   drawText(
     text: string,
     x: number,
@@ -93,6 +184,19 @@ class ShapeDrawer {
     this.context.fillText(text, x, y);
   }
 
+  /**
+   * Clears the canvas and fills it with a solid background color.
+   *
+   * @param color - The color to fill the canvas with (default: "white")
+   *
+   * @example
+   * // Clear canvas with default white background
+   * shapeDrawer.drawBackground();
+   *
+   * @example
+   * // Clear canvas with custom gray background
+   * shapeDrawer.drawBackground("#f0f0f0");
+   */
   drawBackground(color: string = "white"): void {
     this.context.fillStyle = color;
     this.context.fillRect(
@@ -103,6 +207,57 @@ class ShapeDrawer {
     );
   }
 
+  /**
+   * Executes drawing operations within a clipped rectangular region.
+   *
+   * This method saves the current canvas state, creates a clipping region,
+   * executes the provided drawing function, and then restores the original state.
+   *
+   * @param x - The x-coordinate of the clipping rectangle's top-left corner
+   * @param y - The y-coordinate of the clipping rectangle's top-left corner
+   * @param width - The width of the clipping rectangle
+   * @param height - The height of the clipping rectangle
+   * @param draw - A function containing the drawing operations to perform within the clipped region
+   *
+   * @example
+   * // Draw shapes only within a specific region
+   * shapeDrawer.withClippingRect(50, 50, 200, 200, () => {
+   *   shapeDrawer.drawCircle(100, 100, 50, "blue");
+   *   shapeDrawer.drawText("Clipped", 100, 100);
+   * });
+   */
+  withClippingRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    draw: () => void
+  ): void {
+    this.context.save();
+    this.context.beginPath();
+    this.context.rect(x, y, width, height);
+    this.context.clip();
+    draw();
+    this.context.restore();
+  }
+
+  /**
+   * Draws a sprite from the sprite library onto the canvas.
+   *
+   * @param spriteName - The name of the sprite to draw (must be loaded in the SpriteLibrary)
+   * @param x - The x-coordinate of the top-left corner where the sprite will be drawn
+   * @param y - The y-coordinate of the top-left corner where the sprite will be drawn
+   * @param width - The width to scale the sprite to
+   * @param height - The height to scale the sprite to
+   *
+   * @example
+   * // Draw a sprite named "player" at position (100, 100) with size 50x50
+   * shapeDrawer.drawSprite("player", 100, 100, 50, 50);
+   *
+   * @example
+   * // Draw a sprite with different dimensions
+   * shapeDrawer.drawSprite("enemy", 200, 200, 30, 40);
+   */
   drawSprite(
     spriteName: string,
     x: number,
@@ -116,6 +271,27 @@ class ShapeDrawer {
     }
   }
 
+  /**
+   * Loads a font (local URL or Google Fonts stylesheet) and registers it for use.
+   *
+   * This method handles both local font files and Google Fonts URLs. For Google Fonts,
+   * it injects the stylesheet and waits for the font to be available. For local fonts,
+   * it creates a new FontFace object and adds it to the document's font collection.
+   *
+   * @param fontName - The name of the font to load (must match the font family name)
+   * @param url - The URL of the font file or Google Fonts stylesheet
+   * @returns A Promise that resolves when the font is successfully loaded and available
+   *
+   * @example
+   * // Load a Google Font
+   * await shapeDrawer.loadFont("Roboto", "https://fonts.googleapis.com/css2?family=Roboto");
+   *
+   * @example
+   * // Load a local font file
+   * await shapeDrawer.loadFont("CustomFont", "/fonts/custom-font.woff2");
+   *
+   * @throws Will throw an error if the font fails to load
+   */
   async loadFont(fontName: string, url: string): Promise<void> {
     // Google Fonts endpoints return CSS, so inject the stylesheet first and wait for the font to be available
     if (url.includes("fonts.googleapis.com")) {

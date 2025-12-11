@@ -36,12 +36,22 @@ export type MouseButtonReleasedEvent = {
   stopPropagation?: boolean;
 };
 
+export type MouseWheelScrolledEvent = {
+  type: "mouseWheelScrolled";
+  deltaX: number;
+  deltaY: number;
+  x: number;
+  y: number;
+  stopPropagation?: boolean;
+};
+
 export type GameEvent =
   | KeyPressedEvent
   | KeyReleasedEvent
   | MouseMovedEvent
   | MouseButtonPressedEvent
-  | MouseButtonReleasedEvent;
+  | MouseButtonReleasedEvent
+  | MouseWheelScrolledEvent;
 
 class GameEventsdispatcher {
   private canvasElement: HTMLCanvasElement;
@@ -96,6 +106,25 @@ class GameEventsdispatcher {
       };
       this.dispatchEvent(event);
     });
+
+    this.canvasElement.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        const rect = this.canvasElement.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const event: MouseWheelScrolledEvent = {
+          type: "mouseWheelScrolled",
+          deltaX: e.deltaX,
+          deltaY: e.deltaY,
+          x,
+          y,
+        };
+        this.dispatchEvent(event);
+      },
+      { passive: false }
+    );
   }
 
   dispatchEvent(event: GameEvent): void {

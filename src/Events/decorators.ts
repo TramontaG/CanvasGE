@@ -1,4 +1,8 @@
-import type { GameEvent, KeyPressedEvent } from ".";
+import type {
+  GameEvent,
+  KeyPressedEvent,
+  MouseWheelScrolledEvent,
+} from ".";
 import type { GameObject } from "../GameObject";
 
 type HandleEventMethod<TObj extends GameObject> = (
@@ -53,6 +57,73 @@ export const onClick = <TObj extends GameObject = GameObject>(
       ...args: unknown[]
     ) {
       if (event.type === "mouseButtonPressed") {
+        const hitboxes = this.getHitboxes();
+        if (
+          hitboxes.some((hitbox) =>
+            hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+          )
+        ) {
+          handler(this, event);
+        }
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
+/**
+ * Decorator for handling mouse wheel scrolling anywhere on the canvas.
+ */
+export const onMouseWheel = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: MouseWheelScrolledEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseWheelScrolled") {
+        handler(this, event);
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
+/**
+ * Decorator for handling mouse wheel scrolling over hitboxes.
+ */
+export const onMouseWheelOverHitbox = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: MouseWheelScrolledEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseWheelScrolled") {
         const hitboxes = this.getHitboxes();
         if (
           hitboxes.some((hitbox) =>
