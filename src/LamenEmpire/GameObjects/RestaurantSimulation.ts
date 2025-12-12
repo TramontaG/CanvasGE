@@ -6,6 +6,7 @@ import { Walker } from "./Walker";
 import { createClientPaths } from "../Util/Paths";
 import { FloatingMoneyDisplay } from "./FloatingMoneyDisplay";
 import { GoldDisplay } from "./GoldDisplay";
+import { ClientCountDisplay } from "./ClientCountDisplay";
 
 type RestaurantSimulationConfig = {
   spawnIntervalInTicks: number;
@@ -29,6 +30,7 @@ class RestaurantSimulation extends GameObject {
   private paths: ReturnType<typeof createClientPaths> = createClientPaths();
   private clientCounter = 0;
   private goldDisplay?: GoldDisplay;
+  private clientCountDisplay?: ClientCountDisplay;
   private balance: number = 0;
   private totalGold: number = 0;
   private static readonly CLIENT_PAYOUT = 5;
@@ -66,7 +68,17 @@ class RestaurantSimulation extends GameObject {
     return this.spawnTimer >= spawnInterval && !this.cityView.isFull();
   }
 
+  public buyUpgrade(amount: number) {
+    if (this.balance >= amount) {
+      this.balance -= 10;
+    }
+    this.setGoldDisplay(this.goldDisplay!);
+  }
+
   private spawnClient() {
+    this.cityView.incrementOccupants();
+    this.updateClientCount();
+
     const client = new Client(
       `client-${this.clientCounter++}`,
       3,
@@ -112,7 +124,7 @@ class RestaurantSimulation extends GameObject {
       .start()
       .setOnComplete(() => {
         this.removeChild(client);
-        this.cityView.incrementOccupants();
+        this.updateClientCount();
       });
   }
 
@@ -153,10 +165,21 @@ class RestaurantSimulation extends GameObject {
     this.goldDisplay.setTotals(this.balance, this.totalGold);
   }
 
+  setClientCountDisplay(display: ClientCountDisplay): void {
+    this.clientCountDisplay = display;
+    this.updateClientCount();
+  }
+
   private addGold(amount: number): void {
     this.balance += amount;
     this.totalGold += amount;
     this.goldDisplay?.setTotals(this.balance, this.totalGold);
+  }
+
+  private updateClientCount(): void {
+    const current = this.cityView.getOccupants();
+    const max = this.cityView.maximumOccupancy;
+    this.clientCountDisplay?.setCounts(current, max);
   }
 }
 

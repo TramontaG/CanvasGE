@@ -6,6 +6,7 @@ import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";
 import { RestaurantSimulation } from "../../GameObjects/RestaurantSimulation";
 import { ScrollView } from "../../../GameObject/Library/ScrollView";
 import { GoldDisplay } from "../../GameObjects/GoldDisplay";
+import { ClientCountDisplay } from "../../GameObjects/ClientCountDisplay";
 import palette from "../../colors.json";
 
 const createGameplayScene = (dimensions: { width: number; height: number }) => {
@@ -27,15 +28,16 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
     "RestaurantSimulation",
     cityView,
     {
-      walkerDebug: true,
-      walkerRenderDebug: true,
+      walkerDebug: false,
+      walkerRenderDebug: false,
       spawnIntervalInTicks: 60,
       stayDurationMs: 5000,
       walkSpeed: 4,
     }
   );
-  const goldDisplay = new GoldDisplay(
-    new Vector(dimensions.width / 2, 24)
+  const goldDisplay = new GoldDisplay(new Vector(dimensions.width / 2, 24));
+  const clientCountDisplay = new ClientCountDisplay(
+    new Vector(dimensions.width / 2, 48)
   );
 
   const bottomMenuY = dimensions.height - bottomHeight;
@@ -86,14 +88,22 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
     variant: "normal" | "green" | "purple";
     onClick: () => void;
   }> = [
-    { label: "Tier +", variant: "green", onClick: () => cityView.incrementTier() },
-    { label: "Tier -", variant: "purple", onClick: () => cityView.decrementTier() },
+    {
+      label: "Tier +",
+      variant: "green",
+      onClick: () => cityView.incrementTier(),
+    },
+    {
+      label: "Tier -",
+      variant: "purple",
+      onClick: () => cityView.decrementTier(),
+    },
   ];
 
   const fillerLabels = [
     "Add Worker",
     "Buy Table",
-    "Upgrade Kitchen",
+    "Appliances",
     "Advertise",
     "Hire Chef",
     "Theme Swap",
@@ -113,7 +123,7 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
       label,
       variant: variants[index % variants.length]!,
       onClick: () => {
-        console.log(`Clicked ${label}`);
+        restaurantSimulation.buyUpgrade(10);
       },
     });
   });
@@ -121,7 +131,10 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
   sideButtons.forEach((config, index) => {
     const btn = new LamenEmpireButton(
       `SideMenuButton-${config.label}`,
-      new Vector(buttonX, buttonStartY + index * (buttonSize.y + buttonSpacing)),
+      new Vector(
+        buttonX,
+        buttonStartY + index * (buttonSize.y + buttonSpacing)
+      ),
       config.label,
       config.variant,
       config.onClick,
@@ -135,7 +148,9 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
   scene.addGameObject(sideMenu);
   scene.addGameObject(scrollView);
   scene.addGameObject(goldDisplay);
+  scene.addGameObject(clientCountDisplay);
   restaurantSimulation.setGoldDisplay(goldDisplay);
+  restaurantSimulation.setClientCountDisplay(clientCountDisplay);
 
   return scene;
 };

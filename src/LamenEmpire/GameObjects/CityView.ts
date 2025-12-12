@@ -87,8 +87,6 @@ class CityView extends BaseGameObject {
     super.tick();
     const restaurantSimulation = this.getMotherShip<RestaurantSimulation>()!;
 
-    console.log(this.timers);
-
     this.timers.forEach((timer, index) => {
       this.timers[index]!++;
       if (timer >= this.dinnerTimeInTicks) {
