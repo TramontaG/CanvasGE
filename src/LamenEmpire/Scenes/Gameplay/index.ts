@@ -5,6 +5,7 @@ import { CityView } from "../../GameObjects/CityView";
 import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";
 import { RestaurantSimulation } from "../../GameObjects/RestaurantSimulation";
 import { ScrollView } from "../../../GameObject/Library/ScrollView";
+import { GoldDisplay } from "../../GameObjects/GoldDisplay";
 import palette from "../../colors.json";
 
 const createGameplayScene = (dimensions: { width: number; height: number }) => {
@@ -32,6 +33,9 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
       stayDurationMs: 5000,
       walkSpeed: 4,
     }
+  );
+  const goldDisplay = new GoldDisplay(
+    new Vector(dimensions.width / 2, 24)
   );
 
   const bottomMenuY = dimensions.height - bottomHeight;
@@ -130,6 +134,8 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
   scene.addGameObject(bottomMenu);
   scene.addGameObject(sideMenu);
   scene.addGameObject(scrollView);
+  scene.addGameObject(goldDisplay);
+  restaurantSimulation.setGoldDisplay(goldDisplay);
 
   return scene;
 };

@@ -66,15 +66,10 @@ class LamenEmpireButton extends Button {
   }
 
   @renderSprite<LamenEmpireButton>(
-    (obj) => Boolean(obj.hovering),
+    () => true, // Always render (handles both hover and idle states)
     "buttons",
-    (obj) => BUTTON_VARIANT_SPRITES[obj.variant].hover,
-    (obj) => obj.scale
-  )
-  @renderSprite<LamenEmpireButton>(
-    (obj) => !Boolean(obj.hovering),
-    "buttons",
-    (obj) => BUTTON_VARIANT_SPRITES[obj.variant].idle,
+    (obj) =>
+      BUTTON_VARIANT_SPRITES[obj.variant][obj.hovering ? "hover" : "idle"],
     (obj) => obj.scale
   )
   override render(canvas: CanvasController, scene: Scene): void {

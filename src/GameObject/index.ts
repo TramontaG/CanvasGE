@@ -17,8 +17,10 @@ class GameObject {
   public walker: Walker | null = null;
   public speed: Vector = Vector.zero();
   public showOriginDebug: boolean = false;
+  private opacity: number = 1;
   private lastDominantDirection: "up" | "down" | "left" | "right" | null =
     "down";
+  private positionRelativeToMotherShip: boolean = false;
 
   public id: string = Math.floor(Math.random() * 0xffffffff).toString(16);
 
@@ -53,6 +55,13 @@ class GameObject {
   }
 
   destroy() {
+    this.active = false;
+    this.visible = false;
+    // Remove from scene graph and parent to stop rendering/ticking.
+    this.motherShip?.removeChild(this);
+    this.motherShip = null;
+    // Destroy children so they don't linger in the scene.
+    this.children.forEach((child) => child.destroy());
     this.scene?.removeGameObject(this);
   }
 
@@ -83,7 +92,9 @@ class GameObject {
   }
 
   render(canvas: CanvasController, scene: Scene): void {
-    if (this.visible) {
+    if (!this.visible) return;
+
+    const renderSelfAndChildren = () => {
       this.walker?.renderDebug(canvas);
       this.renderFn(this, canvas);
       this.children.forEach((child) => child.render(canvas, scene));
@@ -97,7 +108,14 @@ class GameObject {
           .getShapeDrawer()
           .drawCircle(origin.x, origin.y, 8, "red", true, true, "white", 4);
       }
+    };
+
+    if (this.opacity < 1) {
+      canvas.getShapeDrawer().withOpacity(this.opacity, renderSelfAndChildren);
+      return;
     }
+
+    renderSelfAndChildren();
   }
 
   setOriginDebug(show: boolean): void {
@@ -157,11 +175,31 @@ class GameObject {
 
   getPosition(): Vector {
     const sceneOffset = this.scene ? this.scene.getOffset() : Vector.zero();
+    const absolute = this.getAbsolutePosition();
+    return absolute.toAdded(sceneOffset);
+  }
 
-    return new Vector(
-      this.position.x + sceneOffset.x,
-      this.position.y + sceneOffset.y
-    );
+  protected getAbsolutePosition(): Vector {
+    if (this.positionRelativeToMotherShip && this.motherShip) {
+      return this.motherShip.getAbsolutePosition().toAdded(this.position);
+    }
+    return this.position.clone();
+  }
+
+  setPositionRelativeToMotherShip(useRelative: boolean): void {
+    this.positionRelativeToMotherShip = useRelative;
+  }
+
+  isPositionRelativeToMotherShip(): boolean {
+    return this.positionRelativeToMotherShip;
+  }
+
+  setOpacity(opacity: number): void {
+    this.opacity = Math.max(0, Math.min(1, opacity));
+  }
+
+  getOpacity(): number {
+    return this.opacity;
   }
 
   isVisible(): boolean {

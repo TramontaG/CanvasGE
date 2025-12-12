@@ -4,6 +4,8 @@ import { Client } from "./Client";
 import { CityView } from "./CityView";
 import { Walker } from "./Walker";
 import { createClientPaths } from "../Util/Paths";
+import { FloatingMoneyDisplay } from "./FloatingMoneyDisplay";
+import { GoldDisplay } from "./GoldDisplay";
 
 type RestaurantSimulationConfig = {
   spawnIntervalInTicks: number;
@@ -26,6 +28,10 @@ class RestaurantSimulation extends GameObject {
   private config: RestaurantSimulationConfig;
   private paths: ReturnType<typeof createClientPaths> = createClientPaths();
   private clientCounter = 0;
+  private goldDisplay?: GoldDisplay;
+  private balance: number = 0;
+  private totalGold: number = 0;
+  private static readonly CLIENT_PAYOUT = 5;
 
   constructor(
     name: string,
@@ -78,6 +84,9 @@ class RestaurantSimulation extends GameObject {
   }
 
   public clientCheckOut() {
+    this.addGold(RestaurantSimulation.CLIENT_PAYOUT);
+    this.createFloatingMoneyDisplay(RestaurantSimulation.CLIENT_PAYOUT);
+
     const client = new Client(
       `client-${this.clientCounter++}`,
       3,
@@ -121,6 +130,15 @@ class RestaurantSimulation extends GameObject {
       });
   }
 
+  private createFloatingMoneyDisplay(amount: number) {
+    const position = this.cityView
+      .getDoorPosition()
+      .toSubtracted(new Vector(0, 300));
+    const floatingDisplay = new FloatingMoneyDisplay(position, amount);
+
+    this.addChild(floatingDisplay);
+  }
+
   override tick(): void {
     super.tick();
     this.spawnTimer++;
@@ -128,6 +146,17 @@ class RestaurantSimulation extends GameObject {
     if (this.shouldSpawnClient()) {
       this.spawnClient();
     }
+  }
+
+  setGoldDisplay(display: GoldDisplay): void {
+    this.goldDisplay = display;
+    this.goldDisplay.setTotals(this.balance, this.totalGold);
+  }
+
+  private addGold(amount: number): void {
+    this.balance += amount;
+    this.totalGold += amount;
+    this.goldDisplay?.setTotals(this.balance, this.totalGold);
   }
 }
 

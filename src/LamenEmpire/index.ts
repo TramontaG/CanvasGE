@@ -14,11 +14,11 @@ const prepareGame = async () => {
   await canvas
     .getShapeDrawer()
     .loadFont(
-      "Pixelify Sans",
-      "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
+      "Tiny5",
+      "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Raleway:ital,wght@0,100..900;1,100..900&family=Tiny5&display=swap"
     );
 
-  canvas.getShapeDrawer().setDefaultFont("Pixelify Sans");
+  canvas.getShapeDrawer().setDefaultFont("Tiny5");
 
   const spriteLibrary = canvas.getSpriteLibrary();
 
@@ -76,7 +76,7 @@ const prepareGame = async () => {
         menu,
         gameplay,
       },
-      menu
+      gameplay
     ),
   });
 

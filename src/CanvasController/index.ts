@@ -10,6 +10,21 @@ class ShapeDrawer {
   ) {}
 
   /**
+   * Executes drawing instructions with a temporary alpha multiplier.
+   */
+  withOpacity(opacity: number, draw: () => void): void {
+    if (opacity >= 1) {
+      draw();
+      return;
+    }
+
+    this.context.save();
+    this.context.globalAlpha *= opacity;
+    draw();
+    this.context.restore();
+  }
+
+  /**
    * Draws a rectangle on the canvas with configurable fill/stroke behavior.
    *
    * @param x - The x-coordinate of the rectangle's top-left corner
@@ -18,6 +33,7 @@ class ShapeDrawer {
    * @param height - The height of the rectangle
    * @param color - The color to use for filling or stroking (default: "black")
    * @param filled - If true, fills the rectangle; if false, strokes the outline (default: true)
+   * @param opacity - Alpha multiplier applied while drawing (default: 1)
    *
    * @example
    * // Draw a filled red rectangle
@@ -33,15 +49,18 @@ class ShapeDrawer {
     width: number,
     height: number,
     color: string = "black",
-    filled: boolean = true
+    filled: boolean = true,
+    opacity: number = 1
   ): void {
-    this.context.fillStyle = color;
-    if (filled) {
-      this.context.fillRect(x, y, width, height);
-    } else {
-      this.context.strokeStyle = color;
-      this.context.strokeRect(x, y, width, height);
-    }
+    this.withOpacity(opacity, () => {
+      this.context.fillStyle = color;
+      if (filled) {
+        this.context.fillRect(x, y, width, height);
+      } else {
+        this.context.strokeStyle = color;
+        this.context.strokeRect(x, y, width, height);
+      }
+    });
   }
 
   /**
