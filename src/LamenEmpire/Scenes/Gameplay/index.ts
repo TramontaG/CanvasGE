@@ -3,13 +3,26 @@ import { Vector } from "../../../Vector";
 import { Panel } from "../../GameObjects/Panel";
 import { CityView } from "../../GameObjects/CityView";
 import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";
-import { RestaurantSimulation } from "../../GameObjects/RestaurantSimulation";
 import { ScrollView } from "../../../GameObject/Library/ScrollView";
+import { ShowOnHover } from "../../../GameObject/Library/ShowOnHover";
+import { Text } from "../../../GameObject/Library/Text";
 import { GoldDisplay } from "../../GameObjects/GoldDisplay";
 import { ClientCountDisplay } from "../../GameObjects/ClientCountDisplay";
+import { LamenEmpireGame } from "../../LamenEmpireGame";
+import type { UpgradeKey } from "../../Util/Upgrades";
 import palette from "../../colors.json";
 
-const createGameplayScene = (dimensions: { width: number; height: number }) => {
+type GameplaySceneBindings = {
+  scene: Scene;
+  cityView: CityView;
+  goldDisplay: GoldDisplay;
+  clientCountDisplay: ClientCountDisplay;
+};
+
+const createGameplayScene = (
+  dimensions: { width: number; height: number },
+  getGame: () => LamenEmpireGame
+): GameplaySceneBindings => {
   const scene = new Scene("Gameplay", palette.PrimaryEvenDarker);
 
   const sideWidth = 200;
@@ -24,17 +37,6 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
     new Vector(availableWidth, dimensions.height)
   );
 
-  const restaurantSimulation = new RestaurantSimulation(
-    "RestaurantSimulation",
-    cityView,
-    {
-      walkerDebug: false,
-      walkerRenderDebug: false,
-      spawnIntervalInTicks: 60,
-      stayDurationMs: 5000,
-      walkSpeed: 4,
-    }
-  );
   const goldDisplay = new GoldDisplay(new Vector(dimensions.width / 2, 24));
   const clientCountDisplay = new ClientCountDisplay(
     new Vector(dimensions.width / 2, 48)
@@ -87,72 +89,93 @@ const createGameplayScene = (dimensions: { width: number; height: number }) => {
     label: string;
     variant: "normal" | "green" | "purple";
     onClick: () => void;
+    upgrade?: UpgradeKey;
   }> = [
     {
       label: "Tier +",
       variant: "green",
-      onClick: () => cityView.incrementTier(),
+      onClick: () => getGame().incrementTier(),
     },
     {
       label: "Tier -",
       variant: "purple",
-      onClick: () => cityView.decrementTier(),
+      onClick: () => getGame().decrementTier(),
     },
   ];
 
-  const fillerLabels = [
-    "Add Worker",
-    "Buy Table",
-    "Appliances",
-    "Advertise",
-    "Hire Chef",
-    "Theme Swap",
-    "Open Late",
-    "Happy Hour",
-    "Menu Edit",
-    "Toggle Debug",
+  const upgradeButtons: Array<{
+    label: string;
+    upgrade: UpgradeKey;
+    variant?: "normal" | "green" | "purple";
+  }> = [
+    { label: "Order Time", upgrade: "orderTime" },
+    { label: "Prep Time", upgrade: "prepareTime" },
+    { label: "Eating Time", upgrade: "eatingTime" },
+    { label: "Service Time", upgrade: "serviceTime" },
+    { label: "Walking Speed", upgrade: "walkingSpeed", variant: "green" },
+    { label: "Capacity", upgrade: "capacity", variant: "green" },
+    { label: "Base Capacity", upgrade: "capacityBaseBonus", variant: "green" },
+    { label: "Spawn Time", upgrade: "clientSpawnTime", variant: "purple" },
   ];
 
-  fillerLabels.forEach((label, index) => {
-    const variants: Array<"normal" | "green" | "purple"> = [
-      "normal",
-      "green",
-      "purple",
-    ];
+  upgradeButtons.forEach(({ label, upgrade, variant }) => {
     sideButtons.push({
       label,
-      variant: variants[index % variants.length]!,
+      variant: variant ?? "normal",
       onClick: () => {
-        restaurantSimulation.buyUpgrade(10);
+        getGame().buyUpgrade(upgrade);
       },
+      upgrade,
     });
   });
 
   sideButtons.forEach((config, index) => {
+    const buttonPosition = new Vector(
+      buttonX,
+      buttonStartY + index * (buttonSize.y + buttonSpacing)
+    );
+
     const btn = new LamenEmpireButton(
       `SideMenuButton-${config.label}`,
-      new Vector(
-        buttonX,
-        buttonStartY + index * (buttonSize.y + buttonSpacing)
-      ),
+      buttonPosition,
       config.label,
       config.variant,
       config.onClick,
       { scale: buttonScale, textColor: "white", fontSize: 10 }
     );
     scrollView.addChild(btn);
+
+    if (config.upgrade) {
+      const costLabel = new Text(
+        `UpgradeCost-${config.label}`,
+        buttonPosition.toAdded(new Vector(buttonSize.x / 2, -8)),
+        "",
+        { color: "#f2d14b", size: "12px", align: "center" }
+      );
+
+      costLabel.setTickFunction(() => {
+        const cost = getGame().getUpgradeCost(config.upgrade!);
+        costLabel.setText(`Cost: ${cost} gold`);
+      });
+
+      const costOnHover = new ShowOnHover(
+        costLabel,
+        buttonSize,
+        buttonPosition.clone()
+      );
+      scrollView.addChild(costOnHover);
+    }
   });
 
-  scene.addGameObject(restaurantSimulation);
+  scene.addGameObject(cityView);
   scene.addGameObject(bottomMenu);
   scene.addGameObject(sideMenu);
   scene.addGameObject(scrollView);
   scene.addGameObject(goldDisplay);
   scene.addGameObject(clientCountDisplay);
-  restaurantSimulation.setGoldDisplay(goldDisplay);
-  restaurantSimulation.setClientCountDisplay(clientCountDisplay);
 
-  return scene;
+  return { scene, cityView, goldDisplay, clientCountDisplay };
 };
 
 export { createGameplayScene };
+export type { GameplaySceneBindings };

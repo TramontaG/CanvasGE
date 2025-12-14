@@ -49,6 +49,7 @@ class Game {
       const tickInterval = 1000 / this.ticksPerSecond;
       const lastTickTime = this.lastTickTime || 0;
       if (now - lastTickTime >= tickInterval) {
+        this.onTick();
         this.scenes.tick();
         this.lastTickTime = now;
       }
@@ -69,6 +70,11 @@ class Game {
     });
   }
 
+  // Meant to be overridden by game-specific implementations to inject logic
+  // that should run once per tick, before the scenes tick.
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  protected onTick(): void {}
+
   handleEvent(event: GameEvent) {
     this.scenes
       .getActiveScenes()
@@ -88,3 +94,4 @@ class Game {
 }
 
 export { Game };
+export type { GameOptions };

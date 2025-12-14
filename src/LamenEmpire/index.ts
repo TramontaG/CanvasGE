@@ -1,7 +1,7 @@
 import { CanvasController } from "../CanvasController";
-import { Game } from "../Game";
 import { SceneManager } from "../Scenes/SceneManager";
 import { createLamenEmpireScenes } from "./Scenes";
+import { LamenEmpireGame } from "./LamenEmpireGame";
 
 const prepareGame = async () => {
   const gameConfig = {
@@ -67,18 +67,24 @@ const prepareGame = async () => {
     ),
   ]);
 
-  const { menu, gameplay } = createLamenEmpireScenes(gameConfig);
+  let gameInstance!: LamenEmpireGame;
+  const getGame = () => gameInstance;
 
-  const game = new Game({
+  const { menu, gameplay } = createLamenEmpireScenes(gameConfig, getGame);
+
+  const game = new LamenEmpireGame({
     canvas,
     scenes: new SceneManager(
       {
         menu,
-        gameplay,
+        gameplay: gameplay.scene,
       },
-      gameplay
+      gameplay.scene
     ),
   });
+
+  gameInstance = game;
+  game.registerGameplayBindings(gameplay);
 
   return game;
 };

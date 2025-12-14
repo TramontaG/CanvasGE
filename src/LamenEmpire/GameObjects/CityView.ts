@@ -3,15 +3,18 @@ import type { Scene } from "../../Scenes";
 import { GameObject as BaseGameObject } from "../../GameObject";
 import { renderSprite } from "../../GameObject/Decorators";
 import { Vector } from "../../Vector";
-import type { RestaurantSimulation } from "./RestaurantSimulation";
+import { GAME_CONFIG } from "../config";
 
 class CityView extends BaseGameObject {
   private size: Vector;
   private tier: number;
-  private minTier = 1;
-  private maxTier = 4;
+  private minTier = GAME_CONFIG.minTier;
+  private maxTier = GAME_CONFIG.maxTier;
   private occupants = 0;
   private dinnerTimeInTicks = 60 * 2.5; // ten seconds;
+  private capacityProvider: (() => number) | null = null;
+  private stayDurationProvider: (() => number) | null = null;
+  private onClientCheckout: (() => void) | null = null;
 
   private timers: number[] = [];
 
@@ -57,7 +60,7 @@ class CityView extends BaseGameObject {
   }
 
   get maximumOccupancy() {
-    return 4 ^ this.tier;
+    return this.capacityProvider ? this.capacityProvider() : 4 ^ this.tier;
   }
 
   isFull() {
@@ -83,16 +86,34 @@ class CityView extends BaseGameObject {
     return this.tier === 4 ? cityScale / 1.3 : cityScale / 1.5;
   }
 
+  setCapacityProvider(provider: () => number): void {
+    this.capacityProvider = provider;
+  }
+
+  setStayDurationProvider(provider: () => number): void {
+    this.stayDurationProvider = provider;
+  }
+
+  setOnClientCheckout(handler: () => void): void {
+    this.onClientCheckout = handler;
+  }
+
+  private getStayDurationInTicks(): number {
+    return this.stayDurationProvider
+      ? this.stayDurationProvider()
+      : this.dinnerTimeInTicks;
+  }
+
   override tick() {
     super.tick();
-    const restaurantSimulation = this.getMotherShip<RestaurantSimulation>()!;
 
+    const stayDuration = this.getStayDurationInTicks();
     this.timers.forEach((timer, index) => {
       this.timers[index]!++;
-      if (timer >= this.dinnerTimeInTicks) {
-        restaurantSimulation.clientCheckOut();
-        this.timers[index]! = -1; //marks timer to be deleted
+      if (timer >= stayDuration) {
         this.occupants--;
+        this.onClientCheckout?.();
+        this.timers[index]! = -1; //marks timer to be deleted
       }
     });
 

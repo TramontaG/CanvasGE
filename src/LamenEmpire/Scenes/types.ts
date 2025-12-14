@@ -1,4 +1,5 @@
 import type { Scene } from "../../Scenes";
+import type { GameplaySceneBindings } from "./Gameplay";
 
 type SceneDimensions = {
   width: number;
@@ -7,7 +8,7 @@ type SceneDimensions = {
 
 type LamenEmpireScenes = {
   menu: Scene;
-  gameplay: Scene;
+  gameplay: GameplaySceneBindings;
 };
 
 export type { SceneDimensions, LamenEmpireScenes };

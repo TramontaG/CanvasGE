@@ -1,11 +1,17 @@
 import { createGameplayScene } from "./Gameplay";
 import { createMenuScene } from "./Menu";
-import type { LamenEmpireScenes, SceneDimensions } from "./types";
+import type {
+  GameplaySceneBindings,
+  LamenEmpireScenes,
+  SceneDimensions,
+} from "./types";
+import type { LamenEmpireGame } from "../LamenEmpireGame";
 
 const createLamenEmpireScenes = (
-  dimensions: SceneDimensions
+  dimensions: SceneDimensions,
+  getGame: () => LamenEmpireGame
 ): LamenEmpireScenes => {
-  const gameplay = createGameplayScene(dimensions);
+  const gameplay = createGameplayScene(dimensions, getGame);
   const menu = createMenuScene(dimensions, "gameplay");
 
   return {
@@ -19,4 +25,8 @@ export {
   createMenuScene,
   createGameplayScene,
 };
-export type { LamenEmpireScenes, SceneDimensions };
+export type {
+  GameplaySceneBindings,
+  LamenEmpireScenes,
+  SceneDimensions,
+};
