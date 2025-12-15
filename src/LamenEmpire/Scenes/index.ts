@@ -12,7 +12,7 @@ const createLamenEmpireScenes = (
   getGame: () => LamenEmpireGame
 ): LamenEmpireScenes => {
   const gameplay = createGameplayScene(dimensions, getGame);
-  const menu = createMenuScene(dimensions, "gameplay");
+  const menu = createMenuScene(dimensions);
 
   return {
     menu,
@@ -20,13 +20,5 @@ const createLamenEmpireScenes = (
   };
 };
 
-export {
-  createLamenEmpireScenes,
-  createMenuScene,
-  createGameplayScene,
-};
-export type {
-  GameplaySceneBindings,
-  LamenEmpireScenes,
-  SceneDimensions,
-};
+export { createLamenEmpireScenes, createMenuScene, createGameplayScene };
+export type { GameplaySceneBindings, LamenEmpireScenes, SceneDimensions };

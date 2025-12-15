@@ -11,4 +11,4 @@ type LamenEmpireScenes = {
   gameplay: GameplaySceneBindings;
 };
 
-export type { SceneDimensions, LamenEmpireScenes };
+export type { SceneDimensions, LamenEmpireScenes, GameplaySceneBindings };

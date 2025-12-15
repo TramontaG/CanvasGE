@@ -1,39 +1,17 @@
-import { colorFlash } from "../../../Scenes/SceneManager/Transitions";
 import { Scene } from "../../../Scenes";
-import { Vector } from "../../../Vector";
-import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";
 import palette from "../../colors.json";
 import type { SceneDimensions } from "../types";
+import { createButtons } from "./GameObjects/Buttons";
 
-const createMenuScene = (
-  { width, height }: SceneDimensions,
-  gameplaySceneName: string
-) => {
+const createMenuScene = ({ width, height }: SceneDimensions) => {
   const menuScene = new Scene("Main Menu", palette.Purple);
 
-  const buttonScale = 3;
-  const buttonSize = LamenEmpireButton.FRAME_SIZE.toMultiplied(buttonScale);
+  const { enableAudio, playAudio, startButton, debugButton } = createButtons({
+    width,
+    height,
+  });
 
-  const buttonPosition = new Vector(
-    (width - buttonSize.x) / 2,
-    (height - buttonSize.y) / 2
-  );
-
-  const startButton = new LamenEmpireButton(
-    "StartGameButton",
-    buttonPosition,
-    "Start",
-    "normal",
-    (button) =>
-      button.transitionToScene(
-        gameplaySceneName,
-        colorFlash(palette.Purple),
-        "replace"
-      ),
-    { scale: buttonScale, textColor: "white", fontSize: 12 }
-  );
-
-  menuScene.addGameObject(startButton);
+  menuScene.addGameObject([startButton, playAudio, enableAudio, debugButton]);
 
   return menuScene;
 };

@@ -5,6 +5,7 @@ import type { Scene } from "../Scenes";
 import type { SceneManager } from "../Scenes/SceneManager";
 import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 import { KeyAccumulator } from "../Events/keyAccumulator";
+import type { SoundManager } from "../SoundManager";
 
 type MessageHandler<TPayload = unknown> = (
   payload: TPayload,
@@ -57,6 +58,7 @@ type GameContextOptions = {
   canvas: CanvasController;
   sceneManager: SceneManager;
   keyAccumulator: KeyAccumulator;
+  soundManager: SoundManager;
 };
 
 class GameContext {
@@ -92,6 +94,10 @@ class GameContext {
 
   getSceneManager(): SceneManager {
     return this.options.sceneManager;
+  }
+
+  getSoundManager(): SoundManager {
+    return this.options.soundManager;
   }
 
   getKeyAccumulator(): KeyAccumulator {
@@ -130,11 +136,7 @@ class GameContext {
     transition?: SceneTransition,
     mode: "replace" | "push" = "replace"
   ): Promise<void> {
-    return this.options.sceneManager.transitionToScene(
-      name,
-      transition,
-      mode
-    );
+    return this.options.sceneManager.transitionToScene(name, transition, mode);
   }
 
   sendMessage<TPayload>(

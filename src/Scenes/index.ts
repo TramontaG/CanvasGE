@@ -65,10 +65,14 @@ class Scene {
     this.context?.getCanvas().reset();
   }
 
-  addGameObject(obj: GameObject): void {
-    obj.scene = this;
-    obj.setContext(this.context);
-    this.gameObjects.push(obj);
+  addGameObject(_objects: GameObject | GameObject[]): void {
+    const gameObjects = Array.isArray(_objects) ? _objects : [_objects];
+
+    gameObjects.forEach((go) => {
+      go.scene = this;
+      go.setContext(this.context);
+      this.gameObjects.push(go);
+    });
   }
 
   handleEvent(event: GameEvent): void {

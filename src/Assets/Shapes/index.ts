@@ -5,3 +5,5 @@ export type ShapeRendererFn = (
   position: Vector,
   size: Vector
 ) => void;
+
+export * from "./Arrow";

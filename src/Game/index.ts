@@ -3,10 +3,12 @@ import type { GameEvent } from "../Events";
 import type { SceneManager } from "../Scenes/SceneManager";
 import { GameContext } from "../Context";
 import { GameEventsdispatcher, KeyAccumulator } from "../Events";
+import { SoundManager } from "../SoundManager";
 
 type GameOptions = {
   canvas: CanvasController;
   scenes: SceneManager;
+  soundManager: SoundManager;
   ticksPerSecond?: number;
 };
 
@@ -19,7 +21,7 @@ class Game {
   private keyAccumulator = new KeyAccumulator();
   private eventsDispatcher: GameEventsdispatcher;
 
-  constructor({ canvas, scenes, ticksPerSecond }: GameOptions) {
+  constructor({ canvas, scenes, ticksPerSecond, soundManager }: GameOptions) {
     this.canvas = canvas;
     this.scenes = scenes;
     this.ticksPerSecond = ticksPerSecond || this.ticksPerSecond;
@@ -28,12 +30,10 @@ class Game {
       canvas,
       sceneManager: scenes,
       keyAccumulator: this.keyAccumulator,
+      soundManager: soundManager,
     });
     this.scenes.bindContext(this.context);
-    this.eventsDispatcher = new GameEventsdispatcher(
-      this,
-      this.keyAccumulator
-    );
+    this.eventsDispatcher = new GameEventsdispatcher(this, this.keyAccumulator);
   }
 
   setup() {
