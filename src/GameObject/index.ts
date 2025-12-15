@@ -26,7 +26,7 @@ class GameObject {
 
   constructor(
     public name: string,
-    public position: Vector,
+    private position: Vector,
     public visible: boolean = true,
     public active: boolean = true,
     public hitboxes: (CircleHitbox | SquareHitbox)[] = [],
@@ -179,6 +179,14 @@ class GameObject {
     return absolute.toAdded(sceneOffset);
   }
 
+  /**
+   * Position in scene/world space (not camera/canvas space).
+   * This does not include the Scene's offset.
+   */
+  getScenePosition(): Vector {
+    return this.getAbsolutePosition();
+  }
+
   protected getAbsolutePosition(): Vector {
     if (this.positionRelativeToMotherShip && this.motherShip) {
       return this.motherShip.getAbsolutePosition().toAdded(this.position);
@@ -230,6 +238,7 @@ class GameObject {
 
   setContext(context: GameContext | null): void {
     this.context = context;
+    this.children.forEach((child) => child.setContext(context));
   }
 
   getContext(): GameContext | null {

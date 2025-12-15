@@ -4,6 +4,8 @@ import type { GameObject } from "../../GameObject";
 import { Vector } from "../../Vector";
 import type { Scene } from "../../Scenes";
 import { renderSprite } from "../../GameObject/Decorators";
+import type { GameEvent } from "../../Events";
+import { onClick } from "../../Events/decorators";
 
 type LamenEmpireButtonVariant = "normal" | "green" | "purple";
 
@@ -74,6 +76,13 @@ class LamenEmpireButton extends Button {
   )
   override render(canvas: CanvasController, scene: Scene): void {
     super.render(canvas, scene);
+  }
+
+  @onClick<LamenEmpireButton>((button) => {
+    button.getContext()?.getSoundManager().playSound("button_click");
+  })
+  override handleEvent(event: GameEvent): void {
+    super.handleEvent(event);
   }
 
   private renderSpriteButton(obj: GameObject, canvas: CanvasController): void {

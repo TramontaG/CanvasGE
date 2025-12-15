@@ -96,7 +96,7 @@ class Walker {
       return;
     }
 
-    const currentPosition = this.gameObject.getPosition();
+    const currentPosition = this.gameObject.getScenePosition();
     const targetedWaypoint = this.getTargetedWaypoint();
     if (!targetedWaypoint) {
       this.onComplete?.();
@@ -145,20 +145,26 @@ class Walker {
 
   public renderDebug(canvas: CanvasController) {
     if (!this.debug) return;
+    const sceneOffset = this.gameObject.scene?.getOffset() ?? Vector.zero();
     this.waypoints.forEach((waypoint, index) => {
+      const renderedWaypoint = waypoint.toAdded(sceneOffset);
       canvas
         .getShapeDrawer()
-        .drawCircle(waypoint.x, waypoint.y, 8, "red", true);
+        .drawCircle(renderedWaypoint.x, renderedWaypoint.y, 8, "red", true);
       if (index == 0) return;
-      canvas.getShapeDrawer().drawLine(this.waypoints[index - 1]!, waypoint, 8);
+      canvas.getShapeDrawer().drawLine(
+        this.waypoints[index - 1]!.toAdded(sceneOffset),
+        renderedWaypoint,
+        8
+      );
     });
 
     if (this.ciclic && this.waypoints.length > 1) {
       canvas
         .getShapeDrawer()
         .drawLine(
-          this.waypoints[this.waypoints.length - 1]!,
-          this.waypoints[0]!,
+          this.waypoints[this.waypoints.length - 1]!.toAdded(sceneOffset),
+          this.waypoints[0]!.toAdded(sceneOffset),
           8
         );
     }

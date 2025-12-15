@@ -69,6 +69,7 @@ class CityView extends BaseGameObject {
 
   getDoorPosition(yRatio: number = 0.72): Vector {
     const origin = this.getPosition();
+
     return new Vector(
       origin.x + this.size.x / 2,
       origin.y + this.size.y * yRatio
@@ -117,6 +118,7 @@ class CityView extends BaseGameObject {
       }
     });
 
+    // delete the timers
     this.timers = this.timers.filter((timer) => timer !== -1);
   }
 
@@ -129,7 +131,7 @@ class CityView extends BaseGameObject {
     0,
     (obj) => obj.getRestaurantSize(),
     null,
-    () => new Vector(100, 85)
+    (obj) => obj.getPosition().toAdded(new Vector(100, 75))
   )
   @renderSprite<CityView>(
     (obj) => obj.tier === 2,
@@ -137,7 +139,7 @@ class CityView extends BaseGameObject {
     0,
     (obj) => obj.getRestaurantSize(),
     null,
-    () => new Vector(100, 35)
+    (obj) => obj.getPosition().toAdded(new Vector(100, 35))
   )
   @renderSprite<CityView>(
     (obj) => obj.tier === 3,
@@ -145,7 +147,7 @@ class CityView extends BaseGameObject {
     0,
     (obj) => obj.getRestaurantSize(),
     null,
-    () => new Vector(100, 15)
+    (obj) => obj.getPosition().toAdded(new Vector(100, 15))
   )
   @renderSprite<CityView>(
     (obj) => obj.tier === 4,
@@ -153,7 +155,7 @@ class CityView extends BaseGameObject {
     0,
     (obj) => obj.getRestaurantSize(),
     null,
-    () => new Vector(60, 0)
+    (obj) => obj.getPosition().toAdded(new Vector(60, 0))
   )
   override render(canvas: CanvasController, scene: Scene): void {
     super.render(canvas, scene);

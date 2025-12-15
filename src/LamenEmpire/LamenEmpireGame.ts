@@ -10,11 +10,7 @@ import { CityView } from "./GameObjects/CityView";
 import { GoldDisplay } from "./GameObjects/GoldDisplay";
 import { ClientCountDisplay } from "./GameObjects/ClientCountDisplay";
 import { Upgrades, type UpgradeKey } from "./Util/Upgrades";
-import {
-  GAME_CONFIG,
-  RESTAURANT_TIERS,
-  type RestaurantTierId,
-} from "./config";
+import { GAME_CONFIG, RESTAURANT_TIERS, type RestaurantTierId } from "./config";
 
 type GameplayBindings = {
   scene: Scene;
@@ -73,7 +69,10 @@ class LamenEmpireGame extends Game {
   }
 
   setTier(target: number): void {
-    const clamped = Math.min(GAME_CONFIG.maxTier, Math.max(GAME_CONFIG.minTier, target));
+    const clamped = Math.min(
+      GAME_CONFIG.maxTier,
+      Math.max(GAME_CONFIG.minTier, target)
+    );
     this.tier = clamped as RestaurantTierId;
     this.gameplayBindings?.cityView.setTier(this.tier);
     this.updateClientCount();
@@ -89,7 +88,9 @@ class LamenEmpireGame extends Game {
 
   getCapacity(): number {
     const base = RESTAURANT_TIERS[this.tier]?.capacity ?? 0;
-    return Math.floor(this.applyUpgrades(base, ["capacity", "capacityBaseBonus"]));
+    return Math.floor(
+      this.applyUpgrades(base, ["capacity", "capacityBaseBonus"])
+    );
   }
 
   getWalkingSpeed(): number {
@@ -177,6 +178,8 @@ class LamenEmpireGame extends Game {
     this.updateClientCount();
     this.addGold(GAME_CONFIG.clientPayout);
     this.createFloatingMoneyDisplay(GAME_CONFIG.clientPayout);
+
+    this.getContext()!.getSoundManager().playSound("coin", { volume: 0.25 });
 
     const { scene } = this.gameplayBindings;
     const client = new Client(
