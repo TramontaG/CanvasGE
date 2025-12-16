@@ -23,9 +23,18 @@ const createButtons = ({ width, height }: SceneDimensions) => {
     (btn) => btn.transitionToScene("gameplay", slideReplace("right"), "replace")
   );
 
+  const phisicsTestButton = new LamenEmpireButton(
+    "PhisicsTestButton",
+    buttonPosition.toAdded(new Vector(0, buttonSize.y + 10)),
+    "Phisics Test",
+    "normal",
+    (btn) =>
+      btn.transitionToScene("phisicsTest", slideReplace("left"), "replace")
+  );
+
   const enableAudio = new LamenEmpireButton(
     "EnableAudioButton",
-    buttonPosition.toAdded(new Vector(0, buttonSize.y + 10)),
+    buttonPosition.toAdded(new Vector(0, (buttonSize.y + 10) * 2)),
     "Enable Audio",
     "green",
     (btn) => btn.getContext()!.getSoundManager().unlock()
@@ -33,7 +42,7 @@ const createButtons = ({ width, height }: SceneDimensions) => {
 
   const playAudio = new LamenEmpireButton(
     "PlayAudioButton",
-    buttonPosition.toAdded(new Vector(0, (buttonSize.y + 10) * 2)),
+    buttonPosition.toAdded(new Vector(0, (buttonSize.y + 10) * 3)),
     "PlayAudio",
     "purple",
     (btn) => btn.getContext()!.getSoundManager().playSound("coin")
@@ -49,6 +58,7 @@ const createButtons = ({ width, height }: SceneDimensions) => {
 
   return {
     startButton,
+    phisicsTestButton,
     enableAudio,
     playAudio,
     debugButton,

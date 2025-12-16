@@ -1,24 +1,21 @@
 import { createGameplayScene } from "./Gameplay";
 import { createMenuScene } from "./Menu";
-import type {
-  GameplaySceneBindings,
-  LamenEmpireScenes,
-  SceneDimensions,
-} from "./types";
 import type { LamenEmpireGame } from "../LamenEmpireGame";
+import { createPhisicsTest } from "./PhisicsTest";
 
 const createLamenEmpireScenes = (
-  dimensions: SceneDimensions,
+  dimensions: { width: number; height: number },
   getGame: () => LamenEmpireGame
-): LamenEmpireScenes => {
+) => {
   const gameplay = createGameplayScene(dimensions, getGame);
   const menu = createMenuScene(dimensions);
+  const phisicsTest = createPhisicsTest(dimensions);
 
   return {
     menu,
     gameplay,
+    phisicsTest,
   };
 };
 
 export { createLamenEmpireScenes, createMenuScene, createGameplayScene };
-export type { GameplaySceneBindings, LamenEmpireScenes, SceneDimensions };

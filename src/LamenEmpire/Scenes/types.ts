@@ -9,6 +9,7 @@ type SceneDimensions = {
 type LamenEmpireScenes = {
   menu: Scene;
   gameplay: GameplaySceneBindings;
+  phisicsTest: Scene;
 };
 
 export type { SceneDimensions, LamenEmpireScenes, GameplaySceneBindings };

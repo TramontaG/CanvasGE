@@ -2,11 +2,18 @@ import { CanvasController } from "../CanvasController";
 import type { GameEvent } from "../Events";
 import type { Scene } from "../Scenes";
 import { Vector } from "../Vector";
-import type { CircleHitbox, SquareHitbox } from "./Hitboxes";
+import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
 import { onHover, onStopHovering } from "../Events/decorators";
 import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 import type { Walker } from "../LamenEmpire/GameObjects/Walker";
+
+type GameObjectPhisicsDescriptor = {
+  immovable?: boolean;
+  restitution?: number;
+  affectedByGravity?: boolean;
+  friction?: number;
+};
 
 class GameObject {
   private renderFn = (obj: GameObject, canvas: CanvasController) => {};
@@ -21,6 +28,13 @@ class GameObject {
   private lastDominantDirection: "up" | "down" | "left" | "right" | null =
     "down";
   private positionRelativeToMotherShip: boolean = false;
+
+  public phisics: GameObjectPhisicsDescriptor = {
+    immovable: true,
+    restitution: 1,
+    affectedByGravity: false,
+    friction: 0,
+  };
 
   public id: string = Math.floor(Math.random() * 0xffffffff).toString(16);
 
@@ -43,6 +57,14 @@ class GameObject {
       this.tickFn(this);
 
       this.walker?.tick();
+
+      if (this.phisics.affectedByGravity && !this.phisics.immovable) {
+        const gravity = this.scene?.getGravity();
+        if (gravity) {
+          this.speed.add(gravity);
+        }
+      }
+
       this.position.add(this.speed);
 
       for (const child of this.children) {
@@ -53,6 +75,8 @@ class GameObject {
       // this.children.forEach((child) => child.tick());
     }
   }
+
+  onColision(otherGO: GameObject, penetration: Vector) {}
 
   destroy() {
     this.active = false;
@@ -69,8 +93,16 @@ class GameObject {
     this.walker = walker;
   }
 
+  setPhisics(phisics: Partial<GameObjectPhisicsDescriptor>) {
+    this.phisics = { ...this.phisics, ...phisics };
+  }
+
   setPosition(position: Vector) {
     this.position = position;
+  }
+
+  translate(delta: Vector): void {
+    this.position.add(delta);
   }
 
   setMotherShip<Class extends GameObject | null = GameObject>(
@@ -84,6 +116,12 @@ class GameObject {
   }
 
   addHitbox(hitbox: CircleHitbox | SquareHitbox): void {
+    if (this.hitboxes.length >= 5) {
+      console.warn(
+        `GameObject ${this.name} has too many hitboxes.` +
+          `This may cause performance issues.`
+      );
+    }
     this.hitboxes.push(hitbox);
   }
 
@@ -312,6 +350,62 @@ class GameObject {
     }
 
     handlers.forEach((handler) => handler(this));
+  }
+
+  getIntendedNextPosition(): Vector {
+    return this.getPosition().toAdded(this.speed);
+  }
+
+  isCollidingWith(other: GameObject): boolean {
+    const selfHitboxes = this.hitboxes;
+    const otherHitboxes = other.hitboxes;
+
+    if (selfHitboxes.length === 0 || otherHitboxes.length === 0) {
+      return false;
+    }
+
+    return selfHitboxes.some((selfHitbox) => {
+      return otherHitboxes.some((otherHitbox) => {
+        if (
+          selfHitbox instanceof SquareHitbox &&
+          otherHitbox instanceof SquareHitbox
+        ) {
+          return selfHitbox.intersects(otherHitbox);
+        }
+        if (
+          selfHitbox instanceof CircleHitbox &&
+          otherHitbox instanceof CircleHitbox
+        ) {
+          return selfHitbox.intersects(otherHitbox);
+        }
+      });
+    });
+  }
+
+  willCollideWith(other: GameObject): boolean {
+    const selfHitboxes = this.hitboxes;
+    const otherHitboxes = other.hitboxes;
+
+    if (selfHitboxes.length === 0 || otherHitboxes.length === 0) {
+      return false;
+    }
+
+    return selfHitboxes.some((selfHitbox) => {
+      return otherHitboxes.some((otherHitbox) => {
+        if (
+          selfHitbox instanceof SquareHitbox &&
+          otherHitbox instanceof SquareHitbox
+        ) {
+          return selfHitbox.willIntersectWith(otherHitbox);
+        }
+        if (
+          selfHitbox instanceof CircleHitbox &&
+          otherHitbox instanceof CircleHitbox
+        ) {
+          return selfHitbox.willIntersectWith(otherHitbox);
+        }
+      });
+    });
   }
 }
 

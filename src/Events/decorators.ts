@@ -1,9 +1,6 @@
-import type {
-  GameEvent,
-  KeyPressedEvent,
-  MouseWheelScrolledEvent,
-} from ".";
+import type { GameEvent, KeyPressedEvent, MouseWheelScrolledEvent } from ".";
 import type { GameObject } from "../GameObject";
+import { Vector } from "../Vector";
 
 type HandleEventMethod<TObj extends GameObject> = (
   this: TObj,
@@ -60,7 +57,7 @@ export const onClick = <TObj extends GameObject = GameObject>(
         const hitboxes = this.getHitboxes();
         if (
           hitboxes.some((hitbox) =>
-            hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+            hitbox.intersectsWithPoint(new Vector(event.x, event.y))
           )
         ) {
           handler(this, event);
@@ -127,7 +124,7 @@ export const onMouseWheelOverHitbox = <TObj extends GameObject = GameObject>(
         const hitboxes = this.getHitboxes();
         if (
           hitboxes.some((hitbox) =>
-            hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+            hitbox.intersectsWithPoint(new Vector(event.x, event.y))
           )
         ) {
           handler(this, event);
@@ -237,7 +234,7 @@ export const onHover = <TObj extends GameObject = GameObject>(
       if (event.type === "mouseMoved") {
         const hitboxes = this.getHitboxes();
         const isHovering = hitboxes.some((hitbox) =>
-          hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+          hitbox.intersectsWithPoint(new Vector(event.x, event.y))
         );
         const gameObject = this as unknown as GameObject;
         const objectWasHovering = !!gameObject.hovering;
@@ -277,7 +274,7 @@ export const onStopHovering = <TObj extends GameObject = GameObject>(
       if (event.type === "mouseMoved") {
         const hitboxes = this.getHitboxes();
         const isHovering = hitboxes.some((hitbox) =>
-          hitbox.intersectsWithPoint({ x: event.x, y: event.y })
+          hitbox.intersectsWithPoint(new Vector(event.x, event.y))
         );
 
         const gameObject = this as unknown as GameObject;
