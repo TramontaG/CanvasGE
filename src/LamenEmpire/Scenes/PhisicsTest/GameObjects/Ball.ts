@@ -1,4 +1,6 @@
 import type { CanvasController } from "../../../../CanvasController";
+import type { GameEvent } from "../../../../Events";
+import { grabbable } from "../../../../Events/decorators";
 import { GameObject } from "../../../../GameObject";
 import { CircleHitbox } from "../../../../GameObject/Hitboxes";
 import { Vector } from "../../../../Vector";
@@ -16,9 +18,9 @@ class Ball extends GameObject {
 
     this.setPhisics({
       immovable: false,
-      restitution: 0.98,
+      restitution: 0.8,
       affectedByGravity: true,
-      friction: 0.05,
+      friction: 0.5,
     });
     this.addHitbox(new CircleHitbox(Vector.zero(), size, this, true));
 
@@ -32,10 +34,8 @@ class Ball extends GameObject {
       .drawCircle(pos.x, pos.y, size, palette.Primary, true, false);
   }
 
-  // Make them bounce
-  override onColision(otherGO: GameObject, penetration: Vector): void {
-    this.speed = penetration.multiply(this.speed.magnitude());
-  }
+  @grabbable()
+  override handleEvent(event: GameEvent): void {}
 }
 
 export { Ball };

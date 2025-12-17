@@ -208,20 +208,38 @@ const closestPointOnObbBoundary = (
   );
 };
 
-const getSupportPoint = (vertices: Vector[], direction: Vector): Vector => {
-  let best = vertices[0]!;
-  let bestProjection = best.dotProduct(direction);
+const getSupportFeatureCenter = (
+  vertices: Vector[],
+  direction: Vector
+): Vector => {
+  let bestProjection = Number.NEGATIVE_INFINITY;
 
-  for (let i = 1; i < vertices.length; i++) {
-    const candidate = vertices[i]!;
-    const projection = candidate.dotProduct(direction);
+  for (const vertex of vertices) {
+    const projection = vertex.dotProduct(direction);
     if (projection > bestProjection) {
-      best = candidate;
       bestProjection = projection;
     }
   }
 
-  return best;
+  const epsilon = 1e-6;
+  let sumX = 0;
+  let sumY = 0;
+  let count = 0;
+
+  for (const vertex of vertices) {
+    const projection = vertex.dotProduct(direction);
+    if (projection >= bestProjection - epsilon) {
+      sumX += vertex.x;
+      sumY += vertex.y;
+      count++;
+    }
+  }
+
+  if (count === 0) {
+    return vertices[0]!.clone();
+  }
+
+  return new Vector(sumX / count, sumY / count);
 };
 
 const getContactPoint = (
@@ -263,12 +281,14 @@ const getContactPoint = (
 
     let reference = obbA;
     let incident = obbB;
+    let incidentVertices = verticesB;
     let referenceToIncidentNormal = new Vector(-normal.x, -normal.y);
 
     if (immovableA !== immovableB) {
       if (immovableB) {
         reference = obbB;
         incident = obbA;
+        incidentVertices = verticesA;
         referenceToIncidentNormal = normal;
       }
     } else {
@@ -284,12 +304,18 @@ const getContactPoint = (
       if (alignmentB > alignmentA) {
         reference = obbB;
         incident = obbA;
+        incidentVertices = verticesA;
         referenceToIncidentNormal = normal;
       }
     }
 
+    const incidentSupport = getSupportFeatureCenter(
+      incidentVertices,
+      referenceToIncidentNormal.toMultiplied(-1)
+    );
+
     const pointOnReference = closestPointOnObbBoundary(
-      incident.center,
+      incidentSupport,
       reference,
       referenceToIncidentNormal
     );

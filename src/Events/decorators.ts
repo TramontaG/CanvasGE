@@ -1,4 +1,11 @@
-import type { GameEvent, KeyPressedEvent, MouseWheelScrolledEvent } from ".";
+import type {
+  GameEvent,
+  KeyPressedEvent,
+  MouseButtonPressedEvent,
+  MouseButtonReleasedEvent,
+  MouseMovedEvent,
+  MouseWheelScrolledEvent,
+} from ".";
 import type { GameObject } from "../GameObject";
 import { Vector } from "../Vector";
 
@@ -7,6 +14,12 @@ type HandleEventMethod<TObj extends GameObject> = (
   event: GameEvent,
   ...args: unknown[]
 ) => unknown;
+
+type MethodDec<T> = (
+  target: Object,
+  propertyKey: string | symbol,
+  descriptor: TypedPropertyDescriptor<T>
+) => TypedPropertyDescriptor<T> | void;
 
 type KeyTickHandler<TObj extends GameObject = GameObject> = (
   gameObject: TObj
@@ -34,11 +47,23 @@ const matchesKeyState = (gameObject: GameObject, keys: string[]): boolean => {
   return keys.every((key) => context.isKeyPressed(key));
 };
 
+const composeMethodDecorators = <T>(
+  ...decorators: Array<MethodDec<T>>
+): MethodDec<T> => {
+  return (target, propertyKey, descriptor) => {
+    // Aplica de baixo pra cima (igual TS faz quando empilha decorators)
+    return decorators.reduceRight((desc, dec) => {
+      const out = dec(target, propertyKey, desc);
+      return (out ?? desc) as TypedPropertyDescriptor<T>;
+    }, descriptor);
+  };
+};
+
 /**
  * Decorator for handling mouse clicks on hitboxes.
  */
 export const onClick = <TObj extends GameObject = GameObject>(
-  handler: (gameObject: TObj, event: GameEvent) => void
+  handler: (gameObject: TObj, event: MouseButtonPressedEvent) => void
 ) => {
   return function (
     _target: Object,
@@ -54,6 +79,43 @@ export const onClick = <TObj extends GameObject = GameObject>(
       ...args: unknown[]
     ) {
       if (event.type === "mouseButtonPressed") {
+        const hitboxes = this.getHitboxes();
+        if (
+          hitboxes.some((hitbox) =>
+            hitbox.intersectsWithPoint(new Vector(event.x, event.y))
+          )
+        ) {
+          handler(this, event);
+        }
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
+/**
+ * Decorator for handling mouse clicks on hitboxes.
+ */
+export const onMouseRelease = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: MouseButtonReleasedEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseButtonReleased") {
         const hitboxes = this.getHitboxes();
         if (
           hitboxes.some((hitbox) =>
@@ -92,6 +154,95 @@ export const onMouseWheel = <TObj extends GameObject = GameObject>(
     ) {
       if (event.type === "mouseWheelScrolled") {
         handler(this, event);
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
+/**
+ * Decorator for making the GameObject grabbable by the mouse
+ * it will check colision with all of its hitboxes and if ANY
+ * of them has the mouse inside, the gameObject will follow the
+ * mouse.
+ */
+export const grabbable = <TObj extends GameObject = GameObject>() => {
+  let offset = Vector.zero();
+  const speedSamples: Vector[] = [];
+  const maxSamples = 10;
+  let avgSpeed = Vector.zero();
+
+  return composeMethodDecorators(
+    onHover((obj) => (obj.hovering = true)),
+    onStopHovering((obj) => (obj.hovering = false)),
+    onMouseRelease((obj) => {
+      obj.beingGrabbed = false;
+      obj.speed = avgSpeed;
+
+      console.log(avgSpeed);
+    }),
+    onClick((obj, event) => {
+      const { x, y } = event;
+      obj.beingGrabbed = true;
+      offset = obj.getPosition().toSubtracted(new Vector(x, y));
+    }),
+    onMouseMoved((obj, event) => {
+      const { x, y } = event;
+      if (obj.beingGrabbed) {
+        const oldPosition = obj.getPosition();
+        obj.setPosition(new Vector(x, y).add(offset));
+        const newPosition = obj.getPosition();
+
+        const delta = newPosition.toSubtracted(oldPosition);
+        speedSamples.unshift(delta);
+        speedSamples.length = maxSamples;
+
+        const avgSpeedMag = speedSamples.reduce(
+          (acc, v) => v.magnitude() + acc,
+          0
+        );
+        avgSpeed = speedSamples
+          .reduce((acc, v) => acc.add(v), Vector.zero())
+          .normalize()
+          .multiply(avgSpeedMag);
+
+        obj.speed = Vector.zero();
+      }
+    })
+  );
+};
+
+/**
+ * Decorator for handling mouse moving over the GameObject
+ */
+export const onMouseMoved = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: MouseMovedEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseMoved") {
+        const hitboxes = this.getHitboxes();
+        if (
+          hitboxes.some((hitbox) =>
+            hitbox.intersectsWithPoint(new Vector(event.x, event.y))
+          )
+        ) {
+          handler(this, event);
+        }
       }
 
       return original.call(this, event, ...args);
@@ -236,7 +387,7 @@ export const onHover = <TObj extends GameObject = GameObject>(
         const isHovering = hitboxes.some((hitbox) =>
           hitbox.intersectsWithPoint(new Vector(event.x, event.y))
         );
-        const gameObject = this as unknown as GameObject;
+        const gameObject = this;
         const objectWasHovering = !!gameObject.hovering;
 
         if (isHovering && !objectWasHovering) {
@@ -273,6 +424,7 @@ export const onStopHovering = <TObj extends GameObject = GameObject>(
     ) {
       if (event.type === "mouseMoved") {
         const hitboxes = this.getHitboxes();
+
         const isHovering = hitboxes.some((hitbox) =>
           hitbox.intersectsWithPoint(new Vector(event.x, event.y))
         );

@@ -4,7 +4,7 @@ import type { Scene } from "../Scenes";
 import { Vector } from "../Vector";
 import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
-import { onHover, onStopHovering } from "../Events/decorators";
+import { onClick, onHover, onStopHovering } from "../Events/decorators";
 import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 import type { Walker } from "../LamenEmpire/GameObjects/Walker";
 
@@ -30,6 +30,7 @@ class GameObject {
   private lastDominantDirection: "up" | "down" | "left" | "right" | null =
     "down";
   private positionRelativeToMotherShip: boolean = false;
+  public beingGrabbed: boolean = false;
 
   public phisics: GameObjectPhisicsDescriptor = {
     immovable: true,
@@ -60,7 +61,11 @@ class GameObject {
 
       this.walker?.tick();
 
-      if (this.phisics.affectedByGravity && !this.phisics.immovable) {
+      if (
+        this.phisics.affectedByGravity &&
+        !this.phisics.immovable &&
+        !this.beingGrabbed
+      ) {
         const gravity = this.scene?.getGravity();
         if (gravity) {
           this.speed.add(gravity);
@@ -187,10 +192,12 @@ class GameObject {
     const renderAll = () => {
       if (this.rotation !== 0) {
         const center = this.getRotationCenter();
-        canvas.getShapeDrawer().withRotation(center.x, center.y, this.rotation, () => {
-          renderSelfAndChildren();
-          renderDebug();
-        });
+        canvas
+          .getShapeDrawer()
+          .withRotation(center.x, center.y, this.rotation, () => {
+            renderSelfAndChildren();
+            renderDebug();
+          });
         return;
       }
 

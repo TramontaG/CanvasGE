@@ -124,7 +124,9 @@ class SquareHitbox {
   }
 
   private getFutureRotation(): number {
-    return (this.gameObject.rotation ?? 0) + (this.gameObject.angularVelocity ?? 0);
+    return (
+      (this.gameObject.rotation ?? 0) + (this.gameObject.angularVelocity ?? 0)
+    );
   }
 
   private getFutureRotationCenter(): Vector {
@@ -310,7 +312,9 @@ class CircleHitbox {
   }
 
   private getFutureRotation(): number {
-    return (this.gameObject.rotation ?? 0) + (this.gameObject.angularVelocity ?? 0);
+    return (
+      (this.gameObject.rotation ?? 0) + (this.gameObject.angularVelocity ?? 0)
+    );
   }
 
   private getFutureRotationCenter(): Vector {
@@ -357,11 +361,19 @@ class CircleHitbox {
     const thisPos = this.getTransformedPosition();
 
     if (other instanceof CircleHitbox) {
-      return this.intersectWithCircle(other, thisPos, other.getTransformedPosition());
+      return this.intersectWithCircle(
+        other,
+        thisPos,
+        other.getTransformedPosition()
+      );
     }
 
     if (other instanceof SquareHitbox) {
-      return this.intersectWithSquare(other, thisPos, other.getAbsolutePosition());
+      return this.intersectWithSquare(
+        other,
+        thisPos,
+        other.getAbsolutePosition()
+      );
     }
 
     return false;
@@ -371,7 +383,11 @@ class CircleHitbox {
     const thisPos = this.getFutureTransformedPosition();
 
     if (other instanceof CircleHitbox) {
-      return this.intersectWithCircle(other, thisPos, other.getFutureTransformedPosition());
+      return this.intersectWithCircle(
+        other,
+        thisPos,
+        other.getFutureTransformedPosition()
+      );
     }
     if (other instanceof SquareHitbox) {
       const vertices = other.getFutureTransformedVertices();
@@ -396,9 +412,9 @@ class CircleHitbox {
   public renderDebug(canvas: CanvasController): void {
     if (this.debug) {
       const pos = this.getAbsolutePosition();
-      canvas
-        .getShapeDrawer()
-        .drawCircle(pos.x, pos.y, this.radius, "red", false);
+      const drawer = canvas.getShapeDrawer();
+      drawer.drawCircle(pos.x, pos.y, this.radius, "red", false);
+      drawer.drawLine(pos, pos.toAdded(new Vector(this.radius, 0)), 2, "red");
     }
   }
 }
