@@ -90,6 +90,21 @@ class Vector {
     result.roundToZero();
     return result;
   }
+
+  rotate(angle: number): Vector {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const x = this.x * cos - this.y * sin;
+    const y = this.x * sin + this.y * cos;
+    this.x = x;
+    this.y = y;
+    this.roundToZero();
+    return this;
+  }
+
+  toRotated(angle: number): Vector {
+    return this.clone().rotate(angle);
+  }
 }
 
 export { Vector };

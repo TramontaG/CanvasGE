@@ -20,7 +20,7 @@ class Ball extends GameObject {
       affectedByGravity: true,
       friction: 0.05,
     });
-    this.addHitbox(new CircleHitbox(Vector.zero(), size, this));
+    this.addHitbox(new CircleHitbox(Vector.zero(), size, this, true));
 
     this.setRenderFunction(this.renderBall);
   }

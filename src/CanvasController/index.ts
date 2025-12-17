@@ -261,6 +261,31 @@ class ShapeDrawer {
   }
 
   /**
+   * Executes drawing operations with a temporary rotation around a pivot point.
+   *
+   * This method saves the current canvas state, applies the rotation transform,
+   * executes the provided drawing function, and then restores the original state.
+   *
+   * @param x - The x-coordinate of the rotation pivot
+   * @param y - The y-coordinate of the rotation pivot
+   * @param angle - Rotation angle in radians
+   * @param draw - A function containing the drawing operations to perform while rotated
+   */
+  withRotation(x: number, y: number, angle: number, draw: () => void): void {
+    if (angle === 0) {
+      draw();
+      return;
+    }
+
+    this.context.save();
+    this.context.translate(x, y);
+    this.context.rotate(angle);
+    this.context.translate(-x, -y);
+    draw();
+    this.context.restore();
+  }
+
+  /**
    * Draws a sprite from the sprite library onto the canvas.
    *
    * @param spriteName - The name of the sprite to draw (must be loaded in the SpriteLibrary)

@@ -19,7 +19,7 @@ class PhisicsBox extends GameObject {
       affectedByGravity: true,
       friction: 0.1,
     });
-    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this));
+    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this, true));
     this.setRenderFunction(this.renderBox);
   }
 

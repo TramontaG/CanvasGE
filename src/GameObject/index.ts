@@ -23,6 +23,8 @@ class GameObject {
   private motherShip: GameObject | null = null;
   public walker: Walker | null = null;
   public speed: Vector = Vector.zero();
+  public rotation: number = 0;
+  public angularVelocity: number = 0;
   public showOriginDebug: boolean = false;
   private opacity: number = 1;
   private lastDominantDirection: "up" | "down" | "left" | "right" | null =
@@ -66,6 +68,7 @@ class GameObject {
       }
 
       this.position.add(this.speed);
+      this.rotation += this.angularVelocity;
 
       for (const child of this.children) {
         child.tick();
@@ -129,6 +132,36 @@ class GameObject {
     return this.hitboxes;
   }
 
+  getRotationCenter(): Vector {
+    if (this.hitboxes.length === 0) {
+      return this.getPosition();
+    }
+
+    let minX = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const hitbox of this.hitboxes) {
+      if (hitbox instanceof CircleHitbox) {
+        const center = hitbox.getAbsolutePosition();
+        minX = Math.min(minX, center.x - hitbox.radius);
+        maxX = Math.max(maxX, center.x + hitbox.radius);
+        minY = Math.min(minY, center.y - hitbox.radius);
+        maxY = Math.max(maxY, center.y + hitbox.radius);
+        continue;
+      }
+
+      const topLeft = hitbox.getAbsolutePosition();
+      minX = Math.min(minX, topLeft.x);
+      maxX = Math.max(maxX, topLeft.x + hitbox.size.x);
+      minY = Math.min(minY, topLeft.y);
+      maxY = Math.max(maxY, topLeft.y + hitbox.size.y);
+    }
+
+    return new Vector((minX + maxX) / 2, (minY + maxY) / 2);
+  }
+
   render(canvas: CanvasController, scene: Scene): void {
     if (!this.visible) return;
 
@@ -136,6 +169,9 @@ class GameObject {
       this.walker?.renderDebug(canvas);
       this.renderFn(this, canvas);
       this.children.forEach((child) => child.render(canvas, scene));
+    };
+
+    const renderDebug = () => {
       this.hitboxes.forEach((hitbox) => {
         hitbox.renderDebug(canvas);
       });
@@ -148,12 +184,26 @@ class GameObject {
       }
     };
 
+    const renderAll = () => {
+      if (this.rotation !== 0) {
+        const center = this.getRotationCenter();
+        canvas.getShapeDrawer().withRotation(center.x, center.y, this.rotation, () => {
+          renderSelfAndChildren();
+          renderDebug();
+        });
+        return;
+      }
+
+      renderSelfAndChildren();
+      renderDebug();
+    };
+
     if (this.opacity < 1) {
-      canvas.getShapeDrawer().withOpacity(this.opacity, renderSelfAndChildren);
+      canvas.getShapeDrawer().withOpacity(this.opacity, renderAll);
       return;
     }
 
-    renderSelfAndChildren();
+    renderAll();
   }
 
   setOriginDebug(show: boolean): void {

@@ -12,7 +12,7 @@ class Wall extends GameObject {
 
     this.color = color ?? palette.DarkPurple;
     this.setPhisics({ immovable: true, friction: 0.8 });
-    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this));
+    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this, true));
     this.setRenderFunction(this.renderWall);
   }
 
