@@ -20,7 +20,21 @@ const createButtons = ({ width, height }: SceneDimensions) => {
     buttonPosition,
     "Start",
     "normal",
-    (btn) => btn.transitionToScene("gameplay", slideReplace("right"), "replace")
+    (btn) => {
+      btn.getContext()!.getSoundManager().unlock();
+      btn.transitionToScene("intro", slideReplace("right"), "replace");
+    }
+  );
+
+  const introButton = new LamenEmpireButton(
+    "IntroButton",
+    buttonPosition.toSubtracted(new Vector(0, (buttonSize.y + 10) * 2)),
+    "Intro",
+    "purple",
+    (btn) => {
+      btn.getContext()!.getSoundManager().unlock();
+      btn.transitionToScene("intro", slideReplace("right"), "replace");
+    }
   );
 
   const phisicsTestButton = new LamenEmpireButton(
@@ -58,6 +72,7 @@ const createButtons = ({ width, height }: SceneDimensions) => {
 
   return {
     startButton,
+    introButton,
     phisicsTestButton,
     enableAudio,
     playAudio,

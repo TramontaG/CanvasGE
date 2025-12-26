@@ -9,6 +9,10 @@ const loadAudios = async (soundManager: SoundManager) => {
     "coin",
     new URL("../assets/coin.mp3", import.meta.url)
   );
+  await soundManager.loadSound(
+    "ramen_delight",
+    new URL("../assets/ramen_delight.mp3", import.meta.url)
+  );
 };
 
 export { loadAudios };

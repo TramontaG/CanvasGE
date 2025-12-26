@@ -1,10 +1,12 @@
 import { Scene } from "../../../Scenes";
 import { Vector } from "../../../Vector";
 import palette from "../../colors.json";
+import { Button } from "../../../GameObject/Library/Button";
 import { Ball } from "./GameObjects/Ball";
 import { PhisicsBox } from "./GameObjects/Box";
 import { Wall } from "./GameObjects/Wall";
 import { random } from "../../Util/Math";
+import { fadeTransition } from "../../../Scenes/SceneManager/Transitions";
 
 const WALL_THICKNESS = 20;
 const BALL_COUNT = 10;
@@ -16,7 +18,19 @@ const randomBallSpeed = (): Vector => {
   return new Vector(Math.cos(angle) * magnitude, Math.sin(angle) * magnitude);
 };
 
-const createPhisicsTest = ({ width, height }: { width: number; height: number }) => {
+const randomObjectSpeed = (): Vector => {
+  const angle = random(0, Math.PI * 2);
+  const magnitude = random(1, 5);
+  return new Vector(Math.cos(angle) * magnitude, Math.sin(angle) * magnitude);
+};
+
+const createPhisicsTest = ({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) => {
   const scene = new Scene("PhisicsTest", palette.Purple);
   scene.setGravity(new Vector(0, 0.15));
 
@@ -115,7 +129,10 @@ const createPhisicsTest = ({ width, height }: { width: number; height: number })
 
     const attempts = 100;
     for (let attempt = 0; attempt < attempts; attempt++) {
-      const candidate = new Vector(random(boxesMinX, maxX), random(boxesMinY, maxY));
+      const candidate = new Vector(
+        random(boxesMinX, maxX),
+        random(boxesMinY, maxY)
+      );
       const candidateAabb = boxAabb(candidate, size);
 
       const overlapsBalls = balls.some((ball) =>
@@ -142,7 +159,63 @@ const createPhisicsTest = ({ width, height }: { width: number; height: number })
     boxes.push(box);
   }
 
-  scene.addGameObject([...walls, ...boxes, ...balls]);
+  const randomizeObjects = (): void => {
+    scene.getGameObjects().forEach((gameObject) => {
+      if (gameObject.phisics.immovable) return;
+
+      if (gameObject instanceof Ball) {
+        gameObject.setPosition(
+          new Vector(random(minX, maxX), random(minY, maxY))
+        );
+        gameObject.speed = randomBallSpeed();
+        return;
+      }
+
+      if (gameObject instanceof PhisicsBox) {
+        const size = gameObject.getSize();
+        const maxX = width - WALL_THICKNESS - size.x;
+        const maxY = height - WALL_THICKNESS - size.y;
+        gameObject.setPosition(
+          new Vector(random(WALL_THICKNESS, maxX), random(WALL_THICKNESS, maxY))
+        );
+        gameObject.speed = randomObjectSpeed();
+        return;
+      }
+
+      gameObject.speed = randomObjectSpeed();
+    });
+  };
+
+  const randomizeButton = new Button(
+    "RandomizeSceneObjects",
+    new Vector(32, 32),
+    new Vector(200, 64),
+    "Randomize objects",
+    palette.Primary,
+    "white",
+    () => randomizeObjects()
+  );
+
+  const backButton = new Button(
+    "BackToLastScene",
+    new Vector(240, 32),
+    new Vector(200, 64),
+    "Back to last scene",
+    palette.Primary,
+    "white",
+    (obj) =>
+      obj
+        .getContext()
+        ?.transitionToScene("menu", fadeTransition(200), "replace")
+  );
+
+  scene.addGameObject([
+    ...walls,
+    ...boxes,
+    ...balls,
+    randomizeButton,
+    backButton,
+  ]);
 
   return scene;
 };

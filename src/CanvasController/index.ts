@@ -76,6 +76,10 @@ class ShapeDrawer {
     this.defaultFont = font;
   }
 
+  getDefaultFont(): string {
+    return this.defaultFont;
+  }
+
   /**
    * Draws a straight line between two points with customizable appearance.
    *

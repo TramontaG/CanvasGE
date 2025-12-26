@@ -97,6 +97,10 @@ class Scene {
     });
   }
 
+  getContext(): GameContext | null {
+    return this.context;
+  }
+
   getOffset(): Vector {
     return this.offset;
   }

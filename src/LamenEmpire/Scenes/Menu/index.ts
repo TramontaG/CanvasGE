@@ -11,13 +11,20 @@ const createMenuScene = ({
 }) => {
   const menuScene = new Scene("Main Menu", palette.Purple);
 
-  const { enableAudio, playAudio, startButton, debugButton, phisicsTestButton } =
-    createButtons({
-      width,
-      height,
-    });
+  const {
+    enableAudio,
+    playAudio,
+    startButton,
+    introButton,
+    debugButton,
+    phisicsTestButton,
+  } = createButtons({
+    width,
+    height,
+  });
 
   menuScene.addGameObject([
+    introButton,
     startButton,
     phisicsTestButton,
     playAudio,

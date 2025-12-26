@@ -84,6 +84,10 @@ class GameContext {
     return this.tickCount;
   }
 
+  getTickRate(): number {
+    return this.options.game.getTickRate();
+  }
+
   incrementTickCount(): void {
     this.tickCount++;
   }

@@ -71,19 +71,36 @@ const fadeTransition = (duration: number = 450): SceneTransition =>
 
 type SlideDirection = "left" | "right" | "up" | "down";
 
+const defaultSlideDistance = 400;
+
+const resolveSlideDistance = (
+  direction: SlideDirection,
+  scenes: TransitionScenes,
+  distance?: number
+): number => {
+  if (typeof distance === "number") {
+    return distance;
+  }
+
+  const canvas = scenes.to
+    .getContext()
+    ?.getCanvas()
+    .getCanvas();
+
+  if (!canvas) {
+    return defaultSlideDistance;
+  }
+
+  const isHorizontal = direction === "left" || direction === "right";
+  return isHorizontal ? canvas.width : canvas.height;
+};
+
 const slideReplace = (
   direction: SlideDirection,
-  distance: number = 400,
+  distance?: number,
   duration: number = 500
 ): SceneTransition => {
-  const directionVectorMap: Record<SlideDirection, Vector> = {
-    left: new Vector(-distance, 0),
-    right: new Vector(distance, 0),
-    up: new Vector(0, -distance),
-    down: new Vector(0, distance),
-  };
-
-  const offsetVector = directionVectorMap[direction];
+  let offsetVector = Vector.zero();
 
   return createSceneTransition(
     (progress, { from, to }) => {
@@ -98,7 +115,21 @@ const slideReplace = (
     {
       duration,
       easing: easeInOut,
-      setup: (_, { to }) => {
+      setup: (_, scenes) => {
+        const resolvedDistance = resolveSlideDistance(
+          direction,
+          scenes,
+          distance
+        );
+        const directionVectorMap: Record<SlideDirection, Vector> = {
+          left: new Vector(-resolvedDistance, 0),
+          right: new Vector(resolvedDistance, 0),
+          up: new Vector(0, -resolvedDistance),
+          down: new Vector(0, resolvedDistance),
+        };
+        offsetVector = directionVectorMap[direction];
+
+        const { to } = scenes;
         to.setOffset(offsetVector);
         to.setOpacity(1);
       },
@@ -114,17 +145,10 @@ const slideReplace = (
 
 const slidePush = (
   direction: SlideDirection,
-  distance: number = 400,
+  distance?: number,
   duration: number = 500
 ): SceneTransition => {
-  const directionVectorMap: Record<SlideDirection, Vector> = {
-    left: new Vector(-distance, 0),
-    right: new Vector(distance, 0),
-    up: new Vector(0, -distance),
-    down: new Vector(0, distance),
-  };
-
-  const offsetVector = directionVectorMap[direction];
+  let offsetVector = Vector.zero();
 
   return createSceneTransition(
     (progress, { from, to }) => {
@@ -134,7 +158,21 @@ const slidePush = (
     {
       duration,
       easing: easeInOut,
-      setup: (_, { to }) => {
+      setup: (_, scenes) => {
+        const resolvedDistance = resolveSlideDistance(
+          direction,
+          scenes,
+          distance
+        );
+        const directionVectorMap: Record<SlideDirection, Vector> = {
+          left: new Vector(-resolvedDistance, 0),
+          right: new Vector(resolvedDistance, 0),
+          up: new Vector(0, -resolvedDistance),
+          down: new Vector(0, resolvedDistance),
+        };
+        offsetVector = directionVectorMap[direction];
+
+        const { to } = scenes;
         to.setOffset(offsetVector);
         to.setOpacity(1);
       },
@@ -147,17 +185,10 @@ const slidePush = (
 
 const slidePop = (
   direction: SlideDirection,
-  distance: number = 400,
+  distance?: number,
   duration: number = 500
 ): SceneTransition => {
-  const directionVectorMap: Record<SlideDirection, Vector> = {
-    left: new Vector(-distance, 0),
-    right: new Vector(distance, 0),
-    up: new Vector(0, -distance),
-    down: new Vector(0, distance),
-  };
-
-  const offsetVector = directionVectorMap[direction];
+  let offsetVector = Vector.zero();
 
   return createSceneTransition(
     (progress, { from, to }) => {
@@ -170,7 +201,21 @@ const slidePop = (
       duration,
       easing: easeInOut,
       incomingOnTop: false,
-      setup: (_, { to, from }) => {
+      setup: (_, scenes) => {
+        const resolvedDistance = resolveSlideDistance(
+          direction,
+          scenes,
+          distance
+        );
+        const directionVectorMap: Record<SlideDirection, Vector> = {
+          left: new Vector(-resolvedDistance, 0),
+          right: new Vector(resolvedDistance, 0),
+          up: new Vector(0, -resolvedDistance),
+          down: new Vector(0, resolvedDistance),
+        };
+        offsetVector = directionVectorMap[direction];
+
+        const { from } = scenes;
         from?.setOpacity(1);
       },
       cleanup: (_, { from, to }) => {

@@ -18,7 +18,9 @@ class Button extends GameObject {
     super(name, position);
     this.setRenderFunction(this.renderButton);
 
-    this.addHitbox(new SquareHitbox(Vector.zero(), this.size, this));
+    this.addHitbox(
+      new SquareHitbox(Vector.zero(), this.size, this, { solid: false })
+    );
   }
 
   private renderButton(obj: GameObject, canvas: CanvasController): void {

@@ -88,6 +88,10 @@ class Game {
     return this.context;
   }
 
+  getTickRate(): number {
+    return this.ticksPerSecond;
+  }
+
   getKeyAccumulator(): KeyAccumulator {
     return this.keyAccumulator;
   }

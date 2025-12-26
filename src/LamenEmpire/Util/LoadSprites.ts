@@ -44,6 +44,12 @@ const loadSprites = (spriteLibrary: SpriteLibrary) => {
       1024,
       1024
     ),
+    spriteLibrary.loadSpriteSheet(
+      "heroFaces",
+      new URL("../assets/FaceSets/Hero.png", import.meta.url),
+      144,
+      144
+    ),
   ]);
 };
 

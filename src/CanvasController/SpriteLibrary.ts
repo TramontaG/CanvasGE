@@ -76,6 +76,14 @@ class SpriteLibrary {
     return this.sprites.get(name);
   }
 
+  getSpriteSheetFrameSize(
+    sheetName: string
+  ): { frameWidth: number; frameHeight: number } | null {
+    const sheet = this.spriteSheets.get(sheetName);
+    if (!sheet) return null;
+    return { frameWidth: sheet.frameWidth, frameHeight: sheet.frameHeight };
+  }
+
   /**
    * Render the sprite frame by its index in the sheet
    * Indexes grow from left to right, top to bottom
