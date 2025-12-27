@@ -24,7 +24,8 @@ const prepareGame = async () => {
   const soundManager = new SoundManager();
   await loadAudios(soundManager);
 
-  const { menu, gameplay, phisicsTest, intro } = createLamenEmpireScenes(
+  const { menu, gameplay, phisicsTest, intro, pathfindingDebug } =
+    createLamenEmpireScenes(
     gameConfig,
     getGame
   );
@@ -38,6 +39,7 @@ const prepareGame = async () => {
         gameplay: gameplay.scene,
         phisicsTest,
         intro,
+        pathfindingDebug,
       },
       menu
     ),

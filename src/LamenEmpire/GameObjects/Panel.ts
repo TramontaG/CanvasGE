@@ -1,7 +1,7 @@
 import type { CanvasController } from "../../CanvasController";
 import type { GameObject } from "../../GameObject";
 import { GameObject as BaseGameObject } from "../../GameObject";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { SquareHitbox } from "../../GameObject/Hitboxes";
 
 class Panel extends BaseGameObject {

@@ -1,5 +1,5 @@
 import type { CanvasController } from "../../CanvasController";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import type { GameObject } from "../index";
 
 type HitboxOptions = {

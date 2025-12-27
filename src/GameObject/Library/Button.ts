@@ -2,7 +2,7 @@ import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
 import { onClick, onHover, onStopHovering } from "../../Events/decorators";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { SquareHitbox } from "../Hitboxes";
 
 class Button extends GameObject {

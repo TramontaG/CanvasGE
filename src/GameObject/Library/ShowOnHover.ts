@@ -2,7 +2,7 @@ import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { Scene } from "../../Scenes";
 import type { GameContext } from "../../Context";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { SquareHitbox } from "../Hitboxes";
 
 class ShowOnHover extends GameObject {

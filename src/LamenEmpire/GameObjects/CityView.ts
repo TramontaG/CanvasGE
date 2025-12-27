@@ -2,7 +2,7 @@ import type { CanvasController } from "../../CanvasController";
 import type { Scene } from "../../Scenes";
 import { GameObject as BaseGameObject } from "../../GameObject";
 import { renderSprite } from "../../GameObject/Decorators";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { GAME_CONFIG } from "../config";
 
 class CityView extends BaseGameObject {

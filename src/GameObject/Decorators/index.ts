@@ -1,9 +1,39 @@
 import type { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { Scene } from "../../Scenes";
-import type { Vector } from "../../Vector";
+import type { Vector } from "../../Lib/Vector";
 
 type MirroringMode = "horizontal" | "vertical" | "both" | null;
+
+export const onColision = <TObj extends GameObject = GameObject>(
+  predicate: (self: TObj, other: GameObject) => boolean,
+  handler: (self: TObj, other: GameObject) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<
+      (this: TObj, other: GameObject, penetration: Vector) => unknown
+    >
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      other: GameObject,
+      penetration: Vector
+    ) {
+      if (predicate(this, other)) {
+        handler(this, other);
+      }
+
+      return original.call(this, other, penetration);
+    };
+
+    return descriptor;
+  };
+};
 
 export const renderSprite = <TObj extends GameObject = GameObject>(
   when: (obj: TObj) => boolean,

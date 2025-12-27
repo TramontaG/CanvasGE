@@ -4,7 +4,7 @@ import { withRotation } from "../../CanvasController/Transformations";
 import type { GameEvent } from "../../Events";
 import { onChildrenEvents } from "../../Events/decorators";
 import type { Scene } from "../../Scenes";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { ClickableShape } from "./Clickableshape";
 import { Group } from "./Group";
 import { HoverableShape } from "./HoverableShape";

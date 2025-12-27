@@ -8,7 +8,7 @@ import {
 } from "../../GameObject/Decorators";
 import { SquareHitbox } from "../../GameObject/Hitboxes";
 import type { Scene } from "../../Scenes";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 const UP_ANIMATION_INDEXES = [4, 5, 6, 7];
 const DOWN_ANIMATION_INDEXES = [0, 1, 2, 3];

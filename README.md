@@ -7,6 +7,7 @@ Small TypeScript/HTML5 Canvas playground for building a 2D game engine (CanvasGE
 
 ## Engine features (CanvasGE)
 - **Game loop + context**: tick/render split, configurable TPS, shared `GameContext` (tick/frame counters, pressed keys, message bus, sound manager).
+- **Saves**: base64-encoded save files stored in `localStorage`, with `onLoadSaveFile(save => ...)` callback during `game.setup()`.
 - **Scenes**: scene stack, per-scene camera offset, background fill, opacity + overlay, gravity, and transitions (fade/slide/flash with easing).
 - **Rendering**: `CanvasController` + `ShapeDrawer` for primitives/text, clipping and rotation helpers, font loading, and sprite + sprite-sheet support (frame rendering, scaling, mirroring) with `renderSprite` / `renderSpriteAnimation` helpers.
 - **Input/events**: keyboard + mouse + wheel events, propagation control, and ergonomic decorators (`@onClick`, `@onMouseRelease`, `@onHover`, `@onStopHovering`, `@onMouseWheel`, `@onMouseWheelOverHitbox`, `@onKeyPressed`/combo, `@onChildrenEvents`, `@grabbable()`).
@@ -45,6 +46,13 @@ The demo mounts an 800x600 canvas and boots LamenEmpire via `src/index.ts`.
 - Add a scene by instantiating `Scene` and registering it in `SceneManager` (see how `src/LamenEmpire/index.ts` wires scenes today).
 - Create a game object by subclassing `GameObject`, adding hitboxes, and using decorators like `@onClick` / `@onHover` / `@onKeyPressed`.
 - Use `GameContext` from objects to switch/push/pop/transition scenes, publish/subscribe messages, query pressed keys, and play sounds.
+- Save/load game state using `game.saves` (or `context.getGame().saves` from a `GameObject`).
+
+## Saving & loading
+- Create a save: `const id = game.saves.create({ ...anySerializableState }, { label: "slot 1" });`
+- List saves: `game.saves.list()`
+- Read a save: `const save = game.saves.read(id)`
+- Load hook (runs during `game.setup()`): `game.onLoadSaveFile((save) => { /* restore state */ });`
 
 ## Engine roadmap (to be “2D game ready”)
 - **Decouple engine from LamenEmpire** (remove engine imports that reference `src/LamenEmpire`, and make the engine usable without the game).

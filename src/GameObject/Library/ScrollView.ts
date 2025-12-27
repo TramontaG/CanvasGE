@@ -6,7 +6,7 @@ import {
   onChildrenEvents,
   onMouseWheelOverHitbox,
 } from "../../Events/decorators";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { SquareHitbox } from "../Hitboxes";
 
 type ScrollViewOptions = {
@@ -155,13 +155,11 @@ class ScrollView extends GameObject {
     this.syncChildrenPositions();
     const pos = this.getPosition();
 
-    canvas.getShapeDrawer().withClippingRect(
-      pos.x,
-      pos.y,
-      this.size.x,
-      this.size.y,
-      () => super.render(canvas, scene)
-    );
+    canvas
+      .getShapeDrawer()
+      .withClippingRect(pos.x, pos.y, this.size.x, this.size.y, () =>
+        super.render(canvas, scene)
+      );
     this.renderScrollbar(canvas);
   }
 

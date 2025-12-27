@@ -20,12 +20,38 @@ type AudioPlayOptions = {
   duration?: number;
 };
 
+type SongTransitionOptions = {
+  /** Fade duration in seconds (used for both fade-in and fade-out). */
+  fade?: number;
+  /** Fade-in duration in seconds. Overrides `fade` for the fade-in side. */
+  fadeIn?: number;
+  /** Fade-out duration in seconds. Overrides `fade` for the fade-out side. */
+  fadeOut?: number;
+};
+
+type SongPlayOptions = Pick<AudioPlayOptions, "volume" | "loop" | "playbackRate"> &
+  SongTransitionOptions;
+
+type SongController = {
+  name: string;
+  stop: (options?: Pick<SongTransitionOptions, "fadeOut" | "fade">) => void;
+};
+
 class SoundManager {
   private sounds: Record<string, Audio> = {};
   public active: boolean = false;
 
   private context = new AudioContext();
   public masterGain = this.context.createGain();
+
+  private currentSong?: {
+    id: number;
+    name: string;
+    source: AudioBufferSourceNode;
+    gain: GainNode;
+    controller: SongController;
+  };
+  private songIdCounter = 0;
 
   constructor() {}
 
@@ -97,6 +123,94 @@ class SoundManager {
     };
   }
 
+  getCurrentSongName() {
+    return this.currentSong?.name;
+  }
+
+  stopSong(options: Pick<SongTransitionOptions, "fadeOut" | "fade"> = {}) {
+    if (!this.currentSong) return;
+    const fadeOutSeconds = Math.max(0, options.fadeOut ?? options.fade ?? 0);
+    this.stopSongPlayback(this.currentSong, fadeOutSeconds);
+  }
+
+  /**
+   * Plays a single tracked "song" (typically background music).
+   * - If the same song is requested, nothing happens.
+   * - If a different song is requested, the previous song is stopped and the new one starts.
+   * - Optional fade transition is supported (in seconds) via `fade`, `fadeIn`, `fadeOut`.
+   */
+  playSong(name: string, options: SongPlayOptions = {}): SongController {
+    if (!this.active) {
+      this.unlock();
+    }
+
+    if (this.currentSong?.name === name) {
+      return this.currentSong.controller;
+    }
+
+    const audioEntry = this.sounds[name];
+    if (!audioEntry) {
+      throw new Error(
+        `Tried to play song ${name} but it was not found in the library`
+      );
+    }
+
+    const fadeOutSeconds = Math.max(0, options.fadeOut ?? options.fade ?? 0);
+    const fadeInSeconds = Math.max(0, options.fadeIn ?? options.fade ?? 0);
+
+    if (this.currentSong) {
+      this.stopSongPlayback(this.currentSong, fadeOutSeconds);
+    }
+
+    const { buffer, volume: defaultVolume } = audioEntry;
+    const source = this.context.createBufferSource();
+    source.buffer = buffer;
+    source.loop = options.loop ?? true;
+    source.playbackRate.value = options.playbackRate ?? 1;
+
+    const gain = this.context.createGain();
+    const targetVolume = Math.max(0, options.volume ?? defaultVolume);
+
+    const now = this.context.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(fadeInSeconds > 0 ? 0 : targetVolume, now);
+    if (fadeInSeconds > 0) {
+      gain.gain.linearRampToValueAtTime(targetVolume, now + fadeInSeconds);
+    }
+
+    source.connect(gain);
+    gain.connect(this.masterGain);
+
+    const id = ++this.songIdCounter;
+
+    // one try-catch for each disconnect to avoid one failing to stop the others
+    const onEnd = () => {
+      try {
+        source.disconnect();
+      } catch {}
+      try {
+        gain.disconnect();
+      } catch {}
+      if (this.currentSong?.id === id) {
+        this.currentSong = undefined;
+      }
+    };
+
+    source.onended = onEnd;
+    source.start(now);
+
+    const controller: SongController = {
+      name,
+      stop: (stopOptions = {}) => {
+        const fadeOut = Math.max(0, stopOptions.fadeOut ?? stopOptions.fade ?? 0);
+        this.stopSongPlayback({ source, gain }, fadeOut);
+      },
+    };
+
+    this.currentSong = { id, name, source, gain, controller };
+    return controller;
+  }
+
   playSound(name: string, options: AudioPlayOptions = {}) {
     // This will work only if the sonud was triggered by a
     // User interaction.
@@ -162,6 +276,37 @@ class SoundManager {
       },
     };
   }
+
+  private stopSongPlayback(
+    song: { source: AudioBufferSourceNode; gain: GainNode },
+    fadeOutSeconds: number
+  ) {
+    const { source, gain } = song;
+    const now = this.context.currentTime;
+
+    const stopAt = now + Math.max(0, fadeOutSeconds);
+
+    try {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      if (fadeOutSeconds > 0) {
+        gain.gain.linearRampToValueAtTime(0, stopAt);
+      } else {
+        gain.gain.setValueAtTime(0, now);
+      }
+    } catch {}
+
+    try {
+      source.stop(stopAt);
+    } catch {}
+  }
 }
 
-export { SoundManager, type AudioPlayOptions, type Audio };
+export {
+  SoundManager,
+  type AudioPlayOptions,
+  type SongPlayOptions,
+  type SongTransitionOptions,
+  type SongController,
+  type Audio,
+};

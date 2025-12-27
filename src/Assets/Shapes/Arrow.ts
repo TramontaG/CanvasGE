@@ -1,4 +1,4 @@
-import type { Vector } from "../../Vector";
+import type { Vector } from "../../Lib/Vector";
 
 export type ShapeRendererFn = (
   context: CanvasRenderingContext2D,

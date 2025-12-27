@@ -1,7 +1,7 @@
 import { CanvasController } from "../CanvasController";
 import type { GameEvent } from "../Events";
 import type { Scene } from "../Scenes";
-import { Vector } from "../Vector";
+import { Vector } from "../Lib/Vector";
 import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
 import { onClick, onHover, onStopHovering } from "../Events/decorators";

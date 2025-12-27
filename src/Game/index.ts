@@ -4,12 +4,14 @@ import type { SceneManager } from "../Scenes/SceneManager";
 import { GameContext } from "../Context";
 import { GameEventsdispatcher, KeyAccumulator } from "../Events";
 import { SoundManager } from "../SoundManager";
+import { GameSaves, type SaveFile } from "./Saves";
 
 type GameOptions = {
   canvas: CanvasController;
   scenes: SceneManager;
   soundManager: SoundManager;
   ticksPerSecond?: number;
+  saveNamespace?: string;
 };
 
 class Game {
@@ -17,11 +19,19 @@ class Game {
   private scenes: SceneManager;
   private ticksPerSecond: number = 60;
   private lastTickTime: number = 0;
+  private didSetup: boolean = false;
   public context: GameContext;
   private keyAccumulator = new KeyAccumulator();
   private eventsDispatcher: GameEventsdispatcher;
+  public saves: GameSaves;
 
-  constructor({ canvas, scenes, ticksPerSecond, soundManager }: GameOptions) {
+  constructor({
+    canvas,
+    scenes,
+    ticksPerSecond,
+    soundManager,
+    saveNamespace,
+  }: GameOptions) {
     this.canvas = canvas;
     this.scenes = scenes;
     this.ticksPerSecond = ticksPerSecond || this.ticksPerSecond;
@@ -34,13 +44,36 @@ class Game {
     });
     this.scenes.bindContext(this.context);
     this.eventsDispatcher = new GameEventsdispatcher(this, this.keyAccumulator);
+    this.saves = new GameSaves({ namespace: saveNamespace });
   }
 
   setup() {
+    if (this.didSetup) {
+      return;
+    }
+    this.didSetup = true;
+
+    this.saves.loadAll();
+    this.onSetup();
     console.log("Game setup complete.");
   }
 
+  onLoadSaveFile(callback: ((save: SaveFile) => void) | null): this {
+    this.saves.onLoadSaveFile(callback);
+    return this;
+  }
+
+  saveGame<T = unknown>(data: T, options?: { label?: string; id?: string }): string {
+    return this.saves.create(data, options);
+  }
+
+  // Meant to be overridden by game-specific implementations to inject logic
+  // that should run once during game setup (after save files are loaded).
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  protected onSetup(): void {}
+
   start() {
+    this.setup();
     console.log("Game started.");
 
     // Tick interval
@@ -99,3 +132,4 @@ class Game {
 
 export { Game };
 export type { GameOptions };
+export { GameSaves };

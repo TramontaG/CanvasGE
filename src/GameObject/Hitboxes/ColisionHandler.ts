@@ -1,6 +1,6 @@
 import { CircleHitbox, SquareHitbox, type Hitbox } from ".";
 import { clamp } from "../../LamenEmpire/Util/Math";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 type CollisionResolution = {
   penetration: Vector;
@@ -158,8 +158,7 @@ const closestPointOnObbBoundary = (
   const distX = dx * obb.axisX.x + dy * obb.axisX.y;
   const distY = dx * obb.axisY.x + dy * obb.axisY.y;
 
-  const inside =
-    Math.abs(distX) <= obb.halfX && Math.abs(distY) <= obb.halfY;
+  const inside = Math.abs(distX) <= obb.halfX && Math.abs(distY) <= obb.halfY;
 
   if (!inside) {
     const clampedX = clamp(distX, -obb.halfX, obb.halfX);
@@ -266,7 +265,11 @@ const getContactPoint = (
     const circleCenter = hitboxB.getTransformedPosition();
     const rectVertices = hitboxA.getTransformedVertices();
     const obb = getObbData(rectVertices, hitboxA.size);
-    return closestPointOnObbBoundary(circleCenter, obb, new Vector(-normal.x, -normal.y));
+    return closestPointOnObbBoundary(
+      circleCenter,
+      obb,
+      new Vector(-normal.x, -normal.y)
+    );
   }
 
   if (hitboxA instanceof SquareHitbox && hitboxB instanceof SquareHitbox) {
@@ -367,15 +370,17 @@ class ColisionHandler {
     const contactOffsetA = contactPoint.toSubtracted(centerA);
     const contactOffsetB = contactPoint.toSubtracted(centerB);
 
-    const deltaA = !immovableA && immovableB
-      ? penetration
-      : !immovableA && !immovableB
+    const deltaA =
+      !immovableA && immovableB
+        ? penetration
+        : !immovableA && !immovableB
         ? penetration.toMultiplied(0.5)
         : Vector.zero();
 
-    const deltaB = immovableA && !immovableB
-      ? penetration.toMultiplied(-1)
-      : !immovableA && !immovableB
+    const deltaB =
+      immovableA && !immovableB
+        ? penetration.toMultiplied(-1)
+        : !immovableA && !immovableB
         ? penetration.toMultiplied(-0.5)
         : Vector.zero();
 
@@ -392,31 +397,52 @@ class ColisionHandler {
     let appliedImpulse = false;
     let normalImpulseScalar = 0;
 
-    const velocityAtContact = (velocity: Vector, angularVelocity: number, offset: Vector): Vector => {
-      const angularComponent = new Vector(-angularVelocity * offset.y, angularVelocity * offset.x);
+    const velocityAtContact = (
+      velocity: Vector,
+      angularVelocity: number,
+      offset: Vector
+    ): Vector => {
+      const angularComponent = new Vector(
+        -angularVelocity * offset.y,
+        angularVelocity * offset.x
+      );
       return velocity.toAdded(angularComponent);
     };
 
     const applyImpulse = (impulse: Vector): void => {
       if (invMassA > 0) {
-        resolvedVelocityA = resolvedVelocityA.toAdded(impulse.toMultiplied(invMassA));
+        resolvedVelocityA = resolvedVelocityA.toAdded(
+          impulse.toMultiplied(invMassA)
+        );
       }
       if (invMassB > 0) {
-        resolvedVelocityB = resolvedVelocityB.toSubtracted(impulse.toMultiplied(invMassB));
+        resolvedVelocityB = resolvedVelocityB.toSubtracted(
+          impulse.toMultiplied(invMassB)
+        );
       }
 
       if (invInertiaA > 0) {
-        resolvedAngularVelocityA += cross(contactOffsetA, impulse) * invInertiaA;
+        resolvedAngularVelocityA +=
+          cross(contactOffsetA, impulse) * invInertiaA;
       }
       if (invInertiaB > 0) {
-        resolvedAngularVelocityB -= cross(contactOffsetB, impulse) * invInertiaB;
+        resolvedAngularVelocityB -=
+          cross(contactOffsetB, impulse) * invInertiaB;
       }
     };
 
     const invMassSum = invMassA + invMassB;
     if (invMassSum > 0) {
-      const vAContact = velocityAtContact(resolvedVelocityA, resolvedAngularVelocityA, contactOffsetA);
-      const vBContact = velocityAtContact(resolvedVelocityB, resolvedAngularVelocityB, contactOffsetB);
+      const vAContact = velocityAtContact(
+        resolvedVelocityA,
+        resolvedAngularVelocityA,
+        contactOffsetA
+      );
+      const vBContact = velocityAtContact(
+        resolvedVelocityB,
+        resolvedAngularVelocityB,
+        contactOffsetB
+      );
       const relativeVelocity = vAContact.toSubtracted(vBContact);
 
       const velocityAlongNormal = relativeVelocity.dotProduct(normal);
@@ -435,7 +461,8 @@ class ColisionHandler {
           rbCrossN * rbCrossN * invInertiaB;
 
         if (denom > 0) {
-          normalImpulseScalar = (-(1 + restitution) * velocityAlongNormal) / denom;
+          normalImpulseScalar =
+            (-(1 + restitution) * velocityAlongNormal) / denom;
           const impulse = normal.toMultiplied(normalImpulseScalar);
           applyImpulse(impulse);
           appliedImpulse = normalImpulseScalar !== 0;
@@ -447,12 +474,22 @@ class ColisionHandler {
       const friction = Math.min(frictionA, frictionB);
 
       if (friction > 0 && normalImpulseScalar > 0) {
-        const postVAContact = velocityAtContact(resolvedVelocityA, resolvedAngularVelocityA, contactOffsetA);
-        const postVBContact = velocityAtContact(resolvedVelocityB, resolvedAngularVelocityB, contactOffsetB);
+        const postVAContact = velocityAtContact(
+          resolvedVelocityA,
+          resolvedAngularVelocityA,
+          contactOffsetA
+        );
+        const postVBContact = velocityAtContact(
+          resolvedVelocityB,
+          resolvedAngularVelocityB,
+          contactOffsetB
+        );
         const postRelativeVelocity = postVAContact.toSubtracted(postVBContact);
 
         const normalComponent = postRelativeVelocity.dotProduct(normal);
-        const tangent = postRelativeVelocity.toSubtracted(normal.toMultiplied(normalComponent));
+        const tangent = postRelativeVelocity.toSubtracted(
+          normal.toMultiplied(normalComponent)
+        );
 
         if (tangent.squaredMagnitude() > 0) {
           tangent.normalize();
@@ -474,7 +511,9 @@ class ColisionHandler {
             );
 
             if (clampedTangentImpulse !== 0) {
-              const frictionImpulse = tangent.toMultiplied(clampedTangentImpulse);
+              const frictionImpulse = tangent.toMultiplied(
+                clampedTangentImpulse
+              );
               applyImpulse(frictionImpulse);
               appliedImpulse = true;
             }
@@ -545,10 +584,7 @@ class ColisionHandler {
       const projA = projectVertices(verticesA, normalizedAxis);
       const projB = projectVertices(verticesB, normalizedAxis);
 
-      const overlap = Math.min(
-        projA.max - projB.min,
-        projB.max - projA.min
-      );
+      const overlap = Math.min(projA.max - projB.min, projB.max - projA.min);
       if (overlap <= 0) {
         return Vector.zero();
       }

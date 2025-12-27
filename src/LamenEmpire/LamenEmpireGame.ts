@@ -1,7 +1,7 @@
 import type { Scene } from "../Scenes";
 import type { GameOptions } from "../Game";
 import { Game } from "../Game";
-import { Vector } from "../Vector";
+import { Vector } from "../Lib/Vector";
 import { createClientPaths } from "./Util/Paths";
 import { Client } from "./GameObjects/Client";
 import { Walker } from "./GameObjects/Walker";

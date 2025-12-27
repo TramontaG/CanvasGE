@@ -2,7 +2,7 @@ import {
   colorFlash,
   slideReplace,
 } from "../../../../Scenes/SceneManager/Transitions";
-import { Vector } from "../../../../Vector";
+import { Vector } from "../../../../Lib/Vector";
 import { LamenEmpireButton } from "../../../GameObjects/LamenEmpireButton";
 import type { SceneDimensions } from "../../types";
 
@@ -40,42 +40,25 @@ const createButtons = ({ width, height }: SceneDimensions) => {
   const phisicsTestButton = new LamenEmpireButton(
     "PhisicsTestButton",
     buttonPosition.toAdded(new Vector(0, buttonSize.y + 10)),
-    "Phisics Test",
-    "normal",
+    "Physics",
+    "green",
     (btn) =>
       btn.transitionToScene("phisicsTest", slideReplace("left"), "replace")
-  );
-
-  const enableAudio = new LamenEmpireButton(
-    "EnableAudioButton",
-    buttonPosition.toAdded(new Vector(0, (buttonSize.y + 10) * 2)),
-    "Enable Audio",
-    "green",
-    (btn) => btn.getContext()!.getSoundManager().unlock()
-  );
-
-  const playAudio = new LamenEmpireButton(
-    "PlayAudioButton",
-    buttonPosition.toAdded(new Vector(0, (buttonSize.y + 10) * 3)),
-    "PlayAudio",
-    "purple",
-    (btn) => btn.getContext()!.getSoundManager().playSound("coin")
   );
 
   const debugButton = new LamenEmpireButton(
     "debug",
     buttonPosition.toSubtracted(new Vector(0, buttonSize.y + 10)),
     "Debug",
-    "normal",
-    (btn) => console.log(btn.getContext()!.getSoundManager().getLoadedSounds())
+    "green",
+    (btn) =>
+      btn.transitionToScene("pathfindingDebug", slideReplace("left"), "replace")
   );
 
   return {
     startButton,
     introButton,
     phisicsTestButton,
-    enableAudio,
-    playAudio,
     debugButton,
   };
 };

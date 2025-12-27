@@ -1,6 +1,6 @@
 import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 type FloatingViewOptions = {
   initialOpacity?: number;

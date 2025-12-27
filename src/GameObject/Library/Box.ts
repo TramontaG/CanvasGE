@@ -2,7 +2,7 @@ import { GameObject } from "..";
 import { SquareHitbox } from "../Hitboxes";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { onClick, onKeyPressed } from "../../Events/decorators";
 
 class Box extends GameObject {

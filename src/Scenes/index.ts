@@ -2,7 +2,7 @@ import type { CanvasController } from "../CanvasController";
 import type { GameEvent } from "../Events";
 import type { GameObject } from "../GameObject";
 import type { GameContext } from "../Context";
-import { Vector } from "../Vector";
+import { Vector } from "../Lib/Vector";
 import { ColisionHandler } from "../GameObject/Hitboxes/ColisionHandler";
 
 class Scene {
@@ -165,8 +165,7 @@ class Scene {
           const bHitboxes = b.getHitboxes();
           if (bHitboxes.length === 0) continue;
 
-          const pairKey =
-            a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
+          const pairKey = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
 
           for (let haIndex = 0; haIndex < aHitboxes.length; haIndex++) {
             const ha = aHitboxes[haIndex]!;
@@ -176,6 +175,16 @@ class Scene {
               if (!ha.intersects(hb)) continue;
 
               const resolution = ColisionHandler.resolveCollision(ha, hb);
+              const penetration =
+                resolution?.penetration ??
+                ColisionHandler.getPenetrationVector(ha, hb);
+
+              if (!notifiedPairs.has(pairKey)) {
+                notifiedPairs.add(pairKey);
+                a.onColision(b, penetration);
+                b.onColision(a, penetration.toMultiplied(-1));
+              }
+
               if (!resolution) continue;
 
               resolvedAny = true;
@@ -201,11 +210,6 @@ class Scene {
                 }
               }
 
-              if (!notifiedPairs.has(pairKey)) {
-                notifiedPairs.add(pairKey);
-                a.onColision(b, resolution.velocityA.toNormalized());
-                b.onColision(a, resolution.velocityB.toNormalized());
-              }
             }
           }
         }

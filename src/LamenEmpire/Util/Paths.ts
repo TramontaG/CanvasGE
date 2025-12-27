@@ -1,4 +1,4 @@
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 export const createClientPaths = () => {
   const entryPoint = [

@@ -3,7 +3,7 @@ import type { GameEvent } from "../../../../Events";
 import { grabbable } from "../../../../Events/decorators";
 import { GameObject } from "../../../../GameObject";
 import { SquareHitbox } from "../../../../GameObject/Hitboxes";
-import { Vector } from "../../../../Vector";
+import { Vector } from "../../../../Lib/Vector";
 import palette from "../../../colors.json";
 
 let index = 0;

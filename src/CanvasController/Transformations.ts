@@ -1,5 +1,5 @@
 import type { ShapeRendererFn } from "../Assets/Shapes";
-import type { Vector } from "../Vector";
+import type { Vector } from "../Lib/Vector";
 
 export const withRotation = (
   angle: number,

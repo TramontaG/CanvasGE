@@ -1,7 +1,7 @@
 import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { Scene } from "../../Scenes";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 type TextOptions = {
   color?: string;

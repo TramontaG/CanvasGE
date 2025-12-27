@@ -1,13 +1,18 @@
 import type { CanvasController } from "../../../../CanvasController";
 import { GameObject } from "../../../../GameObject";
 import { SquareHitbox } from "../../../../GameObject/Hitboxes";
-import { Vector } from "../../../../Vector";
+import { Vector } from "../../../../Lib/Vector";
 import palette from "../../../colors.json";
 
 class Wall extends GameObject {
   private color: string;
 
-  constructor(name: string, position: Vector, private size: Vector, color?: string) {
+  constructor(
+    name: string,
+    position: Vector,
+    private size: Vector,
+    color?: string
+  ) {
     super(name, position);
 
     this.color = color ?? palette.DarkPurple;

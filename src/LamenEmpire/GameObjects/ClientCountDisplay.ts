@@ -1,5 +1,5 @@
 import { GameObject } from "../../GameObject";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { Text } from "../../GameObject/Library/Text";
 
 class ClientCountDisplay extends GameObject {

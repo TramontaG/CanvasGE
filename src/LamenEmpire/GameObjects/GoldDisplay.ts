@@ -1,5 +1,5 @@
 import { GameObject } from "../../GameObject";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { Text } from "../../GameObject/Library/Text";
 
 class GoldDisplay extends GameObject {
@@ -10,12 +10,11 @@ class GoldDisplay extends GameObject {
   constructor(position: Vector) {
     super("GoldDisplay", position);
 
-    this.label = new Text(
-      "GoldDisplayText",
-      Vector.zero(),
-      this.formatText(),
-      { color: "#f2d14b", size: "18px", align: "center" }
-    );
+    this.label = new Text("GoldDisplayText", Vector.zero(), this.formatText(), {
+      color: "#f2d14b",
+      size: "18px",
+      align: "center",
+    });
     this.label.setPositionRelativeToMotherShip(true);
     this.addChild(this.label);
   }

@@ -1,7 +1,7 @@
 import { Button } from "../../GameObject/Library/Button";
 import type { CanvasController } from "../../CanvasController";
 import type { GameObject } from "../../GameObject";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import type { Scene } from "../../Scenes";
 import { renderSprite } from "../../GameObject/Decorators";
 import type { GameEvent } from "../../Events";

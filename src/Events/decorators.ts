@@ -7,7 +7,7 @@ import type {
   MouseWheelScrolledEvent,
 } from ".";
 import type { GameObject } from "../GameObject";
-import { Vector } from "../Vector";
+import { Vector } from "../Lib/Vector";
 
 type HandleEventMethod<TObj extends GameObject> = (
   this: TObj,

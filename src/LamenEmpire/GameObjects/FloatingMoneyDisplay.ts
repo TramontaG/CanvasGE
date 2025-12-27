@@ -1,4 +1,4 @@
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { FloatingView } from "../../GameObject/Library/FloatingView";
 import { Text } from "../../GameObject/Library/Text";
 

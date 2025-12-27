@@ -1,8 +1,14 @@
 import { GameObject } from "../../GameObject";
-import { runEvent, type BaseTState, type ScriptEvent } from "../../ScriptedEvents";
-import { Vector } from "../../Vector";
+import {
+  runEvent,
+  type BaseTState,
+  type ScriptEvent,
+} from "../../ScriptedEvents";
+import { Vector } from "../../Lib/Vector";
 
-class ScriptedEventRunner<TState extends Record<string, unknown>> extends GameObject {
+class ScriptedEventRunner<
+  TState extends Record<string, unknown>
+> extends GameObject {
   private started = false;
   private running: Promise<void> | null = null;
 
@@ -24,7 +30,10 @@ class ScriptedEventRunner<TState extends Record<string, unknown>> extends GameOb
       error: undefined,
     };
 
-    await runEvent(this.event, ctx, { ...baseState, ...this.initialState } as TState & BaseTState);
+    await runEvent(this.event, ctx, {
+      ...baseState,
+      ...this.initialState,
+    } as TState & BaseTState);
   }
 
   override tick(): void {

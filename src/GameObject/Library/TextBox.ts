@@ -2,7 +2,7 @@ import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
 import type { GameEvent } from "../../Events";
 import type { Scene } from "../../Scenes";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 import { SquareHitbox } from "../Hitboxes";
 
 type TextBoxPlacement = "top" | "middle" | "bottom";
@@ -43,21 +43,26 @@ type TextBoxOptions = {
   typing?: TextBoxTypingOptions;
 };
 
-const TEXTBOX_PRESETS: Record<TextBoxPreset, Required<Pick<
-  TextBoxOptions,
-  | "placement"
-  | "height"
-  | "marginX"
-  | "marginY"
-  | "padding"
-  | "backgroundColor"
-  | "backgroundOpacity"
-  | "borderColor"
-  | "borderWidth"
-  | "textColor"
-  | "textSize"
-  | "textAlign"
->> & { typing: Required<TextBoxTypingOptions> }> = {
+const TEXTBOX_PRESETS: Record<
+  TextBoxPreset,
+  Required<
+    Pick<
+      TextBoxOptions,
+      | "placement"
+      | "height"
+      | "marginX"
+      | "marginY"
+      | "padding"
+      | "backgroundColor"
+      | "backgroundOpacity"
+      | "borderColor"
+      | "borderWidth"
+      | "textColor"
+      | "textSize"
+      | "textAlign"
+    >
+  > & { typing: Required<TextBoxTypingOptions> }
+> = {
   dialog: {
     placement: "bottom",
     height: 170,
@@ -392,9 +397,7 @@ class TextBox extends GameObject {
         const drawY = y + this.padding + Math.max(0, target - drawH) / 2;
         const side = portrait.side ?? "left";
         const drawX =
-          side === "left"
-            ? x + this.padding
-            : x + width - this.padding - drawW;
+          side === "left" ? x + this.padding : x + width - this.padding - drawW;
 
         canvas
           .getSpriteLibrary()
@@ -407,8 +410,7 @@ class TextBox extends GameObject {
           );
 
         contentWidth = Math.max(0, contentWidth - drawW - portraitGap);
-        contentX =
-          side === "left" ? contentX + drawW + portraitGap : contentX;
+        contentX = side === "left" ? contentX + drawW + portraitGap : contentX;
       }
     }
 

@@ -1,5 +1,5 @@
 import { Scene } from "../../../Scenes";
-import { Vector } from "../../../Vector";
+import { Vector } from "../../../Lib/Vector";
 import { Panel } from "../../GameObjects/Panel";
 import { CityView } from "../../GameObjects/CityView";
 import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";

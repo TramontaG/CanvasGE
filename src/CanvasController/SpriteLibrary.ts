@@ -1,4 +1,4 @@
-import type { Vector } from "../Vector";
+import type { Vector } from "../Lib/Vector";
 
 class SpriteLibrary {
   private sprites: Map<string, HTMLImageElement> = new Map();

@@ -10,6 +10,7 @@ type LamenEmpireScenes = {
   menu: Scene;
   gameplay: GameplaySceneBindings;
   phisicsTest: Scene;
+  pathfindingDebug: Scene;
 };
 
 export type { SceneDimensions, LamenEmpireScenes, GameplaySceneBindings };

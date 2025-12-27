@@ -1,12 +1,16 @@
 import { Scene } from "../../../Scenes";
-import { Vector } from "../../../Vector";
+import { Vector } from "../../../Lib/Vector";
 import palette from "../../colors.json";
 import { Button } from "../../../GameObject/Library/Button";
 import { Ball } from "./GameObjects/Ball";
 import { PhisicsBox } from "./GameObjects/Box";
 import { Wall } from "./GameObjects/Wall";
 import { random } from "../../Util/Math";
-import { fadeTransition } from "../../../Scenes/SceneManager/Transitions";
+import {
+  fadeTransition,
+  slideReplace,
+} from "../../../Scenes/SceneManager/Transitions";
+import { LamenEmpireButton } from "../../GameObjects/LamenEmpireButton";
 
 const WALL_THICKNESS = 20;
 const BALL_COUNT = 10;
@@ -186,27 +190,23 @@ const createPhisicsTest = ({
     });
   };
 
-  const randomizeButton = new Button(
+  const randomizeButton = new LamenEmpireButton(
     "RandomizeSceneObjects",
     new Vector(32, 32),
-    new Vector(200, 64),
-    "Randomize objects",
-    palette.Primary,
-    "white",
+    "Random",
+    "green",
     () => randomizeObjects()
   );
 
-  const backButton = new Button(
+  const backButton = new LamenEmpireButton(
     "BackToLastScene",
     new Vector(240, 32),
-    new Vector(200, 64),
-    "Back to last scene",
-    palette.Primary,
-    "white",
+    "Back",
+    "purple",
     (obj) =>
       obj
         .getContext()
-        ?.transitionToScene("menu", fadeTransition(200), "replace")
+        ?.transitionToScene("menu", slideReplace("right"), "replace")
   );
 
   scene.addGameObject([

@@ -1,5 +1,5 @@
 import type { Scene } from "..";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 type TransitionScenes = {
   from: Scene | null;
@@ -82,10 +82,7 @@ const resolveSlideDistance = (
     return distance;
   }
 
-  const canvas = scenes.to
-    .getContext()
-    ?.getCanvas()
-    .getCanvas();
+  const canvas = scenes.to.getContext()?.getCanvas().getCanvas();
 
   if (!canvas) {
     return defaultSlideDistance;

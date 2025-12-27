@@ -1,7 +1,7 @@
 import { GameObject } from "..";
 import type { GameEvent } from "../../Events";
 import { onChildrenEvents } from "../../Events/decorators";
-import { Vector } from "../../Vector";
+import { Vector } from "../../Lib/Vector";
 
 class Group extends GameObject {
   constructor(name: string, children: GameObject[]) {
