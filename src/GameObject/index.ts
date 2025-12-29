@@ -4,7 +4,11 @@ import type { Scene } from "../Scenes";
 import { Vector } from "../Lib/Vector";
 import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
-import { KEY_TICK_HANDLERS, onHover, onStopHovering } from "../Events/decorators";
+import {
+  KEY_TICK_HANDLERS,
+  onHover,
+  onStopHovering,
+} from "../Events/decorators";
 import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 import type { Walker } from "./Walker";
 
@@ -363,37 +367,6 @@ class GameObject {
 
   sendMessage<TPayload>(channel: string, payload: TPayload): void {
     this.context?.sendMessage(channel, payload, this);
-  }
-
-  setCurrentScene(name: string): void {
-    this.context?.setCurrentScene(name);
-  }
-
-  pushScene(name: string): void {
-    this.context?.pushScene(name);
-  }
-
-  popScene(): Scene | undefined {
-    return this.context?.popScene();
-  }
-
-  transitionToScene(
-    name: string,
-    transition?: SceneTransition,
-    mode: "replace" | "push" = "replace"
-  ): Promise<void> {
-    return (
-      this.context?.transitionToScene(name, transition, mode) ??
-      Promise.resolve()
-    );
-  }
-
-  getPressedKeys(): string[] {
-    return this.context?.getPressedKeys() ?? [];
-  }
-
-  isKeyPressed(key: string): boolean {
-    return this.context?.isKeyPressed(key) ?? false;
   }
 
   private runKeyTickHandlers(): void {

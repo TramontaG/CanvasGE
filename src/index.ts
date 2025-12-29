@@ -1,5 +1,4 @@
 export * from "./Assets/Shapes";
-
 export * from "./CanvasController";
 export * from "./Context";
 export * from "./Events";

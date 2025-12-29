@@ -18,18 +18,20 @@ export type TextBoxSequenceEntry =
       textBox?: TextBoxOptions;
     };
 
-export const createTextBoxSequence = (
+export const createTextBoxSequence = <TState extends Record<string, any> = {}>(
   entries: TextBoxSequenceEntry[],
   defaultTextBoxOptions: TextBoxOptions = {}
 ) => {
+  type State = TextBoxSequenceState & TState;
+
   const isSpaceDown = (ctx: {
     isKeyPressed: (key: string) => boolean;
   }): boolean => ctx.isKeyPressed(" ") || ctx.isKeyPressed("Spacebar");
 
   const setDialog = (
     entry: TextBoxSequenceEntry
-  ): ScriptEvent<TextBoxSequenceState & BaseTState> =>
-    scripted<TextBoxSequenceState>(async (ctx, state) => {
+  ): ScriptEvent<State & BaseTState> =>
+    scripted<State>(async (ctx, state) => {
       state.dialog?.destroy();
 
       const resolved =
@@ -52,14 +54,14 @@ export const createTextBoxSequence = (
       return { ...state, dialog };
     }, "setDialog");
 
-  const cleanupDialog = (): ScriptEvent<TextBoxSequenceState & BaseTState> =>
-    scripted<TextBoxSequenceState>(async (_ctx, state) => {
+  const cleanupDialog = (): ScriptEvent<State & BaseTState> =>
+    scripted<State>(async (_ctx, state) => {
       state.dialog?.destroy();
       return { ...state, dialog: undefined };
     }, "cleanupDialog");
 
   const waitForDialogAdvance = () =>
-    sequenceOf<TextBoxSequenceState>(
+    sequenceOf<State>(
       [
         waitUntil(
           (_ctx, state) => {
@@ -82,9 +84,9 @@ export const createTextBoxSequence = (
       "waitForDialogAdvance"
     );
 
-  return sequenceOf<TextBoxSequenceState>([
+  return sequenceOf<State>([
     ...entries.map((page) =>
-      sequenceOf<TextBoxSequenceState>([
+      sequenceOf<State>([
         setDialog(page),
         waitForDialogAdvance(),
       ])

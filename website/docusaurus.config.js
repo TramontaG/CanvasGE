@@ -32,6 +32,14 @@ const config = {
           routeBasePath: "/",
           sidebarPath: require.resolve("./sidebars.js"),
           editUrl: undefined,
+          // Make "current" (unversioned docs in website/docs) the default during dev.
+          // Versioned docs remain accessible under their version path.
+          lastVersion: "current",
+          versions: {
+            current: {
+              label: "Next",
+            },
+          },
         },
         blog: false,
         theme: {
