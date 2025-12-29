@@ -17,6 +17,13 @@ type CollisionResolution = {
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 const cross = (a: Vector, b: Vector): number => a.x * b.y - a.y * b.x;
 
+const getInverseMass = (immovable: boolean, mass: number | undefined): number => {
+  if (immovable) return 0;
+  const resolved = mass ?? 1;
+  if (!Number.isFinite(resolved) || resolved <= 0) return 1;
+  return 1 / resolved;
+};
+
 const getHitboxBounds = (hitbox: Hitbox) => {
   if (hitbox instanceof CircleHitbox) {
     const center = hitbox.getAbsolutePosition();
@@ -364,31 +371,31 @@ class ColisionHandler {
     const centerA = getBodyCenter(hitboxesA);
     const centerB = getBodyCenter(hitboxesB);
 
-    const invInertiaA = immovableA ? 0 : getInverseInertia(hitboxesA);
-    const invInertiaB = immovableB ? 0 : getInverseInertia(hitboxesB);
+    const invMassA = getInverseMass(immovableA, goA.phisics.mass);
+    const invMassB = getInverseMass(immovableB, goB.phisics.mass);
+    const invMassSum = invMassA + invMassB;
+
+    // Base inverse inertia assumes unit mass; scale by inverse mass.
+    const invInertiaA =
+      invMassA > 0 ? getInverseInertia(hitboxesA) * invMassA : 0;
+    const invInertiaB =
+      invMassB > 0 ? getInverseInertia(hitboxesB) * invMassB : 0;
 
     const contactOffsetA = contactPoint.toSubtracted(centerA);
     const contactOffsetB = contactPoint.toSubtracted(centerB);
 
     const deltaA =
-      !immovableA && immovableB
-        ? penetration
-        : !immovableA && !immovableB
-        ? penetration.toMultiplied(0.5)
+      invMassA > 0 && invMassSum > 0
+        ? penetration.toMultiplied(invMassA / invMassSum)
         : Vector.zero();
 
     const deltaB =
-      immovableA && !immovableB
-        ? penetration.toMultiplied(-1)
-        : !immovableA && !immovableB
-        ? penetration.toMultiplied(-0.5)
+      invMassB > 0 && invMassSum > 0
+        ? penetration.toMultiplied(-invMassB / invMassSum)
         : Vector.zero();
 
     const velocityA = goA.speed.clone();
     const velocityB = goB.speed.clone();
-
-    const invMassA = immovableA ? 0 : 1;
-    const invMassB = immovableB ? 0 : 1;
 
     let resolvedVelocityA = velocityA.clone();
     let resolvedVelocityB = velocityB.clone();
@@ -431,7 +438,6 @@ class ColisionHandler {
       }
     };
 
-    const invMassSum = invMassA + invMassB;
     if (invMassSum > 0) {
       const vAContact = velocityAtContact(
         resolvedVelocityA,

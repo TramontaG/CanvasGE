@@ -4,15 +4,16 @@ import type { Scene } from "../Scenes";
 import { Vector } from "../Lib/Vector";
 import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
-import { onClick, onHover, onStopHovering } from "../Events/decorators";
+import { onHover, onStopHovering } from "../Events/decorators";
 import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
-import type { Walker } from "../LamenEmpire/GameObjects/Walker";
+import type { Walker } from "./Walker";
 
 type GameObjectPhisicsDescriptor = {
   immovable?: boolean;
   restitution?: number;
   affectedByGravity?: boolean;
   friction?: number;
+  mass?: number;
 };
 
 class GameObject {
@@ -37,6 +38,7 @@ class GameObject {
     restitution: 1,
     affectedByGravity: false,
     friction: 0,
+    mass: 1,
   };
 
   public id: string = Math.floor(Math.random() * 0xffffffff).toString(16);
@@ -82,6 +84,14 @@ class GameObject {
       // Using this way messes up with the 'this' keyword
       // this.children.forEach((child) => child.tick());
     }
+  }
+
+  /**
+   * Runs when an overlap is detected, before resolution/impulses are applied.
+   * Return `false` to ignore collision handling with `otherGO`.
+   */
+  beforeColision(otherGO: GameObject): boolean {
+    return true;
   }
 
   onColision(otherGO: GameObject, penetration: Vector) {}

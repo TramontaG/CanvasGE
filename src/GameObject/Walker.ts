@@ -1,9 +1,9 @@
-import type { CanvasController } from "../../CanvasController";
-import type { GameObject } from "../../GameObject";
-import { CircleHitbox, SquareHitbox } from "../../GameObject/Hitboxes";
-import { MinHeap } from "../../Lib/MinHeap";
-import { PathfindingProxy } from "../../Lib/PathfindingProxy";
-import { Vector } from "../../Lib/Vector";
+import type { GameObject } from ".";
+import type { CanvasController } from "../CanvasController";
+import { MinHeap } from "../Lib/MinHeap";
+import { PathfindingProxy } from "../Lib/PathfindingProxy";
+import { Vector } from "../Lib/Vector";
+import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 
 type WalkerPathRecalculationContext = {
   walker: Walker;

@@ -49,7 +49,7 @@ class FloatingView extends GameObject {
   }
 
   override tick(): void {
-    this.position.add(new Vector(0, -this.riseSpeed));
+    this.getPosition().add(new Vector(0, -this.riseSpeed));
     const nextOpacity = Math.max(0, this.getOpacity() - this.fadeStep);
     this.setOpacity(nextOpacity);
 

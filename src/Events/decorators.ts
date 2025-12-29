@@ -59,6 +59,40 @@ const composeMethodDecorators = <T>(
   };
 };
 
+type BeforeColisionMethod<TObj extends GameObject = GameObject> = (
+  this: TObj,
+  other: GameObject
+) => boolean;
+
+/**
+ * Decorator for controlling whether a GameObject should handle collisions with another.
+ * If `predicate(self, other)` returns `false`, the decorated method returns `false`.
+ *
+ * Intended usage:
+ * - Apply to `GameObject.beforeColision(other)`
+ */
+export const solidTo = <TObj extends GameObject = GameObject>(
+  predicate: (self: TObj, other: GameObject) => boolean
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<BeforeColisionMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (this: TObj, other: GameObject) {
+      if (!predicate(this, other)) {
+        return false;
+      }
+      return original.call(this, other);
+    };
+
+    return descriptor;
+  };
+};
+
 /**
  * Decorator for handling mouse clicks on hitboxes.
  */
@@ -170,49 +204,162 @@ export const onMouseWheel = <TObj extends GameObject = GameObject>(
  * mouse.
  */
 export const grabbable = <TObj extends GameObject = GameObject>() => {
-  let offset = Vector.zero();
-  const speedSamples: Vector[] = [];
+  type GrabState = {
+    offset: Vector;
+    samples: Vector[];
+    lastTickPosition: Vector | null;
+    stationaryTicks: number;
+    throwSpeed: Vector;
+    lastMouseMoveTimeMs: number | null;
+  };
+
+  const STATE = Symbol.for("canvasge.grabbableState");
+  const getState = (obj: GameObject): GrabState => {
+    const record = obj as unknown as Record<symbol, GrabState | undefined>;
+    let state = record[STATE];
+    if (!state) {
+      state = {
+        offset: Vector.zero(),
+        samples: [],
+        lastTickPosition: null,
+        stationaryTicks: 0,
+        throwSpeed: Vector.zero(),
+        lastMouseMoveTimeMs: null,
+      };
+      record[STATE] = state;
+    }
+    return state;
+  };
+
   const maxSamples = 10;
-  let avgSpeed = Vector.zero();
+  const maxThrowSpeed = 30;
+  const stationaryEpsilonSq = 1e-6;
+  const stationaryTicksToZero = 2;
 
-  return composeMethodDecorators(
-    onHover((obj) => (obj.hovering = true)),
-    onStopHovering((obj) => (obj.hovering = false)),
-    onMouseRelease((obj) => {
-      obj.beingGrabbed = false;
-      obj.speed = avgSpeed;
+  return function (
+    target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    registerKeyTickHandler<TObj>(target, (obj) => {
+      if (!obj.beingGrabbed) return;
 
-      console.log(avgSpeed);
-    }),
-    onClick((obj, event) => {
-      const { x, y } = event;
-      obj.beingGrabbed = true;
-      offset = obj.getPosition().toSubtracted(new Vector(x, y));
-    }),
-    onMouseMoved((obj, event) => {
-      const { x, y } = event;
-      if (obj.beingGrabbed) {
-        const oldPosition = obj.getPosition();
-        obj.setPosition(new Vector(x, y).add(offset));
-        const newPosition = obj.getPosition();
+      const state = getState(obj);
+      const current = obj.getScenePosition();
 
-        const delta = newPosition.toSubtracted(oldPosition);
-        speedSamples.unshift(delta);
-        speedSamples.length = maxSamples;
-
-        const avgSpeedMag = speedSamples.reduce(
-          (acc, v) => v.magnitude() + acc,
-          0
-        );
-        avgSpeed = speedSamples
-          .reduce((acc, v) => acc.add(v), Vector.zero())
-          .normalize()
-          .multiply(avgSpeedMag);
-
-        obj.speed = Vector.zero();
+      if (!state.lastTickPosition) {
+        state.lastTickPosition = current.clone();
+        state.samples = [];
+        state.stationaryTicks = 0;
+        state.throwSpeed = Vector.zero();
+        return;
       }
-    })
-  );
+
+      const delta = current.toSubtracted(state.lastTickPosition);
+      state.lastTickPosition = current.clone();
+
+      if (delta.squaredMagnitude() <= stationaryEpsilonSq) {
+        state.stationaryTicks++;
+        if (state.stationaryTicks >= stationaryTicksToZero) {
+          state.samples = [];
+          state.throwSpeed = Vector.zero();
+        }
+        return;
+      }
+
+      state.stationaryTicks = 0;
+      state.samples.unshift(delta);
+      state.samples.length = maxSamples;
+
+      const avg = state.samples.reduce((acc, v) => acc.add(v), Vector.zero());
+      if (state.samples.length > 0) {
+        avg.multiply(1 / state.samples.length);
+      }
+
+      if (avg.magnitude() > maxThrowSpeed) {
+        avg.normalize().multiply(maxThrowSpeed);
+      }
+
+      state.throwSpeed = avg;
+    });
+
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      const state = getState(this);
+
+      const sceneOffset = this.scene?.getOffset() ?? Vector.zero();
+      const mouseToScene = (x: number, y: number): Vector =>
+        new Vector(x, y).toSubtracted(sceneOffset);
+
+      const pointerInside = (x: number, y: number): boolean => {
+        const hitboxes = this.getHitboxes();
+        return hitboxes.some((hitbox) =>
+          hitbox.intersectsWithPoint(new Vector(x, y))
+        );
+      };
+
+      if (event.type === "mouseButtonPressed") {
+        if (pointerInside(event.x, event.y)) {
+          this.beingGrabbed = true;
+          this.speed = Vector.zero();
+          this.angularVelocity = 0;
+
+          const mouseScenePos = mouseToScene(event.x, event.y);
+          state.offset = this.getScenePosition().toSubtracted(mouseScenePos);
+          state.samples = [];
+          state.lastTickPosition = this.getScenePosition();
+          state.stationaryTicks = 0;
+          state.throwSpeed = Vector.zero();
+          state.lastMouseMoveTimeMs = performance.now();
+
+          event.stopPropagation = true;
+        }
+      }
+
+      if (event.type === "mouseMoved") {
+        if (this.beingGrabbed) {
+          state.lastMouseMoveTimeMs = performance.now();
+          const mouseScenePos = mouseToScene(event.x, event.y);
+          this.setPosition(mouseScenePos.toAdded(state.offset));
+          this.speed = Vector.zero();
+          event.stopPropagation = true;
+        } else if (pointerInside(event.x, event.y)) {
+          this.hovering = true;
+        } else {
+          this.hovering = false;
+        }
+      }
+
+      if (event.type === "mouseButtonReleased") {
+        if (this.beingGrabbed) {
+          this.beingGrabbed = false;
+          const tickRate = this.getContext()?.getTickRate() ?? 60;
+          const tickIntervalMs = 1000 / tickRate;
+          const now = performance.now();
+          const timeSinceMove =
+            state.lastMouseMoveTimeMs === null
+              ? Number.POSITIVE_INFINITY
+              : now - state.lastMouseMoveTimeMs;
+
+          // If the pointer has been still for at least ~1 tick before release,
+          // drop the throw velocity to avoid "stale" inertia.
+          this.speed =
+            timeSinceMove >= tickIntervalMs ? Vector.zero() : state.throwSpeed.clone();
+          event.stopPropagation = true;
+        }
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
 };
 
 /**

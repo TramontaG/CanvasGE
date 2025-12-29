@@ -9,12 +9,15 @@ class ShowOnHover extends GameObject {
   private child: GameObject;
 
   constructor(child: GameObject, size: Vector, position?: Vector) {
-    const anchor = position ? position.clone() : child.position.clone();
+    const anchor = position ? position.clone() : child.getPosition().clone();
     super("ShowOnHover", anchor);
     this.child = child;
 
     // Keep the child positioned relative to this anchor so it moves along with scroll views.
-    const relativeChildPosition = child.position.toSubtracted(anchor);
+    const relativeChildPosition = child
+      .getPosition()
+      .clone()
+      .toSubtracted(anchor);
     this.child.setPosition(relativeChildPosition);
     this.child.setPositionRelativeToMotherShip(true);
     this.child.setMotherShip(this);

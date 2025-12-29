@@ -67,7 +67,7 @@ class ScrollView extends GameObject {
   }
 
   private addChildWithOffset(child: GameObject, offset?: Vector): void {
-    const relativeOffset = offset ?? child.position.clone();
+    const relativeOffset = offset ?? child.getPosition().clone();
     this.childOffsets.set(child, relativeOffset.clone());
     this.bumpContentHeight(relativeOffset);
     this.syncChildPosition(child, relativeOffset);
@@ -97,8 +97,8 @@ class ScrollView extends GameObject {
 
   private syncChildPosition(child: GameObject, relativeOffset: Vector): void {
     const absolute = new Vector(
-      this.position.x + relativeOffset.x,
-      this.position.y + relativeOffset.y - this.scrollOffset
+      this.getPosition().x + relativeOffset.x,
+      this.getPosition().y + relativeOffset.y - this.scrollOffset
     );
     child.setPosition(absolute);
   }

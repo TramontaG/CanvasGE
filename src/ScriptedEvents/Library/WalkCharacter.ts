@@ -1,6 +1,6 @@
 import { scripted, type BaseTState } from "..";
 import type { GameObject } from "../../GameObject";
-import type { Walker } from "../../LamenEmpire/GameObjects/Walker";
+import type { Walker } from "../../GameObject/Walker";
 
 export const walkCharacter = <TState extends Record<string, any>>(
   character: GameObject,

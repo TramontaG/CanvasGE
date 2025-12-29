@@ -146,6 +146,7 @@ class Scene {
     const objects = [...movableObjects, ...immovableObjects];
 
     const notifiedPairs = new Set<string>();
+    const allowedPairs = new Map<string, boolean>();
     const maxPasses = 4;
 
     for (let pass = 0; pass < maxPasses; pass++) {
@@ -158,7 +159,7 @@ class Scene {
         const aHitboxes = a.getHitboxes();
         if (aHitboxes.length === 0) continue;
 
-        for (let j = i + 1; j < objects.length; j++) {
+        objectPairLoop: for (let j = i + 1; j < objects.length; j++) {
           const b = objects[j]!;
           if (!b.isActive()) continue;
 
@@ -166,6 +167,8 @@ class Scene {
           if (bHitboxes.length === 0) continue;
 
           const pairKey = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
+          let isPairAllowed = allowedPairs.get(pairKey);
+          if (isPairAllowed === false) continue;
 
           for (let haIndex = 0; haIndex < aHitboxes.length; haIndex++) {
             const ha = aHitboxes[haIndex]!;
@@ -173,6 +176,15 @@ class Scene {
               const hb = bHitboxes[hbIndex]!;
 
               if (!ha.intersects(hb)) continue;
+
+              if (isPairAllowed === undefined) {
+                isPairAllowed = a.beforeColision(b) && b.beforeColision(a);
+                allowedPairs.set(pairKey, isPairAllowed);
+              }
+
+              if (!isPairAllowed) {
+                continue objectPairLoop;
+              }
 
               const resolution = ColisionHandler.resolveCollision(ha, hb);
               const penetration =
