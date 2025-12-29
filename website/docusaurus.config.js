@@ -1,0 +1,106 @@
+const path = require("node:path");
+const { themes } = require("prism-react-renderer");
+
+/** @type {import('@docusaurus/types').Config} */
+const config = {
+  title: "Sliver Engine",
+  tagline: "Pre-alpha TypeScript/HTML5 Canvas 2D game engine",
+  favicon: "img/favicon.svg",
+
+  // Deployment settings (update when you publish the docs site)
+  url: "https://example.com",
+  baseUrl: "/",
+
+  onBrokenLinks: "throw",
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: "warn",
+    },
+  },
+
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en"],
+  },
+
+  presets: [
+    [
+      "classic",
+      /** @type {import('@docusaurus/preset-classic').Options} */
+      ({
+        docs: {
+          routeBasePath: "/",
+          sidebarPath: require.resolve("./sidebars.js"),
+          editUrl: undefined,
+        },
+        blog: false,
+        theme: {
+          customCss: require.resolve("./src/css/custom.css"),
+        },
+      }),
+    ],
+  ],
+
+  plugins: [
+    function webpackAliasesPlugin() {
+      return {
+        name: "webpack-aliases-plugin",
+        configureWebpack() {
+          return {
+            resolve: {
+              alias: {
+                shallowequal: path.resolve(__dirname, "src/shims/shallowequal.js"),
+              },
+            },
+          };
+        },
+      };
+    },
+  ],
+
+  themeConfig:
+    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    ({
+      navbar: {
+        title: "Sliver Engine",
+        logo: {
+          alt: "Sliver Engine",
+          src: "img/logo.svg",
+        },
+        items: [
+          {
+            type: "docSidebar",
+            sidebarId: "defaultSidebar",
+            position: "left",
+            label: "Docs",
+          },
+          {
+            href: "https://github.com/your-org/your-repo",
+            label: "GitHub",
+            position: "right",
+          },
+        ],
+      },
+      footer: {
+        style: "dark",
+        links: [
+          {
+            title: "Docs",
+            items: [
+              {
+                label: "Getting started",
+                to: "/getting-started",
+              },
+            ],
+          },
+        ],
+        copyright: `Copyright © ${new Date().getFullYear()} Sliver Engine.`,
+      },
+      prism: {
+        theme: themes.github,
+        darkTheme: themes.dracula,
+      },
+    }),
+};
+
+module.exports = config;

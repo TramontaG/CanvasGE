@@ -58,9 +58,27 @@ Sliver Engine appends the `<canvas>` to `#canvas-container` if present, otherwis
 - `src/Assets` – Shape render helpers (arrow/chevrons).
 
 ## Running locally
-1) Install deps: `npm install`
-2) Typecheck: `npm run typecheck`
-3) Build: `npm run build`
+1) Install deps: `bun install`
+2) Typecheck: `bun run typecheck`
+3) Build: `bun run build`
+
+## Documentation (Docusaurus)
+The docs site lives in `website/` and is **not** part of the published npm package.
+
+### Run locally
+1) Install docs deps: `bun run docs:install`
+2) Start the dev server: `bun run docs:start`
+
+### Docs versioning
+Docs are versioned (initial snapshot: `0.0.1-alpha.0`). For a new engine release, snapshot the current docs into a new version:
+
+```bash
+bun run docs:version -- 0.0.1-alpha.1
+```
+
+Commit the generated `website/versioned_docs/`, `website/versioned_sidebars/`, and `website/versions.json`.
+
+When you decide how to publish, update `website/docusaurus.config.js` (`url`, `baseUrl`, and the GitHub link).
 
 ## Extending
 - Add a scene by instantiating `Scene` and registering it in `SceneManager` (see how `src/LamenEmpire/index.ts` wires scenes today).
@@ -76,6 +94,6 @@ Sliver Engine appends the `<canvas>` to `#canvas-container` if present, otherwis
 
 ## Notes
 - Browser-only (DOM + Canvas + Web Audio).
-- Building requires a modern Node.js (TypeScript 5).
+- Tooling uses Bun (TypeScript 5).
 - If you use the decorator helpers, enable `experimentalDecorators: true` in your TS config.
 - `src/LamenEmpire` is a dogfooding game and is excluded from the published npm package.

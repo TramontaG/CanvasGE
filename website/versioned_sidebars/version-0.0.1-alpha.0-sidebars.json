@@ -1,0 +1,46 @@
+{
+  "defaultSidebar": [
+    {
+      "type": "doc",
+      "id": "intro"
+    },
+    {
+      "type": "doc",
+      "id": "getting-started"
+    },
+    {
+      "type": "category",
+      "label": "Core concepts",
+      "items": [
+        {
+          "type": "doc",
+          "id": "concepts/game-loop"
+        },
+        {
+          "type": "doc",
+          "id": "concepts/scenes"
+        },
+        {
+          "type": "doc",
+          "id": "concepts/game-objects"
+        },
+        {
+          "type": "doc",
+          "id": "concepts/events"
+        },
+        {
+          "type": "doc",
+          "id": "concepts/saves"
+        },
+        {
+          "type": "doc",
+          "id": "concepts/rendering"
+        },
+        {
+          "type": "doc",
+          "id": "concepts/audio"
+        }
+      ]
+    }
+  ]
+}

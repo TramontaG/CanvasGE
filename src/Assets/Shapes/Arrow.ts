@@ -1,3 +1,4 @@
+import type { ShapeRendererFn } from ".";
 import type { Vector } from "../../Lib/Vector";
 
 export const renderArrow = (

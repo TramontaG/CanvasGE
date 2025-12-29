@@ -18,9 +18,15 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "clean": "node -e \"const fs=require('fs'); if (fs.rmSync) fs.rmSync('dist',{recursive:true,force:true}); else if (fs.existsSync('dist')) fs.rmdirSync('dist',{recursive:true});\"",
-    "build": "npm run clean && tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json",
-    "prepack": "npm run build"
+    "clean": "bun scripts/clean.js",
+    "build": "bun run clean && bunx tsc -p tsconfig.build.json",
+    "typecheck": "bunx tsc -p tsconfig.json",
+    "prepack": "bun run build",
+    "docs:install": "cd website && bun install",
+    "docs:start": "cd website && bun run start",
+    "docs:build": "cd website && bun run build",
+    "docs:serve": "cd website && bun run serve",
+    "docs:clear": "cd website && bun run clear",
+    "docs:version": "cd website && bun run docs:version"
   }
 }

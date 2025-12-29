@@ -4,6 +4,7 @@
 .idea/
 .parcel-cache/
 node_modules/
+website/
 *.tgz
 
 # Sources (published output lives in dist/)
