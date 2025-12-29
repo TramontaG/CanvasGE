@@ -1,0 +1,16 @@
+# Tooling / repo-only
+.github/
+.vscode/
+.idea/
+.parcel-cache/
+node_modules/
+*.tgz
+
+# Sources (published output lives in dist/)
+src/
+tsconfig*.json
+
+# Local dev artifacts
+index.html
+bun.lock
+package-lock.json

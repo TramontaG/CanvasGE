@@ -1,6 +1,19 @@
-import { Game } from "./Game";
-import { prepareGame } from "./LamenEmpire";
+export * from "./Assets/Shapes";
 
-prepareGame().then((game: Game) => {
-  game.start();
-});
+export * from "./CanvasController";
+export * from "./Context";
+export * from "./Events";
+export * from "./Events/decorators";
+export * from "./Game";
+export * from "./GameObject";
+export * from "./GameObject/Decorators";
+export * from "./GameObject/Hitboxes";
+export * from "./GameObject/Hitboxes/ColisionHandler";
+export * from "./GameObject/Library";
+export * from "./GameObject/Walker";
+export * from "./Lib";
+export * from "./Scenes";
+export * from "./Scenes/SceneManager";
+export * from "./Scenes/SceneManager/Transitions";
+export * from "./ScriptedEvents";
+export * from "./SoundManager";

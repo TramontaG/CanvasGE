@@ -1,16 +1,26 @@
 {
-  "name": "canvasge",
+  "name": "sliver-engine",
+  "version": "0.0.1-alpha.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "devDependencies": {
-    "@types/bun": "latest",
-    "parcel": "^2.16.1"
+    "typescript": "^5.0.0"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "private": true,
   "scripts": {
-    "start": "parcel index.html --open",
-    "build": "parcel build index.html --dist-dir build --public-url ./"
-  },
-  "type": "module"
+    "clean": "node -e \"const fs=require('fs'); if (fs.rmSync) fs.rmSync('dist',{recursive:true,force:true}); else if (fs.existsSync('dist')) fs.rmdirSync('dist',{recursive:true});\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepack": "npm run build"
+  }
 }

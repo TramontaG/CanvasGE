@@ -133,3 +133,4 @@ class Game {
 export { Game };
 export type { GameOptions };
 export { GameSaves };
+export type { SaveFile };

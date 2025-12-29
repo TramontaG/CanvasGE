@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "canvasge",
+      "name": "sliver-engine",
       "devDependencies": {
         "@types/bun": "latest",
         "parcel": "^2.16.1",

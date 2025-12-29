@@ -25,7 +25,7 @@ type KeyTickHandler<TObj extends GameObject = GameObject> = (
   gameObject: TObj
 ) => void;
 
-const KEY_TICK_HANDLERS = Symbol.for("canvasge.keyTickHandlers");
+const KEY_TICK_HANDLERS = Symbol.for("sliver-engine.keyTickHandlers");
 
 function registerKeyTickHandler<TObj extends GameObject>(
   target: Object,
@@ -213,7 +213,7 @@ export const grabbable = <TObj extends GameObject = GameObject>() => {
     lastMouseMoveTimeMs: number | null;
   };
 
-  const STATE = Symbol.for("canvasge.grabbableState");
+  const STATE = Symbol.for("sliver-engine.grabbableState");
   const getState = (obj: GameObject): GrabState => {
     const record = obj as unknown as Record<symbol, GrabState | undefined>;
     let state = record[STATE];

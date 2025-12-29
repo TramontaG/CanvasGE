@@ -417,4 +417,5 @@ class CanvasController {
   }
 }
 
-export { CanvasController, ShapeDrawer };
+export * from "./Transformations";
+export { CanvasController, ShapeDrawer, SpriteLibrary };

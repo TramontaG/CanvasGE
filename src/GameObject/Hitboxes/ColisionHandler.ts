@@ -1,5 +1,5 @@
 import { CircleHitbox, SquareHitbox, type Hitbox } from ".";
-import { clamp } from "../../LamenEmpire/Util/Math";
+import { clamp } from "../../Lib/Math";
 import { Vector } from "../../Lib/Vector";
 
 type CollisionResolution = {

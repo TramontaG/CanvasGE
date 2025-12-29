@@ -4,7 +4,7 @@ import type { Scene } from "../Scenes";
 import { Vector } from "../Lib/Vector";
 import { CircleHitbox, SquareHitbox } from "./Hitboxes";
 import type { GameContext, MessageHandler } from "../Context";
-import { onHover, onStopHovering } from "../Events/decorators";
+import { KEY_TICK_HANDLERS, onHover, onStopHovering } from "../Events/decorators";
 import type { SceneTransition } from "../Scenes/SceneManager/Transitions";
 import type { Walker } from "./Walker";
 
@@ -397,8 +397,6 @@ class GameObject {
   }
 
   private runKeyTickHandlers(): void {
-    const KEY_TICK_HANDLERS = Symbol.for("canvasge.keyTickHandlers");
-
     const handlers: Array<(obj: GameObject) => void> = [];
 
     let proto = Object.getPrototypeOf(this);

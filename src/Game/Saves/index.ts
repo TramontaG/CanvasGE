@@ -104,7 +104,7 @@ class GameSaves {
   private onLoadSaveFileCallback: ((save: SaveFile) => void) | null = null;
 
   constructor(options?: GameSavesOptions) {
-    this.namespace = options?.namespace ?? "CanvasGE";
+    this.namespace = options?.namespace ?? "sliver-engine";
   }
 
   onLoadSaveFile(callback: ((save: SaveFile) => void) | null): this {
