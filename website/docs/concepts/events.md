@@ -8,7 +8,7 @@ Sliver’s default way to handle input is through **decorators** applied to a `G
 This gives you:
 
 - Hitbox-aware mouse events (`@onClick`, `@onHover`, …)
-- Tick-based key handling (`@onKeyPressed`, `@onKeyComboPressed`)
+- Key handling (`@onKeyPressed` for one-shot, `@onKeyHold` for continuous; combos too)
 - Event propagation control (`event.stopPropagation`)
 - Composition: stack multiple decorators on the same method
 
@@ -115,22 +115,38 @@ Runs on every `mouseWheelScrolled` anywhere on the canvas (not hitbox-based).
 
 Runs on `mouseWheelScrolled` only if the pointer is inside the hitboxes.
 
-## Keyboard decorators (tick-based)
+## Keyboard decorators
 
 Keyboard events update an internal `KeyAccumulator`. The key decorators use the **current key state** from the [`GameContext`](./game-context.md), which makes “hold to move” logic easy.
 
-### `@onKeyPressed(key, handler)`
+### `@onKeyPressed(key, handler)` (one-shot)
 
-Runs the handler every tick while `key` is held.
+Runs the handler **once** when `key` becomes pressed.
 
 ```ts
 import { onKeyPressed } from "sliver-engine";
 import { Vector } from "sliver-engine";
 
 @onKeyPressed("ArrowLeft", (obj) => {
+  obj.sendMessage("ui:back", null);
+})
+override handleEvent(event: GameEvent): void {
+  super.handleEvent(event);
+}
+```
+
+### `@onKeyHold(key, handler)` (continuous)
+
+Runs the handler every tick while `key` is held (good for movement).
+
+```ts
+import { onKeyHold } from "sliver-engine";
+import { Vector } from "sliver-engine";
+
+@onKeyHold("ArrowLeft", (obj) => {
   obj.speed = new Vector(-2, 0);
 })
-@onKeyPressed("ArrowRight", (obj) => {
+@onKeyHold("ArrowRight", (obj) => {
   obj.speed = new Vector(2, 0);
 })
 override handleEvent(event: GameEvent): void {
@@ -138,15 +154,15 @@ override handleEvent(event: GameEvent): void {
 }
 ```
 
-### `@onKeyComboPressed(keys, handler)`
+### `@onKeyComboPressed(keys, handler)` (one-shot)
 
-Runs the handler every tick while **all** keys in `keys` are held.
+Runs the handler **once** when **all** keys in `keys` become pressed.
 
 ```ts
 import { onKeyComboPressed } from "sliver-engine";
 
 @onKeyComboPressed(["Shift", "ArrowRight"], (obj) => {
-  obj.speed.x = 5; // “dash”
+  obj.sendMessage("player:dash", { dir: "right" });
 })
 override handleEvent(event: GameEvent): void {
   super.handleEvent(event);
@@ -156,6 +172,21 @@ override handleEvent(event: GameEvent): void {
 Notes:
 - Keys are compared against `KeyboardEvent.key` (e.g. `"ArrowLeft"`, `"a"`, `"Shift"`).
 - These are tick handlers; they don’t require you to react to raw `keyPressed` events.
+
+### `@onKeyComboHold(keys, handler)` (continuous)
+
+Runs the handler every tick while **all** keys in `keys` are held.
+
+```ts
+import { onKeyComboHold } from "sliver-engine";
+
+@onKeyComboHold(["Shift", "ArrowRight"], (obj) => {
+  obj.speed.x = 5; // hold-to-dash
+})
+override handleEvent(event: GameEvent): void {
+  super.handleEvent(event);
+}
+```
 
 ## Composition: stacking multiple decorators
 

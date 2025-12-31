@@ -1,18 +1,17 @@
 import {
   abort,
-  done,
   failed,
   isAborted,
   isErrored,
   runEvent,
   scripted,
-  type BaseTState,
   type ScriptEvent,
-} from ".";
-import type { GameContext } from "../Context";
+  type ScriptState,
+} from "..";
+import type { GameContext } from "../../Context";
 
-export const sequenceOf = <TState extends Record<string, any>>(
-  events: ScriptEvent<BaseTState & TState>[],
+export const sequenceOf = <TState extends object>(
+  events: ScriptEvent<TState>[],
   label: string | null = null
 ) => {
   return scripted<TState>(async (ctx, _state) => {
@@ -26,8 +25,8 @@ export const sequenceOf = <TState extends Record<string, any>>(
   }, label);
 };
 
-export const parallel = <TState extends Record<string, any>>(
-  events: ScriptEvent<TState & BaseTState>[],
+export const parallel = <TState extends object>(
+  events: ScriptEvent<TState>[],
   label: string | null = null
 ) => {
   return scripted<TState>(async (ctx, state) => {
@@ -44,8 +43,8 @@ export const parallel = <TState extends Record<string, any>>(
   }, label);
 };
 
-export const first = <TState extends Record<string, any>>(
-  events: ScriptEvent<TState & BaseTState>[],
+export const first = <TState extends object>(
+  events: ScriptEvent<TState>[],
   label: string | null = null
 ) => {
   return scripted<TState>(async (ctx, state) => {
@@ -55,10 +54,10 @@ export const first = <TState extends Record<string, any>>(
   }, label);
 };
 
-export const conditional = <TState extends Record<string, any>>(
-  predicate: (state: TState & BaseTState) => boolean,
-  thenEv: ScriptEvent<TState & BaseTState>,
-  elseEv: ScriptEvent<TState & BaseTState>,
+export const conditional = <TState extends object>(
+  predicate: (state: ScriptState<TState>) => boolean,
+  thenEv: ScriptEvent<TState>,
+  elseEv: ScriptEvent<TState>,
   label: string | null = null
 ) => {
   return scripted<TState>(async (ctx, state) => {
@@ -70,8 +69,8 @@ export const conditional = <TState extends Record<string, any>>(
   }, label);
 };
 
-export const all = <TState extends Record<string, any>>(
-  events: ScriptEvent<TState & BaseTState>[],
+export const all = <TState extends object>(
+  events: ScriptEvent<TState>[],
   label: string | null = null
 ) => {
   return scripted<TState>(async (ctx, _state) => {
@@ -103,9 +102,9 @@ export const all = <TState extends Record<string, any>>(
   }, label);
 };
 
-export const repeatWhile = <TState extends Record<string, any>>(
-  predicate: (ctx: GameContext, state: TState & BaseTState) => boolean,
-  event: ScriptEvent<TState & BaseTState>,
+export const repeatWhile = <TState extends object>(
+  predicate: (ctx: GameContext, state: ScriptState<TState>) => boolean,
+  event: ScriptEvent<TState>,
   label: string | null = null
 ) => {
   return scripted<TState>(async (ctx, state) => {
@@ -132,8 +131,8 @@ export const repeatWhile = <TState extends Record<string, any>>(
   });
 };
 
-export const repeat = <TState extends Record<string, any>>(
-  event: ScriptEvent<TState & BaseTState>,
+export const repeat = <TState extends object>(
+  event: ScriptEvent<TState>,
   times: number,
   label: string | null = null
 ) => {
@@ -148,8 +147,8 @@ export const repeat = <TState extends Record<string, any>>(
   }, label);
 };
 
-export const withTimeout = <TState extends Record<string, any>>(
-  event: ScriptEvent<TState & BaseTState>,
+export const withTimeout = <TState extends object>(
+  event: ScriptEvent<TState>,
   timeout: number,
   label: string | null = null
 ) => {
@@ -162,7 +161,7 @@ export const withTimeout = <TState extends Record<string, any>>(
   });
 };
 
-export const waitTicks = <TState extends Record<string, any>>(
+export const waitTicks = <TState extends object>(
   timeInTicks: number
 ) => {
   return scripted<TState>(async (ctx, state) => {
@@ -180,7 +179,7 @@ export const waitTicks = <TState extends Record<string, any>>(
   });
 };
 
-export const waitUntil = <TState extends Record<string, any>>(
+export const waitUntil = <TState extends object>(
   predicate: (ctx: GameContext, state: TState) => boolean,
   opts?: { pollGameTicks?: number; label?: string }
 ) => {
@@ -202,7 +201,7 @@ export const waitUntil = <TState extends Record<string, any>>(
   return core;
 };
 
-export const waitForKeyPress = <TState extends Record<string, any>>(
+export const waitForKeyPress = <TState extends object>(
   key: string,
   label: string | null = null
 ) => {

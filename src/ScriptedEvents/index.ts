@@ -1,7 +1,6 @@
 import type { GameContext } from "../Context";
 export * from "./Combinators";
-export * from "./Library/TextBoxSequence";
-export * from "./Library/WalkCharacter";
+export * from "./Library";
 
 export type BaseTState =
   | ErroredTState
@@ -33,22 +32,28 @@ export type SuccessTState = {
   error: undefined;
 };
 
-export type ScriptEvent<TState extends BaseTState> = {
+export type ScriptState<TState extends object> = BaseTState & TState;
+export type ScriptInputState<TState extends object> =
+  & TState
+  & Partial<BaseTState>;
+
+export type ScriptEvent<TState extends object> = {
   /**For debugging purposes */
   label?: string;
 
   /**Executes the script event and returns a new copy of the result state */
-  run(ctx: GameContext, state: TState): Promise<TState>;
+  run(ctx: GameContext, state: ScriptInputState<TState>): Promise<ScriptState<TState>>;
   abort: (reason: string) => void;
 };
 
-export const scripted = <TState extends Record<string, any>>(
+export const scripted = <TState extends object>(
   cb: (
     ctx: GameContext,
-    state: BaseTState & TState
-  ) => Promise<BaseTState & TState>,
+    state: ScriptState<TState>
+  ) => Promise<ScriptState<TState>>,
   label: string | null = null
-): ScriptEvent<BaseTState & TState> => {
+): ScriptEvent<TState> => {
+  // This is the state that will be passed to the script event
   const scriptState: ActiveTState = {
     done: false,
     aborted: undefined,
@@ -57,13 +62,13 @@ export const scripted = <TState extends Record<string, any>>(
 
   return {
     label: label ?? undefined,
-    run: (ctx: GameContext, state: BaseTState & TState) => {
+    run: (ctx: GameContext, state: ScriptInputState<TState>) => {
       const newState = {
         ...scriptState,
         ...state,
       };
 
-      return cb(ctx, newState);
+      return cb(ctx, newState as ScriptState<TState>);
     },
     abort: (reason: string) => abort(scriptState, reason),
   };
@@ -114,10 +119,10 @@ export const isDone = <TState extends BaseTState>(state: TState) => {
   return state.done;
 };
 
-export const runEvent = async <TState extends Record<string, any>>(
-  event: ScriptEvent<TState & BaseTState>,
+export const runEvent = async <TState extends object>(
+  event: ScriptEvent<TState>,
   ctx: GameContext,
-  state: TState & BaseTState
+  state: ScriptState<TState>
 ) => {
   if (isDone(state)) {
     return state;

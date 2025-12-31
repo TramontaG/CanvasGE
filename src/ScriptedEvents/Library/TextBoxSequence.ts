@@ -1,96 +1,27 @@
-import { scripted, type BaseTState, type ScriptEvent } from "..";
-import {
-  TextBox,
-  type TextBoxOptions,
-  type TextBoxPortrait,
-} from "../../GameObject/Library/TextBox";
-import { sequenceOf, waitUntil } from "../Combinators";
+import { scripted, sequenceOf } from "..";
+import { TextBox, type TextBoxOptions } from "../../GameObject/Library/TextBox";
 
-type TextBoxSequenceState = {
-  dialog?: TextBox;
+export type TextEntry = TextBoxOptions & {
+  text: string;
 };
 
-export type TextBoxSequenceEntry =
-  | string
-  | {
-      text: string;
-      portrait?: TextBoxPortrait;
-      textBox?: TextBoxOptions;
-    };
-
-export const createTextBoxSequence = <TState extends Record<string, any> = {}>(
-  entries: TextBoxSequenceEntry[],
-  defaultTextBoxOptions: TextBoxOptions = {}
+export const DisplayTextBox = <TState extends object>(
+  entry: TextEntry
 ) => {
-  type State = TextBoxSequenceState & TState;
+  return scripted<TState>(async (ctx, state) => {
+    return new Promise((resolve) => {
+      const textBox = new TextBox("textBox", entry.text, entry, () =>
+        resolve(state)
+      );
+      ctx.getSceneManager().getCurrentScene()?.addGameObject(textBox);
+    });
+  });
+};
 
-  const isSpaceDown = (ctx: {
-    isKeyPressed: (key: string) => boolean;
-  }): boolean => ctx.isKeyPressed(" ") || ctx.isKeyPressed("Spacebar");
-
-  const setDialog = (
-    entry: TextBoxSequenceEntry
-  ): ScriptEvent<State & BaseTState> =>
-    scripted<State>(async (ctx, state) => {
-      state.dialog?.destroy();
-
-      const resolved =
-        typeof entry === "string" ? { text: entry } : entry;
-
-      const portrait: TextBoxPortrait | undefined =
-        resolved.portrait ??
-        resolved.textBox?.portrait ??
-        defaultTextBoxOptions.portrait;
-
-      const dialog = new TextBox("Dialog", resolved.text, {
-        preset: "dialog",
-        ...defaultTextBoxOptions,
-        ...(resolved.textBox ?? {}),
-        portrait,
-      });
-
-      ctx.getCurrentScene()?.addGameObject(dialog);
-
-      return { ...state, dialog };
-    }, "setDialog");
-
-  const cleanupDialog = (): ScriptEvent<State & BaseTState> =>
-    scripted<State>(async (_ctx, state) => {
-      state.dialog?.destroy();
-      return { ...state, dialog: undefined };
-    }, "cleanupDialog");
-
-  const waitForDialogAdvance = () =>
-    sequenceOf<State>(
-      [
-        waitUntil(
-          (_ctx, state) => {
-            return !!state.dialog && !state.dialog.isTyping();
-          },
-          { label: "waitTypingDone" }
-        ),
-        // Force a release so the "skip typing" press doesn't instantly advance.
-        waitUntil(
-          (ctx, state) =>
-            !isSpaceDown(ctx) || !!state.dialog?.hasAdvanceRequested(),
-          { label: "waitSpaceRelease" }
-        ),
-        waitUntil(
-          (ctx, state) =>
-            isSpaceDown(ctx) || !!state.dialog?.hasAdvanceRequested(),
-          { label: "waitSpacePressOrClick" }
-        ),
-      ],
-      "waitForDialogAdvance"
-    );
-
-  return sequenceOf<State>([
-    ...entries.map((page) =>
-      sequenceOf<State>([
-        setDialog(page),
-        waitForDialogAdvance(),
-      ])
-    ),
-    cleanupDialog(),
+export const TextBoxSequence = <TState extends object>(
+  entries: TextEntry[]
+) => {
+  return sequenceOf<TState>([
+    ...entries.map((entry) => DisplayTextBox<TState>(entry)),
   ]);
 };

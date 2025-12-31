@@ -437,8 +437,7 @@ export const onMouseWheelOverHitbox = <TObj extends GameObject = GameObject>(
 };
 
 /**
- * Decorator that runs the handler every tick while the key is held.
- * It also suppresses the keyPressed event from invoking handleEvent.
+ * Decorator that runs the handler once when the key becomes pressed.
  */
 export function onKeyPressed<TObj extends GameObject = GameObject>(
   key: string,
@@ -448,9 +447,62 @@ export function onKeyPressed<TObj extends GameObject = GameObject>(
 }
 
 /**
- * Decorator that runs the handler every tick while all keys in the combo are held.
+ * Decorator that runs the handler every tick while the key is held.
+ */
+export function onKeyHold<TObj extends GameObject = GameObject>(
+  key: string,
+  handler: (gameObject: TObj, event: KeyPressedEvent) => void
+) {
+  return onKeyComboHold([key], handler);
+}
+
+/**
+ * Decorator that runs the handler once when all keys in the combo become pressed.
  */
 export function onKeyComboPressed<TObj extends GameObject = GameObject>(
+  keys: string[],
+  handler: (gameObject: TObj, event: KeyPressedEvent) => void
+) {
+  const wasPressedMap = new WeakMap<GameObject, boolean>();
+
+  return function (
+    target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    // Register tick handler
+    registerKeyTickHandler<TObj>(target, (gameObj) => {
+      const pressed = matchesKeyState(gameObj, keys);
+      const wasPressed = wasPressedMap.get(gameObj) ?? false;
+
+      if (pressed && !wasPressed) {
+        const lastKey = keys[keys.length - 1] ?? "";
+        handler(gameObj as TObj, { type: "keyPressed", key: lastKey });
+      }
+
+      wasPressedMap.set(gameObj, pressed);
+    });
+
+    // Wrap handleEvent so it still receives keyPressed while the tick handler handles the held state
+    const original = descriptor.value;
+    if (original) {
+      descriptor.value = function (
+        this: TObj,
+        event: GameEvent,
+        ...args: unknown[]
+      ) {
+        return original.call(this, event, ...args);
+      };
+    }
+
+    return descriptor;
+  };
+}
+
+/**
+ * Decorator that runs the handler every tick while all keys in the combo are held.
+ */
+export function onKeyComboHold<TObj extends GameObject = GameObject>(
   keys: string[],
   handler: (gameObject: TObj, event: KeyPressedEvent) => void
 ) {

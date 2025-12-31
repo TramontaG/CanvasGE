@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/LamenEmpire/**"]
+  "exclude": ["src/LamenEmpire/**", "src/DebugGame/**"]
 }

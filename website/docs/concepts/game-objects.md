@@ -133,7 +133,7 @@ The base `GameObject.handleEvent` already includes `@onHover` / `@onStopHovering
 
 See [`Input & events`](./events.md) for:
 - click/hover/wheel decorators
-- key-held tick decorators (`@onKeyPressed`, combos)
+- key decorators (`@onKeyPressed` for one-shot, `@onKeyHold` for continuous; combos too)
 - composition (stacking multiple decorators)
 
 ## Messaging between GameObjects

@@ -7,14 +7,14 @@ This example shows how to build a bigger scripted sequence using:
 
 - a typed state object that you update as the cutscene progresses
 - combinators like `sequenceOf`, `parallel`, `conditional`, `waitForKeyPress`, `waitTicks`
-- library helpers like `createTextBoxSequence` and `walkCharacter`
+- library helpers like `TextBoxSequence` and `walkCharacter`
 
 ## 1) Define a cutscene state
 
 ```ts
-import type { BaseTState } from "sliver-engine";
+import type { GameObject } from "sliver-engine";
 
-type CutsceneState = BaseTState & {
+type CutsceneState = {
   elder: GameObject;
   hero: GameObject;
   coinsAwarded: boolean;
@@ -27,10 +27,10 @@ type CutsceneState = BaseTState & {
 import { scripted } from "sliver-engine";
 
 const checkCoins = scripted<CutsceneState>(async (_ctx, state) => {
-  const { elder, hero };
+  const { elder, hero } = state;
   const elderCoins = elder.getCoins();
   const heroCoins = hero.getCoins();
-  const newState = state.structuredClone();
+  const newState = { ...state };
 
   if (elderCoins > heroCoins) {
     newState.coinsAwarded = true;
@@ -43,16 +43,31 @@ const checkCoins = scripted<CutsceneState>(async (_ctx, state) => {
 ## 3) Compose a cutscene with combinators
 
 ```ts
+import type { GameObject } from "sliver-engine";
 import {
   sequenceOf,
   parallel,
   conditional,
   waitForKeyPress,
   waitTicks,
-  createTextBoxSequence,
+  TextBoxSequence,
+  type TextEntry,
   walkCharacter,
 } from "sliver-engine";
 import { Walker, Vector } from "sliver-engine";
+
+const createTextBoxSequence = (lines: string[]) => {
+  const base: Omit<TextEntry, "text"> = {
+    position: "bottom",
+    textSize: 18,
+    boxColor: "rgba(0,0,0,0.75)",
+    textColor: "white",
+    lettersPerTick: 2,
+  };
+
+  const entries: TextEntry[] = lines.map((text) => ({ ...base, text }));
+  return TextBoxSequence(entries);
+};
 
 const makeIntroCutscene = (opts: { elder: GameObject; hero: GameObject }) => {
   const { elder, hero } = opts;
@@ -80,19 +95,20 @@ const makeIntroCutscene = (opts: { elder: GameObject; hero: GameObject }) => {
 
       conditional<CutsceneState>(
         (state) => state.coinsAwarded,
-        sequenceOf([
+        sequenceOf<CutsceneState>([
           createTextBoxSequence([
-            "Hey, you look like you could use some coins."
-            "Here, take these 10 coins and make good use of them!"
+            "Hey, you look like you could use some coins.",
+            "Here, take these 10 coins and make good use of them!",
           ]),
-          scripted<CutsceneState>(async (ctx, state) => {
-            ctx.player.coins += 10;
-            ctx.elder.coins -= 10;
-          })
-        ])
+          scripted<CutsceneState>(async (_ctx, state) => {
+            elder.coins -= 10;
+            hero.coins += 10;
+            return state;
+          }, "awardCoins"),
+        ]),
         createTextBoxSequence([
           "I hope you have a fantastic journey!",
-          "You look like a rich guy, so you won't have much problems!"
+          "You look like a rich guy, so you won't have much problems!",
         ])
       ),
 
@@ -111,6 +127,8 @@ const makeIntroCutscene = (opts: { elder: GameObject; hero: GameObject }) => {
 ## 4) Run the cutscene from a scene
 
 ```ts
+import type { GameContext, GameObject } from "sliver-engine";
+
 const runIntro = (ctx: GameContext, elder: GameObject, hero: GameObject) => {
   const cutscene = makeIntroCutscene({ elder, hero });
 

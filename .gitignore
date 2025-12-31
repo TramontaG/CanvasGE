@@ -4,6 +4,7 @@ node_modules
 
 # output
 .parcel-cache
+.debugGame
 out
 dist
 *.tgz
@@ -36,3 +37,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Local debug sandbox (not versioned)
+src/DebugGame/

@@ -15,6 +15,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "parcel": "^2.12.0",
     "typescript": "^5.0.0"
   },
   "scripts": {
@@ -22,6 +23,8 @@
     "build": "bun run clean && bunx tsc -p tsconfig.build.json",
     "typecheck": "bunx tsc -p tsconfig.json",
     "prepack": "bun run build",
+    "debug:start": "parcel src/DebugGame/index.html --open --port 1234 --dist-dir .debugGame/dist --cache-dir .debugGame/.parcel-cache",
+    "debug:build": "parcel build src/DebugGame/index.html --dist-dir .debugGame/dist --cache-dir .debugGame/.parcel-cache --public-url ./",
     "docs:install": "cd website && bun install",
     "docs:start": "cd website && bun docusaurus start --port 3025",
     "docs:build": "cd website && bun docusaurus build",

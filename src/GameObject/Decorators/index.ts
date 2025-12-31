@@ -86,7 +86,7 @@ export const renderSprite = <TObj extends GameObject = GameObject>(
 
 export const renderSpriteAnimation = <TObj extends GameObject = GameObject>(
   when: (obj: TObj) => boolean,
-  spriteSheetName: string,
+  _spriteSheetName: ((obj: TObj) => string) | string,
   indexes: number[] | ((obj: TObj) => number[]),
   _ticksPerFrame: number | ((obj: TObj) => number),
   scale: number | ((obj: TObj) => number) = 1,
@@ -129,6 +129,11 @@ export const renderSpriteAnimation = <TObj extends GameObject = GameObject>(
         typeof indexes === "function"
           ? indexes(this)[frameIndex]!
           : indexes[frameIndex]!;
+
+      const spriteSheetName =
+        typeof _spriteSheetName === "function"
+          ? _spriteSheetName(this)
+          : _spriteSheetName;
 
       spriteLib.drawSpriteFrame(
         context,

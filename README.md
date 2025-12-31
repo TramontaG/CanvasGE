@@ -38,10 +38,11 @@ Sliver Engine appends the `<canvas>` to `#canvas-container` if present, otherwis
 - **Scenes**: scene stack, per-scene camera offset, background fill, opacity + overlay, gravity, and transitions (fade/slide/flash with easing).
 - **Rendering**: `CanvasController` + `ShapeDrawer` for primitives/text, clipping and rotation helpers, font loading, and sprite + sprite-sheet support (frame rendering, scaling, mirroring) with `renderSprite` / `renderSpriteAnimation` helpers.
 - **Input/events**: keyboard + mouse + wheel events, propagation control, and ergonomic decorators (`@onClick`, `@onMouseRelease`, `@onHover`, `@onStopHovering`, `@onMouseWheel`, `@onMouseWheelOverHitbox`, `@onKeyPressed`/combo, `@onChildrenEvents`, `@grabbable()`).
+- **Scripted events**: composable async sequences via `scripted` + combinators (`sequenceOf`, `parallel`, `conditional`, `waitUntil`, `waitTicks`, `waitForKeyPress`, ...), plus library helpers like `TextBoxSequence` for dialog.
 - **Game objects**: `GameObject` base with tick/render hooks, child hierarchy, relative positioning, opacity/rotation, simple movement via `speed`, and helpers to change scenes / publish messages / query keys.
 - **Hitboxes + collisions**: circle + (rotatable) square hitboxes, point checks, “will intersect” checks, debug rendering, and collision resolution with restitution + friction and immovable bodies.
 - **Audio**: `SoundManager` (Web Audio) with preload, master gain, per-sound volume, looping, playback-rate, and start/end/duration controls.
-- **Reusable object/widgets**: `Button`, `Text`, `ScrollView` (clipping + scrollbar + wheel), `FloatingView` (rise + fade), `ShowOnHover`, `Group`, `SceneTranslator`, and basic shape helpers (`ClickableShape`, `HoverableShape`).
+- **Reusable object/widgets**: `Button`, `Text`, `TextBox` (optional animated sprite portrait), `ScrollView` (clipping + scrollbar + wheel), `FloatingView` (rise + fade), `ShowOnHover`, `Group`, `SceneTranslator`, and basic shape helpers (`ClickableShape`, `HoverableShape`).
 
 ## Repository layout
 - `src/` – Engine sources.
@@ -61,6 +62,7 @@ Sliver Engine appends the `<canvas>` to `#canvas-container` if present, otherwis
 1) Install deps: `bun install`
 2) Typecheck: `bun run typecheck`
 3) Build: `bun run build`
+4) Debug sandbox (Parcel): `bun run debug:start` (served from `src/DebugGame/`)
 
 ## Documentation (Docusaurus)
 The docs site lives in `website/` and is **not** part of the published npm package.

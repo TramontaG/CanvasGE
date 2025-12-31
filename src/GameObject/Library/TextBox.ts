@@ -1,502 +1,265 @@
 import { GameObject } from "..";
 import type { CanvasController } from "../../CanvasController";
+import type { GameContext } from "../../Context";
 import type { GameEvent } from "../../Events";
+import { onClick, onKeyPressed } from "../../Events/decorators";
+import { Vector } from "../../Lib";
 import type { Scene } from "../../Scenes";
-import { Vector } from "../../Lib/Vector";
 import { SquareHitbox } from "../Hitboxes";
 
-type TextBoxPlacement = "top" | "middle" | "bottom";
-
-type TextBoxPreset = "dialog" | "narration";
-
-type TextBoxPortrait = {
-  spriteSheetName: string;
-  index: number;
-  side?: "left" | "right";
-};
-
-type TextBoxTypingOptions = {
-  enabled?: boolean;
-  charsPerTick?: number;
-  startImmediately?: boolean;
-  skipKeys?: string[];
-};
-
 type TextBoxOptions = {
-  preset?: TextBoxPreset;
-  placement?: TextBoxPlacement;
-  width?: number;
-  height?: number;
-  marginX?: number;
-  marginY?: number;
-  padding?: number;
-  portrait?: TextBoxPortrait;
-  backgroundColor?: string;
-  backgroundOpacity?: number;
-  borderColor?: string;
-  borderWidth?: number;
+  position: "top" | "middle" | "bottom";
+  skipTyping?: boolean;
+  boxColor?: string;
   textColor?: string;
-  textSize?: string;
-  textAlign?: CanvasTextAlign;
-  font?: string;
-  lineHeight?: number;
-  typing?: TextBoxTypingOptions;
+  textSize: number;
+  lettersPerTick?: number;
+  sprite?: {
+    spritesheetName: string;
+    indexes: number[];
+    position: "left" | "right";
+    ticksPerFrame: number;
+    scale: number;
+    mirroring?: "horizontal" | "vertical" | "both";
+  };
 };
 
-const TEXTBOX_PRESETS: Record<
-  TextBoxPreset,
-  Required<
-    Pick<
-      TextBoxOptions,
-      | "placement"
-      | "height"
-      | "marginX"
-      | "marginY"
-      | "padding"
-      | "backgroundColor"
-      | "backgroundOpacity"
-      | "borderColor"
-      | "borderWidth"
-      | "textColor"
-      | "textSize"
-      | "textAlign"
-    >
-  > & { typing: Required<TextBoxTypingOptions> }
-> = {
-  dialog: {
-    placement: "bottom",
-    height: 170,
-    marginX: 32,
-    marginY: 24,
-    padding: 18,
-    backgroundColor: "#000000",
-    backgroundOpacity: 0.8,
-    borderColor: "#ffffff",
-    borderWidth: 2,
-    textColor: "#ffffff",
-    textSize: "20px",
-    textAlign: "left",
-    typing: {
-      enabled: true,
-      charsPerTick: 1.25,
-      startImmediately: true,
-      skipKeys: [" ", "Spacebar"],
-    },
-  },
-  narration: {
-    placement: "top",
-    height: 140,
-    marginX: 32,
-    marginY: 24,
-    padding: 18,
-    backgroundColor: "#000000",
-    backgroundOpacity: 0.65,
-    borderColor: "#ffffff",
-    borderWidth: 2,
-    textColor: "#ffffff",
-    textSize: "18px",
-    textAlign: "left",
-    typing: {
-      enabled: true,
-      charsPerTick: 1.25,
-      startImmediately: true,
-      skipKeys: [" ", "Spacebar"],
-    },
-  },
-};
+const __TEXT_BOX_HEIGHT__ = 200;
+const __SPRITE_PADDING__ = 20;
 
-const parsePx = (size: string): number => {
-  const match = /(-?\d+(\.\d+)?)px/.exec(size);
-  if (!match) return 16;
-  const parsed = Number(match[1]);
-  return Number.isFinite(parsed) ? parsed : 16;
+const calculateTextBoxPosition = (
+  placement: TextBoxOptions["position"],
+  ctx: GameContext
+) => {
+  const { height: canvasHeight } = ctx.getCanvas().getCanvas();
+
+  switch (placement) {
+    case "top":
+      return new Vector(0, 0);
+    case "middle":
+      return new Vector(0, canvasHeight / 2 - __TEXT_BOX_HEIGHT__ / 2);
+    case "bottom":
+      return new Vector(0, canvasHeight - __TEXT_BOX_HEIGHT__);
+  }
 };
 
 class TextBox extends GameObject {
-  private placement: TextBoxPlacement;
-  private width?: number;
-  private height: number;
-  private marginX: number;
-  private marginY: number;
-  private padding: number;
-  private portrait?: TextBoxPortrait;
-  private backgroundColor: string;
-  private backgroundOpacity: number;
-  private borderColor?: string;
-  private borderWidth: number;
-  private textColor: string;
-  private textSize: string;
-  private textAlign: CanvasTextAlign;
-  private font?: string;
-  private lineHeight?: number;
+  private textIndex: number = 0;
+  private renderedText: string = "";
+  private finishedTyping: boolean = false;
 
-  private fullText: string;
-  private typingEnabled: boolean;
-  private typingCharsPerTick: number;
-  private skipKeys: string[];
-
-  private visibleLength: number = 0;
-  private charAccumulator: number = 0;
-  private advanceRequested: boolean = false;
-  private hitbox: SquareHitbox;
-
-  constructor(name: string, text: string, options: TextBoxOptions = {}) {
+  constructor(
+    name: string,
+    private text: string,
+    private options: TextBoxOptions,
+    private onFinished: () => void
+  ) {
     super(name, Vector.zero());
 
-    const preset = TEXTBOX_PRESETS[options.preset ?? "dialog"];
-
-    this.marginX = options.marginX ?? preset.marginX;
-    this.marginY = options.marginY ?? preset.marginY;
-
-    this.placement = options.placement ?? preset.placement;
-    this.width = options.width;
-
-    this.height = options.height ?? preset.height;
-    this.padding = options.padding ?? preset.padding;
-    this.portrait = options.portrait;
-    this.backgroundColor = options.backgroundColor ?? preset.backgroundColor;
-    this.backgroundOpacity =
-      options.backgroundOpacity ?? preset.backgroundOpacity;
-    this.borderColor = options.borderColor ?? preset.borderColor;
-    this.borderWidth = options.borderWidth ?? preset.borderWidth;
-    this.textColor = options.textColor ?? preset.textColor;
-    this.textSize = options.textSize ?? preset.textSize;
-    this.textAlign = options.textAlign ?? preset.textAlign;
-    this.font = options.font;
-    this.lineHeight = options.lineHeight;
-
-    const typing = {
-      ...preset.typing,
-      ...(options.typing ?? {}),
-    };
-
-    this.fullText = text;
-    this.typingEnabled = typing.enabled;
-    this.typingCharsPerTick = Math.max(0, typing.charsPerTick);
-    this.skipKeys = typing.skipKeys;
-
-    if (!this.typingEnabled || typing.startImmediately === false) {
-      this.visibleLength = this.fullText.length;
-    }
-
-    this.setRenderFunction(this.renderTextBox);
-    this.setTickFunction(this.tickTextBox);
-
-    this.hitbox = new SquareHitbox(
-      Vector.zero(),
-      new Vector(0, this.height),
-      this,
-      { solid: false }
-    );
-    this.addHitbox(this.hitbox);
+    // Setting the position once it becomes active
+    this.setTickFunction(() => {
+      if (this.getContext()) {
+        this.initializeTextBox();
+        // We don't need to check context again after it gets initalized
+        this.setTickFunction(() => {});
+        this.setRenderFunction(this.renderTextBox.bind(this));
+      }
+    });
   }
 
-  setText(text: string, { restartTyping = this.typingEnabled } = {}): void {
-    this.fullText = text;
-    this.advanceRequested = false;
-    if (restartTyping) {
-      this.startTyping();
+  private initializeTextBox() {
+    const { width: canvasWidth } = this.getContext()!.getCanvas().getCanvas();
+
+    const textboxHitbox = new SquareHitbox(
+      Vector.zero(),
+      new Vector(canvasWidth, __TEXT_BOX_HEIGHT__),
+      this,
+      {
+        solid: false,
+      }
+    );
+
+    // Adding hitbox so it can be clicked
+    this.addHitbox(textboxHitbox);
+
+    // Setting the position accordingly to it's preset
+    this.setPosition(
+      calculateTextBoxPosition(this.options.position, this.getContext()!)
+    );
+
+    if (this.options.skipTyping) {
+      this.renderedText = this.text;
+      this.textIndex = this.text.length - 1;
+      this.finishedTyping = true;
+    }
+  }
+
+  private updateRenderdText() {
+    if (this.finishedTyping) {
       return;
     }
-    this.finishTyping();
-  }
 
-  getText(): string {
-    return this.fullText;
-  }
+    const lettersPerTick = this.options.lettersPerTick ?? 1;
 
-  setPlacement(placement: TextBoxPlacement): void {
-    this.placement = placement;
-  }
+    this.textIndex += Math.round(lettersPerTick);
 
-  setPortrait(portrait: TextBoxPortrait | undefined): void {
-    this.portrait = portrait;
-  }
-
-  startTyping(): void {
-    this.typingEnabled = true;
-    this.visibleLength = 0;
-    this.charAccumulator = 0;
-    this.advanceRequested = false;
-  }
-
-  finishTyping(): void {
-    this.visibleLength = this.fullText.length;
-    this.charAccumulator = 0;
-  }
-
-  isTyping(): boolean {
-    return this.visibleLength < this.fullText.length;
-  }
-
-  hasAdvanceRequested(): boolean {
-    return this.advanceRequested;
-  }
-
-  private getDisplayedText(): string {
-    return this.fullText.slice(0, this.visibleLength);
-  }
-
-  private tickTextBox = () => {
-    const canvas = this.getContext()?.getCanvas();
-    if (canvas) {
-      this.syncLayout(canvas);
+    if (this.textIndex > this.text.length) {
+      this.renderedText = this.text;
+      this.finishedTyping = true;
+    } else {
+      this.renderedText = this.text.substring(0, this.textIndex);
     }
-    this.tickTyping();
-  };
-
-  private tickTyping = () => {
-    if (!this.typingEnabled) return;
-    if (!this.isTyping()) return;
-    if (this.typingCharsPerTick <= 0) return;
-
-    this.charAccumulator += this.typingCharsPerTick;
-    const addChars = Math.floor(this.charAccumulator);
-    if (addChars <= 0) return;
-
-    this.charAccumulator -= addChars;
-    this.visibleLength = Math.min(
-      this.fullText.length,
-      this.visibleLength + addChars
-    );
-  };
-
-  private syncLayout(canvas: CanvasController): void {
-    const { x, y, width, height } = this.getLayout(canvas);
-    this.setPosition(new Vector(x, y));
-    this.hitbox.size.x = width;
-    this.hitbox.size.y = height;
   }
 
-  private getLayout(canvas: CanvasController): {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } {
-    const canvasEl = canvas.getCanvas();
-    const canvasWidth = canvasEl.width;
-    const canvasHeight = canvasEl.height;
-
-    const width = Math.max(
-      0,
-      this.width ?? Math.max(0, canvasWidth - 2 * this.marginX)
-    );
-
-    const height = Math.max(0, this.height);
-    const x = Math.max(0, (canvasWidth - width) / 2);
-
-    const y =
-      this.placement === "top"
-        ? this.marginY
-        : this.placement === "middle"
-        ? (canvasHeight - height) / 2
-        : canvasHeight - height - this.marginY;
-
-    return { x, y, width, height };
-  }
-
-  private wrapText(
-    ctx: CanvasRenderingContext2D,
-    text: string,
-    maxWidth: number
-  ): string[] {
-    if (maxWidth <= 0) return [];
-
-    const hardLines = text.split("\n");
-    const out: string[] = [];
-
-    for (const hardLine of hardLines) {
-      const line = hardLine.trimEnd();
-      if (line.trim().length === 0) {
-        out.push("");
-        continue;
-      }
-
-      const words = line.split(/\s+/g);
-      let current = "";
-
-      for (const word of words) {
-        const candidate = current.length === 0 ? word : `${current} ${word}`;
-        if (ctx.measureText(candidate).width <= maxWidth) {
-          current = candidate;
-          continue;
-        }
-
-        if (current.length > 0) {
-          out.push(current);
-          current = word;
-          continue;
-        }
-
-        // Word is longer than maxWidth; hard-break it.
-        let chunk = "";
-        for (const char of word) {
-          const next = `${chunk}${char}`;
-          if (ctx.measureText(next).width <= maxWidth) {
-            chunk = next;
-            continue;
-          }
-          if (chunk.length > 0) {
-            out.push(chunk);
-            chunk = char;
-          }
-        }
-        if (chunk.length > 0) out.push(chunk);
-        current = "";
-      }
-
-      if (current.length > 0) out.push(current);
+  private requestAdvance() {
+    if (this.finishedTyping) {
+      this.onFinished();
+      this.destroy();
+    } else {
+      this.finishedTyping = true;
+      this.renderedText = this.text;
+      this.textIndex = this.text.length - 1;
     }
-
-    return out;
   }
 
-  private renderTextBox = (
-    _obj: GameObject,
-    canvas: CanvasController
-  ): void => {
-    this.syncLayout(canvas);
-    const pos = this.getPosition();
-    const x = pos.x;
-    const y = pos.y;
-    const width = this.hitbox.size.x;
-    const height = this.hitbox.size.y;
-    const shapeDrawer = canvas.getShapeDrawer();
-    const ctx = canvas.getContext();
+  override tick() {
+    super.tick();
+    this.updateRenderdText();
+  }
 
-    shapeDrawer.drawRectangle(
-      x,
-      y,
-      width,
-      height,
-      this.backgroundColor,
-      true,
-      this.backgroundOpacity
-    );
+  public getSpritePosition() {
+    const sprite = this.options.sprite;
+    if (!sprite) return Vector.zero();
 
-    const portraitGap = 12;
-    let contentX = x + this.padding;
-    let contentWidth = Math.max(0, width - 2 * this.padding);
+    const ctx = this.getContext();
+    if (!ctx) return Vector.zero();
 
-    const portrait = this.portrait;
-    if (portrait) {
-      const sheetSize = canvas
+    const canvasWidth = ctx.getCanvas().getCanvas().width;
+    const portraitSide = __TEXT_BOX_HEIGHT__; // 200px square area
+
+    const frameSize =
+      ctx
+        .getCanvas()
         .getSpriteLibrary()
-        .getSpriteSheetFrameSize(portrait.spriteSheetName);
-      if (!sheetSize) {
-        // If the sheet isn't loaded, skip reserving space.
-        // (Better to show text than clip it.)
-      } else {
-        const frameWidth = sheetSize.frameWidth;
-        const frameHeight = sheetSize.frameHeight;
-        const target = Math.max(0, height - 2 * this.padding);
-        const scale = frameHeight === 0 ? 1 : target / frameHeight;
-        const drawW = frameWidth * scale;
-        const drawH = frameHeight * scale;
-        const drawY = y + this.padding + Math.max(0, target - drawH) / 2;
-        const side = portrait.side ?? "left";
-        const drawX =
-          side === "left" ? x + this.padding : x + width - this.padding - drawW;
+        .getSpriteSheetFrameSize(sprite.spritesheetName) ?? null;
 
-        canvas
-          .getSpriteLibrary()
-          .drawSpriteFrame(
-            ctx,
-            portrait.spriteSheetName,
-            portrait.index,
-            new Vector(drawX, drawY),
-            scale
-          );
+    const frameWidth = frameSize?.frameWidth ?? 32;
+    const frameHeight = frameSize?.frameHeight ?? 32;
 
-        contentWidth = Math.max(0, contentWidth - drawW - portraitGap);
-        contentX = side === "left" ? contentX + drawW + portraitGap : contentX;
-      }
+    const spriteWidthPx = frameWidth * sprite.scale;
+    const spriteHeightPx = frameHeight * sprite.scale;
+
+    const base = this.getPosition();
+    const portraitLeft =
+      sprite.position === "left"
+        ? base.x + __SPRITE_PADDING__
+        : base.x + canvasWidth - __SPRITE_PADDING__ - portraitSide;
+
+    return new Vector(
+      portraitLeft + (portraitSide - spriteWidthPx) / 2,
+      base.y + (portraitSide - spriteHeightPx) / 2
+    );
+  }
+
+  public getTextPosition() {
+    const canvasWidth = this.getContext()!.getCanvas().getCanvas().width;
+
+    let upperCorner = this.getPosition().toAdded(
+      new Vector(__SPRITE_PADDING__, __SPRITE_PADDING__)
+    );
+
+    let downCorner = upperCorner.toAdded(
+      new Vector(
+        canvasWidth - __SPRITE_PADDING__ * 2,
+        __TEXT_BOX_HEIGHT__ - __SPRITE_PADDING__ * 2
+      )
+    );
+
+    if (!this.options.sprite) {
+      return { upperCorner, downCorner };
     }
 
-    if (this.borderColor && this.borderWidth > 0) {
-      ctx.save();
-      ctx.globalAlpha *= 1;
-      ctx.lineWidth = this.borderWidth;
-      ctx.strokeStyle = this.borderColor;
-      ctx.strokeRect(x, y, width, height);
-      ctx.restore();
+    if (this.options.sprite.position === "left") {
+      return {
+        upperCorner: upperCorner.toAdded(new Vector(200, 0)),
+        downCorner,
+      };
     }
 
-    const fontToUse = this.font ?? canvas.getShapeDrawer().getDefaultFont();
-    ctx.save();
-    ctx.fillStyle = this.textColor;
-    ctx.font = `${this.textSize} ${fontToUse}`;
-    ctx.textAlign = this.textAlign;
-    ctx.textBaseline = "top";
+    return {
+      upperCorner,
+      downCorner: downCorner.toAdded(new Vector(-200, 0)),
+    };
+  }
 
-    const fontPx = parsePx(this.textSize);
-    const lineHeight = this.lineHeight ?? Math.ceil(fontPx * 1.3);
-    const maxLines =
-      lineHeight <= 0
-        ? 0
-        : Math.max(1, Math.floor((height - 2 * this.padding) / lineHeight));
+  private renderTextBox(self: GameObject, canvas: CanvasController) {
+    const { downCorner, upperCorner } = this.getTextPosition();
+    const defaultFont = canvas.getShapeDrawer().getDefaultFont();
 
-    const textX =
-      this.textAlign === "left"
-        ? contentX
-        : this.textAlign === "right"
-        ? contentX + contentWidth
-        : contentX + contentWidth / 2;
-    const textY = y + this.padding;
-    const availableWidth = contentWidth;
+    const width = downCorner.x - upperCorner.x;
 
-    const lines = this.wrapText(ctx, this.getDisplayedText(), availableWidth);
-    for (let i = 0; i < Math.min(lines.length, maxLines); i += 1) {
-      const line = lines[i] ?? "";
-      ctx.fillText(line, textX, textY + i * lineHeight);
+    const { x, y } = this.getPosition();
+    const canvasWidth = this.getContext()!.getCanvas().getCanvas().width;
+
+    canvas
+      .getShapeDrawer()
+      .drawRectangle(
+        x,
+        y,
+        canvasWidth,
+        __TEXT_BOX_HEIGHT__,
+        this.options.boxColor
+      );
+
+    const sprite = this.options.sprite;
+    if (sprite) {
+      const gameContext = this.getContext()!;
+      const frameIndex =
+        Math.floor(gameContext.getTickCount() / sprite.ticksPerFrame) %
+        sprite.indexes.length;
+      const spriteIndex = sprite.indexes[frameIndex] ?? sprite.indexes[0] ?? 0;
+      const mirroring = sprite.mirroring ?? null;
+
+      canvas
+        .getSpriteLibrary()
+        .drawSpriteFrame(
+          canvas.getContext(),
+          sprite.spritesheetName,
+          spriteIndex,
+          this.getSpritePosition(),
+          sprite.scale,
+          mirroring === "horizontal" || mirroring === "both",
+          mirroring === "vertical" || mirroring === "both"
+        );
     }
 
-    ctx.restore();
-  };
+    canvas
+      .getShapeDrawer()
+      .drawText(
+        this.renderedText,
+        upperCorner.x,
+        upperCorner.y,
+        this.options.textColor ?? "white",
+        `${this.options.textSize ?? 16}px`,
+        "left",
+        defaultFont,
+        {
+          wrapText: width,
+          baseline: "top",
+        }
+      );
+  }
+
+  @onClick<TextBox>((self) => self.requestAdvance())
+  @onKeyPressed<TextBox>(" ", (self) => self.requestAdvance())
+  override handleEvent(event: GameEvent): void {
+    super.handleEvent(event);
+  }
 
   override render(canvas: CanvasController, scene: Scene): void {
     super.render(canvas, scene);
   }
-
-  override handleEvent(event: GameEvent): void {
-    if (event.type === "keyPressed" && this.skipKeys.includes(event.key)) {
-      if (this.isTyping()) {
-        this.finishTyping();
-      } else {
-        this.advanceRequested = true;
-      }
-      event.stopPropagation = true;
-      return;
-    }
-
-    if (event.type === "mouseButtonPressed") {
-      const canvas = this.getContext()?.getCanvas();
-      if (canvas) {
-        this.syncLayout(canvas);
-      }
-
-      const inside = this.hitbox.intersectsWithPoint(
-        new Vector(event.x, event.y)
-      );
-      if (!inside) return;
-
-      if (this.isTyping()) {
-        this.finishTyping();
-      } else {
-        this.advanceRequested = true;
-      }
-      event.stopPropagation = true;
-      return;
-    }
-  }
 }
 
 export { TextBox };
-export type {
-  TextBoxOptions,
-  TextBoxPlacement,
-  TextBoxTypingOptions,
-  TextBoxPortrait,
-  TextBoxPreset,
-};
+export type { TextBoxOptions };

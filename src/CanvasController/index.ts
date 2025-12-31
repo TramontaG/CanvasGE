@@ -1,6 +1,28 @@
 import type { Vector } from "../Lib/Vector";
 import { SpriteLibrary } from "./SpriteLibrary";
 
+type DrawTextOptions = {
+  /**
+   * If provided, wraps the text to fit within this max width (in pixels).
+   * When omitted, no wrapping is applied.
+   */
+  wrapText?: number;
+  /**
+   * Line height in pixels, used when wrapping is enabled.
+   * Defaults to `Math.ceil(fontSizePx * 1.3)`.
+   */
+  lineHeight?: number;
+  /**
+   * Maximum lines to render when wrapping is enabled.
+   * Defaults to unlimited.
+   */
+  maxLines?: number;
+  /**
+   * Optional text baseline override for this call.
+   */
+  baseline?: CanvasTextBaseline;
+};
+
 class ShapeDrawer {
   private defaultFont: string = "Arial";
 
@@ -178,6 +200,7 @@ class ShapeDrawer {
    * @param size - The font size in pixels (default: "16px")
    * @param align - The text alignment (default: "center")
    * @param font - Optional font family to override the default font
+   * @param options - Optional rendering options (e.g. text wrapping)
    *
    * @example
    * // Draw centered black text with default font
@@ -198,13 +221,98 @@ class ShapeDrawer {
     color: string = "black",
     size: string = "16px",
     align: CanvasTextAlign = "center",
-    font?: string
+    font?: string,
+    options?: DrawTextOptions
   ): void {
     const fontToUse = font ?? this.defaultFont;
+    const previousBaseline = this.context.textBaseline;
     this.context.fillStyle = color;
     this.context.font = `${size} ${fontToUse}`;
     this.context.textAlign = align;
-    this.context.fillText(text, x, y);
+
+    if (options?.baseline) {
+      this.context.textBaseline = options.baseline;
+    }
+
+    const maxWidth = options?.wrapText;
+    if (maxWidth === undefined) {
+      this.context.fillText(text, x, y);
+      if (options?.baseline) this.context.textBaseline = previousBaseline;
+      return;
+    }
+
+    const lines = this.wrapText(this.context, text, maxWidth);
+    const lineHeight = options?.lineHeight ?? this.defaultLineHeightPx(size);
+    const maxLines = options?.maxLines ?? Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < Math.min(lines.length, maxLines); i += 1) {
+      this.context.fillText(lines[i] ?? "", x, y + i * lineHeight);
+    }
+
+    if (options?.baseline) this.context.textBaseline = previousBaseline;
+  }
+
+  private defaultLineHeightPx(size: string): number {
+    const match = /(-?\d+(\.\d+)?)px/.exec(size);
+    const parsed = match ? Number(match[1]) : 16;
+    const fontPx = Number.isFinite(parsed) ? parsed : 16;
+    return Math.ceil(fontPx * 1.3);
+  }
+
+  private wrapText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    maxWidth: number
+  ): string[] {
+    if (maxWidth <= 0) return [];
+
+    const hardLines = text.split("\n");
+    const out: string[] = [];
+
+    for (const hardLine of hardLines) {
+      const line = hardLine.trimEnd();
+      if (line.trim().length === 0) {
+        out.push("");
+        continue;
+      }
+
+      const words = line.split(/\s+/g);
+      let current = "";
+
+      for (const word of words) {
+        const candidate = current.length === 0 ? word : `${current} ${word}`;
+        if (ctx.measureText(candidate).width <= maxWidth) {
+          current = candidate;
+          continue;
+        }
+
+        if (current.length > 0) {
+          out.push(current);
+          current = word;
+          continue;
+        }
+
+        // Word is longer than maxWidth; hard-break it.
+        let chunk = "";
+        for (const char of word) {
+          const next = `${chunk}${char}`;
+          if (ctx.measureText(next).width <= maxWidth) {
+            chunk = next;
+            continue;
+          }
+          if (chunk.length > 0) {
+            out.push(chunk);
+            chunk = char;
+          }
+        }
+        if (chunk.length > 0) out.push(chunk);
+        current = "";
+      }
+
+      if (current.length > 0) out.push(current);
+    }
+
+    return out;
   }
 
   /**
