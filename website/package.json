@@ -1,7 +1,7 @@
 {
   "name": "sliver-engine-docs",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1-alpha.1",
   "description": "Documentation site for Sliver Engine (Docusaurus).",
   "scripts": {
     "start": "docusaurus start --port 3025",

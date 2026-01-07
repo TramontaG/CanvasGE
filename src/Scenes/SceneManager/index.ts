@@ -38,9 +38,15 @@ class SceneManager {
     const scene = this.getScene(name);
     if (scene) {
       scene.setContext(this.context);
-      scene.setup();
+      const previousActiveScenes = this.activeScenes;
       this.activeScenes = [scene];
       this.currentScene = scene;
+      scene.activate();
+      previousActiveScenes.forEach((activeScene) => {
+        if (activeScene !== scene) {
+          activeScene.deactivate();
+        }
+      });
     }
   }
 
@@ -58,12 +64,14 @@ class SceneManager {
 
   pushSceneToActive(scene: Scene): void {
     scene.setContext(this.context);
-    scene.setup();
     this.activeScenes.push(scene);
+    scene.activate();
   }
 
   popSceneFromActive(): Scene | undefined {
-    return this.activeScenes.pop();
+    const popped = this.activeScenes.pop();
+    popped?.deactivate();
+    return popped;
   }
 
   bindContext(context: GameContext): void {
@@ -87,7 +95,6 @@ class SceneManager {
     }
 
     target.setContext(this.context);
-    target.setup();
 
     const transitionScenes: TransitionScenes = {
       from: this.currentScene,
@@ -121,6 +128,7 @@ class SceneManager {
       ];
     }
     this.currentScene = target;
+    target.activate();
 
     transition.setup?.(0, transitionScenes);
 
@@ -153,6 +161,8 @@ class SceneManager {
     if (progress >= 1) {
       config.cleanup?.(1, { from, to });
 
+      const previousActiveScenes = this.activeScenes;
+
       if (mode === "replace") {
         this.activeScenes = [to];
       } else if (mode === "push") {
@@ -162,6 +172,13 @@ class SceneManager {
           to,
         ];
       }
+
+      const activeSet = new Set(this.activeScenes);
+      previousActiveScenes.forEach((scene) => {
+        if (!activeSet.has(scene)) {
+          scene.deactivate();
+        }
+      });
 
       this.activeTransition = null;
       resolve();

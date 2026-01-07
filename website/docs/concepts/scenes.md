@@ -35,19 +35,24 @@ Notes:
 - The **registry key** (`"main"`, `"pause"`) is what you’ll use with `setCurrentScene(...)` / `transitionToScene(...)`.
 - The `Scene` constructor’s `name` is currently used mainly for logging (`setup()` prints it). It’s easiest if you keep it the same as the registry key.
 
-## Setup and context injection
+## Scene lifecycle and context injection
 
 When a scene becomes active, `SceneManager` will:
 
 1) call `scene.setContext(gameContext)`
-2) call `scene.setup()`
+2) call `scene.setup()` once (the first time the scene is activated)
+3) call `scene.onEnter()` every time the scene becomes active
 
 This happens when you:
 - set a scene as current
 - push a scene on the stack
 - transition to a scene
 
-If you subclass `Scene`, `setup()` is the right place to populate it:
+When a scene leaves the active stack, `scene.onExit()` is called.
+
+If a scene becomes active before the game binds a context (for example, when you pass an initial scene to `SceneManager`), `setup()` and `onEnter()` are deferred until the context is available.
+
+If you subclass `Scene`, use the hooks like this:
 
 ```ts
 import { Scene } from "sliver-engine";
@@ -56,6 +61,14 @@ class MainScene extends Scene {
   override setup(): void {
     super.setup();
     // addGameObject(...), setGravity(...), etc.
+  }
+
+  override onEnter(): void {
+    // reset timers, start music, subscribe to messages, etc.
+  }
+
+  override onExit(): void {
+    // cleanup subscriptions, pause music, etc.
   }
 }
 ```
@@ -72,10 +85,13 @@ scene.addGameObject([hud, enemy1, enemy2]);
 What `addGameObject` does for you:
 - sets `go.scene = scene`
 - injects the scene’s `GameContext` into the object (and its children) so `this.getContext()` starts working
+- triggers `go.onAddedToScene(scene, context)` once the context is available
 
 Remove objects either by:
 - calling `gameObject.destroy()` (recommended; also detaches children and removes from the scene), or
 - `scene.removeGameObject(gameObject)` if you need manual removal
+
+On removal, `go.onRemovedFromScene(scene)` runs after `onAddedToScene`.
 
 ## Tick: updates, gravity, collisions
 

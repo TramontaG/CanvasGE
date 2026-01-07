@@ -24,6 +24,7 @@ class GameObject {
   private renderFn = (obj: GameObject, canvas: CanvasController) => {};
   private tickFn = (obj: GameObject) => {};
   private context: GameContext | null = null;
+  private didNotifyAddedToScene: boolean = false;
   public hovering?: boolean = false;
   private motherShip: GameObject | null = null;
   public walker: Walker | null = null;
@@ -88,6 +89,26 @@ class GameObject {
       // Using this way messes up with the 'this' keyword
       // this.children.forEach((child) => child.tick());
     }
+  }
+
+  onAddedToScene(_scene: Scene, _context: GameContext): void {}
+
+  onRemovedFromScene(_scene: Scene): void {}
+
+  notifyAddedToScene(scene: Scene, context: GameContext | null): void {
+    if (this.didNotifyAddedToScene || !context) {
+      return;
+    }
+    this.didNotifyAddedToScene = true;
+    this.onAddedToScene(scene, context);
+  }
+
+  notifyRemovedFromScene(scene: Scene): void {
+    if (!this.didNotifyAddedToScene) {
+      return;
+    }
+    this.didNotifyAddedToScene = false;
+    this.onRemovedFromScene(scene);
   }
 
   /**
@@ -236,9 +257,15 @@ class GameObject {
     child.scene = this.scene;
     child.setContext(this.context);
     this.children.push(child);
+    if (this.scene) {
+      child.notifyAddedToScene(this.scene, this.context);
+    }
   }
 
   removeChild(gameObject: GameObject): void {
+    if (this.scene) {
+      gameObject.notifyRemovedFromScene(this.scene);
+    }
     this.children = this.children.filter((child) => child !== gameObject);
   }
 
@@ -347,7 +374,12 @@ class GameObject {
 
   setContext(context: GameContext | null): void {
     this.context = context;
-    this.children.forEach((child) => child.setContext(context));
+    this.children.forEach((child) => {
+      child.setContext(context);
+      if (this.scene) {
+        child.notifyAddedToScene(this.scene, context);
+      }
+    });
   }
 
   getContext(): GameContext | null {
@@ -363,6 +395,20 @@ class GameObject {
     }
 
     return this.context.subscribeToMessage(channel, handler);
+  }
+
+  onceOnMessage<TPayload>(
+    channel: string,
+    handler: MessageHandler<TPayload>
+  ): () => void {
+    let unsubscribe: () => void = () => {};
+
+    unsubscribe = this.onMessage(channel, (payload, sender) => {
+      unsubscribe();
+      handler(payload, sender);
+    });
+
+    return unsubscribe;
   }
 
   sendMessage<TPayload>(channel: string, payload: TPayload): void {

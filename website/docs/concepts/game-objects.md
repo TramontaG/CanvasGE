@@ -23,8 +23,39 @@ new GameObject(name, position, visible?, active?, hitboxes?, scene?, children?, 
 ```
 
 Most of the time you either:
+
 - subclass `GameObject`, or
 - create one and assign runtime behavior with `setTickFunction` / `setRenderFunction`.
+
+## Lifecycle hooks
+
+`GameObject` exposes two lifecycle methods you can override:
+
+- `onAddedToScene(scene, context)` runs once when the object is added to a scene _and_ the scene has a `GameContext`.
+- `onRemovedFromScene(scene)` runs when the object is removed from the scene (including `destroy()`), after `onAddedToScene` has run.
+
+This is the best place to subscribe to messages without a per-tick guard:
+
+```ts
+import { GameObject, Vector } from "sliver-engine";
+import type { GameContext, Scene } from "sliver-engine";
+
+class ScoreHud extends GameObject {
+  private score = 0;
+
+  constructor() {
+    super("hud", new Vector(0, 0));
+  }
+
+  override onAddedToScene(_scene: Scene, _context: GameContext): void {
+    this.onMessage<{ amount: number }>("score:add", ({ amount }) => {
+      this.score += amount;
+    });
+  }
+}
+```
+
+Note: if you add an object before the scene is bound to a `GameContext`, `onAddedToScene` runs later when the context becomes available.
 
 ## Tick vs render
 
@@ -54,13 +85,15 @@ import { GameObject, Vector } from "sliver-engine";
 
 const npc = new GameObject("npc", new Vector(200, 200));
 
-const idle = () => npc.setTickFunction(() => {
-  npc.speed = Vector.zero();
-});
+const idle = () =>
+  npc.setTickFunction(() => {
+    npc.speed = Vector.zero();
+  });
 
-const flee = () => npc.setTickFunction(() => {
-  npc.speed = new Vector(-2, 0);
-});
+const flee = () =>
+  npc.setTickFunction(() => {
+    npc.speed = new Vector(-2, 0);
+  });
 
 idle();
 
@@ -69,7 +102,8 @@ npc.onMessage("npc:flee", () => flee());
 ```
 
 Why it works well in Sliver:
-- `tickFn`/`renderFn` are called *after* key-tick decorators and *before* physics integration, so they’re a natural place to update speed/rotation/state.
+
+- `tickFn`/`renderFn` are called _after_ key-tick decorators and _before_ physics integration, so they’re a natural place to update speed/rotation/state.
 - Swapping functions is cheap and keeps call sites explicit (“set the object into flee mode now”).
 
 ## Visibility and activity
@@ -107,6 +141,7 @@ parent.addChild(child);
 ```
 
 What this does:
+
 - sets the child’s “mothership” (`child.getMotherShip()`)
 - propagates `scene` and `GameContext` into the child
 - ensures child ticks and renders with the parent
@@ -132,9 +167,12 @@ This is useful for things like a health bar attached to a character, or a weapon
 The base `GameObject.handleEvent` already includes `@onHover` / `@onStopHovering` to maintain `gameObject.hovering`, so your override should usually call `super.handleEvent(event)`.
 
 See [`Input & events`](./events.md) for:
+
 - click/hover/wheel decorators
 - key decorators (`@onKeyPressed` for one-shot, `@onKeyHold` for continuous; combos too)
 - composition (stacking multiple decorators)
+
+If you want to compose arbitrary methods (not just `handleEvent`), see [`Mixins`](./mixins.md).
 
 ## Messaging between GameObjects
 
@@ -151,13 +189,28 @@ That publishes on the global message bus and sets `sender` to the current object
 ### Listen
 
 ```ts
-const unsubscribe = this.onMessage<{ id: string }>("ui:clicked", (payload, sender) => {
-  if (payload.id === "start") {
-    // react
+const unsubscribe = this.onMessage<{ id: string }>(
+  "ui:clicked",
+  (payload, sender) => {
+    if (payload.id === "start") {
+      // react
+    }
   }
-});
+);
+```
 
-// call unsubscribe() when you no longer need it
+To remove the handler later:
+
+```ts
+unsubscribe();
+```
+
+If you only need the first event, use `onceOnMessage`:
+
+```ts
+this.onceOnMessage("ui:clicked", () => {
+  // fire once
+});
 ```
 
 Use messages when you want loose coupling (UI talks to gameplay without direct references, enemies broadcast “died”, etc.).
@@ -167,6 +220,7 @@ Use messages when you want loose coupling (UI talks to gameplay without direct r
 To make an object participate in collisions, give it one or more hitboxes and set physics flags (`immovable`, `mass`, `restitution`, etc.).
 
 Collision flow is:
+
 - `beforeColision(other)` (return `false` to ignore)
 - `onColision(other, penetration)` (react to overlap)
 

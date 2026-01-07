@@ -13,12 +13,19 @@ class Scene {
   private opacity: number = 1;
   private overlayColor: string | null = null;
   private overlayAlpha: number = 0;
+  private didSetup: boolean = false;
+  private isActive: boolean = false;
+  private pendingEnter: boolean = false;
 
   constructor(private name: string, private backgroundColor?: string) {}
 
   setup() {
     console.log(`Setting up scene: ${this.name}`);
   }
+
+  onEnter(): void {}
+
+  onExit(): void {}
 
   tick() {
     this.gameObjects.forEach((obj) => {
@@ -33,6 +40,7 @@ class Scene {
   }
 
   removeGameObject(gameObject: GameObject) {
+    gameObject.notifyRemovedFromScene(this);
     this.gameObjects = this.gameObjects.filter((go) => go !== gameObject);
   }
 
@@ -80,6 +88,7 @@ class Scene {
       go.scene = this;
       go.setContext(this.context);
       this.gameObjects.push(go);
+      go.notifyAddedToScene(this, this.context);
     });
   }
 
@@ -94,7 +103,16 @@ class Scene {
     this.context = context;
     this.gameObjects.forEach((obj) => {
       obj.setContext(context);
+      obj.notifyAddedToScene(this, context);
     });
+
+    if (context && this.pendingEnter) {
+      this.pendingEnter = false;
+      this.runSetupIfNeeded();
+      if (this.isActive) {
+        this.onEnter();
+      }
+    }
   }
 
   getContext(): GameContext | null {
@@ -128,6 +146,44 @@ class Scene {
   setOverlay(color: string | null, alpha: number): void {
     this.overlayColor = color;
     this.overlayAlpha = alpha;
+  }
+
+  activate(): void {
+    if (this.isActive) {
+      if (this.pendingEnter && this.context) {
+        this.pendingEnter = false;
+        this.runSetupIfNeeded();
+        this.onEnter();
+      }
+      return;
+    }
+
+    this.isActive = true;
+
+    if (!this.context) {
+      this.pendingEnter = true;
+      return;
+    }
+
+    this.runSetupIfNeeded();
+    this.onEnter();
+  }
+
+  deactivate(): void {
+    if (!this.isActive) {
+      return;
+    }
+    this.isActive = false;
+    this.pendingEnter = false;
+    this.onExit();
+  }
+
+  private runSetupIfNeeded(): void {
+    if (this.didSetup) {
+      return;
+    }
+    this.didSetup = true;
+    this.setup();
   }
 
   private handleColisions(): void {

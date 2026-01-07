@@ -83,12 +83,12 @@ const unsubscribe = ctx.subscribeToMessage<{ damage: number }>(
     console.log(payload.damage, sender);
   }
 );
+```
+Later, unsubscribe if needed:
 
-// later:
+```ts
 unsubscribe();
 ```
-
-Why `subscribeToMessage` returns a function: unsubscribing is how you prevent duplicate handlers when objects are recreated, and it avoids memory leaks in long-running games.
 
 ### Convenience from GameObject
 

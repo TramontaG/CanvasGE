@@ -35,61 +35,45 @@ class KeyPickup extends GameObject {
 ## Door (locks until key obtained)
 
 ```ts
-import { GameObject, SquareHitbox, Vecto, renderSprite } from "sliver-engine";
+import { GameObject, SquareHitbox, Vector, renderSprite } from "sliver-engine";
+import type { CanvasController, GameContext, Scene } from "sliver-engine";
 
 // indexes of the sprites in the spritesheet
 const DoorSprites = {
-  open: 0
-  closed: 1
-}
+  open: 0,
+  closed: 1,
+};
 
 class Door extends GameObject {
-  private unsubscribe: (() => void) | null = null;
   public open: boolean = false;
 
   constructor() {
     super("door", new Vector(400, 160));
     this.addHitbox(new SquareHitbox(Vector.zero(), new Vector(24, 48), this)); // solid
     this.setPhisics({ immovable: true });
+  }
 
-    // Subscribe once we have a context, using tickFn (context is injected when added to a scene).
-    this.setTickFunction(() => {
-      if (this.unsubscribe || !this.getContext()) return;
+  override onAddedToScene(_scene: Scene, _context: GameContext): void {
+    this.onceOnMessage<{ id: string }>("player:key_obtained", ({ id }) => {
+      if (id !== "gold") return;
 
-      this.unsubscribe = this.onMessage<{ id: string }>(
-        "player:key_obtained",
-        ({ id }) => {
-          if (id !== "gold") return;
-
-          // Make the door non-solid for the player to pass through it
-          this.getHitboxes().forEach((h) => (h.solid = false));
-          // Stop listening to events, a door can't open if it's already open
-          this.unsubscribe()
-        }
-      );
-
-      // After subscribing, stop doing work every tick.
-      this.setTickFunction(() => {});
+      // Make the door non-solid for the player to pass through it
+      this.getHitboxes().forEach((h) => (h.solid = false));
     });
   }
 
   // change the rendering of the door depending on if it's open or closed.
   @renderSprite<Door>(
-    (door) => door.open,    // when
-    "interactive_objects"   // spritesheet name
-    DoorSprites.open        // sprite index
+    (door) => door.open, // when
+    "interactive_objects", // spritesheet name
+    DoorSprites.open // sprite index
   )
   @renderSprite<Door>(
-    (door) => !door.open,   // when
-    "interactive_objects"   // spritesheet name
-    DoorSprites.closed      // sprite index
+    (door) => !door.open, // when
+    "interactive_objects", // spritesheet name
+    DoorSprites.closed // sprite index
   )
-  override render(canvas: CanvasController, scene: Scene){}
-
-  override destroy(): void {
-    this.unsubscribe?.();
-    super.destroy();
-  }
+  override render(canvas: CanvasController, scene: Scene): void {}
 }
 ```
 

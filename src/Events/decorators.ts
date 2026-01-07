@@ -47,11 +47,10 @@ const matchesKeyState = (gameObject: GameObject, keys: string[]): boolean => {
   return keys.every((key) => context.isKeyPressed(key));
 };
 
-const composeMethodDecorators = <T>(
+export const composeMethodDecorators = <T>(
   ...decorators: Array<MethodDec<T>>
 ): MethodDec<T> => {
   return (target, propertyKey, descriptor) => {
-    // Aplica de baixo pra cima (igual TS faz quando empilha decorators)
     return decorators.reduceRight((desc, dec) => {
       const out = dec(target, propertyKey, desc);
       return (out ?? desc) as TypedPropertyDescriptor<T>;
@@ -350,7 +349,9 @@ export const grabbable = <TObj extends GameObject = GameObject>() => {
           // If the pointer has been still for at least ~1 tick before release,
           // drop the throw velocity to avoid "stale" inertia.
           this.speed =
-            timeSinceMove >= tickIntervalMs ? Vector.zero() : state.throwSpeed.clone();
+            timeSinceMove >= tickIntervalMs
+              ? Vector.zero()
+              : state.throwSpeed.clone();
           event.stopPropagation = true;
         }
       }
