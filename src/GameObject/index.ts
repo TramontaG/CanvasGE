@@ -32,6 +32,7 @@ class GameObject {
   public rotation: number = 0;
   public angularVelocity: number = 0;
   public showOriginDebug: boolean = false;
+  public zIndex: number = 0;
   private opacity: number = 1;
   private lastDominantDirection: "up" | "down" | "left" | "right" | null =
     "down";
@@ -403,7 +404,7 @@ class GameObject {
   ): () => void {
     let unsubscribe: () => void = () => {};
 
-    unsubscribe = this.onMessage(channel, (payload, sender) => {
+    unsubscribe = this.onMessage(channel, (payload: any, sender) => {
       unsubscribe();
       handler(payload, sender);
     });

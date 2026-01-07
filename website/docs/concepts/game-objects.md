@@ -110,6 +110,7 @@ Why it works well in Sliver:
 
 - `visible`: if `false`, the object won’t render (children won’t render either).
 - `active`: if `false`, the object won’t tick (children won’t tick either).
+- `zIndex`: render order within a scene; higher values draw later (on top).
 
 `destroy()` is the common way to remove an object:
 

@@ -64,7 +64,17 @@ class Scene {
       ctx.restore();
     }
 
-    this.gameObjects.forEach((obj) => {
+    const sortedObjects = this.gameObjects
+      .map((obj, index) => ({ obj, index }))
+      .sort((a, b) => {
+        if (a.obj.zIndex !== b.obj.zIndex) {
+          return a.obj.zIndex - b.obj.zIndex;
+        }
+        return a.index - b.index;
+      })
+      .map(({ obj }) => obj);
+
+    sortedObjects.forEach((obj) => {
       obj.render(canvas, this);
     });
 
