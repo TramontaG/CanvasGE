@@ -47,3 +47,8 @@ inventing new ones.
 ## Tooling
 
 - Use Bun for scripts (`bun run typecheck`, `bun run build`, `bun run docs:*`).
+
+## BEFORE WORKING ON A PROMPT
+
+- If the prompt is a question, do not implement anything yet, just reply the question.
+- Only change the code if the user requests you to do so.

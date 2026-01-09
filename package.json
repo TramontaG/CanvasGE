@@ -1,6 +1,6 @@
 {
   "name": "sliver-engine",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.3",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,6 +30,7 @@
     "docs:build": "cd website && bun docusaurus build",
     "docs:serve": "cd website && bun docusaurus serve --port 3025",
     "docs:clear": "cd website && bun docusaurus clear",
-    "docs:version": "cd website && bun docusaurus docs:version"
+    "docs:version": "cd website && bun docusaurus docs:version",
+    "release": "bun scripts/release.js"
   }
 }
