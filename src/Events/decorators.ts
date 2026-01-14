@@ -130,6 +130,36 @@ export const onClick = <TObj extends GameObject = GameObject>(
 };
 
 /**
+ * Decorator for handling mouse clicks anywhere on the canvas.
+ */
+export const onClickAnywhere = <TObj extends GameObject = GameObject>(
+  handler: (gameObject: TObj, event: MouseButtonPressedEvent) => void
+) => {
+  return function (
+    _target: Object,
+    _propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<HandleEventMethod<TObj>>
+  ) {
+    const original = descriptor.value;
+    if (!original) return descriptor;
+
+    descriptor.value = function (
+      this: TObj,
+      event: GameEvent,
+      ...args: unknown[]
+    ) {
+      if (event.type === "mouseButtonPressed") {
+        handler(this, event);
+      }
+
+      return original.call(this, event, ...args);
+    };
+
+    return descriptor;
+  };
+};
+
+/**
  * Decorator for handling mouse clicks on hitboxes.
  */
 export const onMouseRelease = <TObj extends GameObject = GameObject>(

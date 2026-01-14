@@ -17,6 +17,22 @@ type WalkerPathRecalculationContext = {
   currentPathIndex: number;
 };
 
+type WalkerPathNotFoundBehavior = "throw" | "stop" | "snap" | "continue";
+
+type WalkerPathNotFoundResolution =
+  | WalkerPathNotFoundBehavior
+  | { behavior: Exclude<WalkerPathNotFoundBehavior, "snap"> }
+  | { behavior: "snap"; goal?: Vector };
+
+type WalkerPathNotFoundContext = {
+  walker: Walker;
+  gameObject: GameObject;
+  scene: GameObject["scene"];
+  start: Vector;
+  goal: Vector;
+  obstacleHitboxes: ReadonlyArray<SquareHitbox | CircleHitbox>;
+};
+
 type WalkerPathfindingOptions = {
   avoidObstacles?: boolean;
   gridCellSize?: number;
@@ -24,6 +40,11 @@ type WalkerPathfindingOptions = {
   shouldRecalculatePath?: (ctx: WalkerPathRecalculationContext) => boolean;
   maxExpandedNodes?: number;
   maxSearchRadiusTiles?: number;
+  pathNotFoundBehavior?: WalkerPathNotFoundBehavior;
+  snapTargetToEdgeDistance?: number;
+  onPathNotFound?: (
+    ctx: WalkerPathNotFoundContext
+  ) => WalkerPathNotFoundResolution | void;
 };
 
 type ResolvedWalkerPathfindingOptions = Required<WalkerPathfindingOptions>;
@@ -49,6 +70,11 @@ const normalizePathfindingOptions = (
       ? 256
       : Math.max(1, Math.floor(options.maxSearchRadiusTiles));
 
+  const snapTargetToEdgeDistance = Math.max(
+    0,
+    options?.snapTargetToEdgeDistance ?? gridCellSize
+  );
+
   return {
     avoidObstacles: options?.avoidObstacles ?? false,
     gridCellSize,
@@ -56,6 +82,9 @@ const normalizePathfindingOptions = (
     shouldRecalculatePath: options?.shouldRecalculatePath ?? (() => false),
     maxExpandedNodes,
     maxSearchRadiusTiles,
+    pathNotFoundBehavior: options?.pathNotFoundBehavior ?? "throw",
+    snapTargetToEdgeDistance,
+    onPathNotFound: options?.onPathNotFound ?? (() => undefined),
   };
 };
 
@@ -70,6 +99,7 @@ class Walker {
   private currentPathIndex: number = 0;
   private recalcRequested: boolean = true;
   private tickCounter: number = 0;
+  private adjustedWaypoint: Vector | null = null;
   private pathfindingProxy: {
     proxy: PathfindingProxy;
     signature: string;
@@ -111,6 +141,7 @@ class Walker {
     this.waypointIndex = this.ciclic
       ? (this.waypointIndex + 1) % this.waypoints.length
       : this.waypointIndex + 1;
+    this.adjustedWaypoint = null;
     return this.getTargetedWaypoint()!;
   }
 
@@ -122,6 +153,7 @@ class Walker {
     this.currentPath = [];
     this.currentPathIndex = 0;
     this.recalcRequested = true;
+    this.adjustedWaypoint = null;
     this.gameObject.speed = Vector.zero();
   }
 
@@ -154,6 +186,7 @@ class Walker {
     this.currentPath = [];
     this.currentPathIndex = 0;
     this.recalcRequested = true;
+    this.adjustedWaypoint = null;
   }
 
   public hardReset() {
@@ -161,6 +194,7 @@ class Walker {
     this.currentPath = [];
     this.currentPathIndex = 0;
     this.recalcRequested = true;
+    this.adjustedWaypoint = null;
     if (!this.waypoints[0]) {
       return console.warn(
         `${this.gameObject.name} has no waypoints, impossible to hard reset it's walker!`
@@ -194,6 +228,21 @@ class Walker {
     obj: GameObject
   ): Array<SquareHitbox | CircleHitbox> {
     return obj.getHitboxes().filter((hitbox) => hitbox.solid);
+  }
+
+  private getObstacleHitboxes(
+    scene: GameObject["scene"]
+  ): Array<SquareHitbox | CircleHitbox> {
+    if (!scene) return [];
+    const obstacleHitboxes: Array<SquareHitbox | CircleHitbox> = [];
+    for (const obj of scene.getGameObjects()) {
+      if (obj === this.gameObject) continue;
+      if (!obj.isActive()) continue;
+      const solid = this.getSolidHitboxes(obj);
+      if (solid.length === 0) continue;
+      obstacleHitboxes.push(...solid);
+    }
+    return obstacleHitboxes;
   }
 
   private ensurePathfindingProxy(): PathfindingProxy | null {
@@ -290,35 +339,219 @@ class Walker {
     );
   }
 
+  private clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  private closestPointOnSquareEdge(
+    hitbox: SquareHitbox,
+    point: Vector
+  ): Vector {
+    const vertices = hitbox.getTransformedVertices();
+    const center = vertices[0].toAdded(vertices[2]).toMultiplied(0.5);
+    const axisX = vertices[1].toSubtracted(vertices[0]).normalize();
+    const axisY = vertices[3].toSubtracted(vertices[0]).normalize();
+    const halfX = hitbox.size.x / 2;
+    const halfY = hitbox.size.y / 2;
+
+    const d = point.toSubtracted(center);
+    const distX = d.dotProduct(axisX);
+    const distY = d.dotProduct(axisY);
+
+    let clampedX = this.clamp(distX, -halfX, halfX);
+    let clampedY = this.clamp(distY, -halfY, halfY);
+
+    const absX = Math.abs(distX);
+    const absY = Math.abs(distY);
+    const insideX = absX <= halfX;
+    const insideY = absY <= halfY;
+
+    if (insideX && insideY) {
+      const distToEdgeX = halfX - absX;
+      const distToEdgeY = halfY - absY;
+      if (distToEdgeX <= distToEdgeY) {
+        clampedX = Math.sign(distX || 1) * halfX;
+      } else {
+        clampedY = Math.sign(distY || 1) * halfY;
+      }
+    }
+
+    return center
+      .toAdded(axisX.toMultiplied(clampedX))
+      .toAdded(axisY.toMultiplied(clampedY));
+  }
+
+  private getSnappedGoal(
+    goalScenePosition: Vector,
+    obstacleHitboxes: Array<SquareHitbox | CircleHitbox>,
+    proxy: PathfindingProxy
+  ): Vector | null {
+    const snapDistance = this.pathfindingOptions.snapTargetToEdgeDistance;
+    if (snapDistance <= 0) return null;
+
+    const nudgeDistance = Math.max(
+      1,
+      Math.min(4, this.pathfindingOptions.gridCellSize * 0.25)
+    );
+
+    let bestCandidate: { point: Vector; distance: number } | null = null;
+
+    for (const hitbox of obstacleHitboxes) {
+      let edgePoint: Vector | null = null;
+      let distanceToEdge = Number.POSITIVE_INFINITY;
+      let direction: Vector | null = null;
+
+      if (hitbox instanceof SquareHitbox) {
+        edgePoint = this.closestPointOnSquareEdge(hitbox, goalScenePosition);
+        distanceToEdge = goalScenePosition
+          .toSubtracted(edgePoint)
+          .magnitude();
+        const vertices = hitbox.getTransformedVertices();
+        const center = vertices[0].toAdded(vertices[2]).toMultiplied(0.5);
+        direction = edgePoint.toSubtracted(center);
+      } else if (hitbox instanceof CircleHitbox) {
+        const center = hitbox.getTransformedPosition();
+        const delta = goalScenePosition.toSubtracted(center);
+        const deltaMagnitude = delta.magnitude();
+        const normalized =
+          deltaMagnitude === 0 ? new Vector(1, 0) : delta.toNormalized();
+        edgePoint = center.toAdded(normalized.toMultiplied(hitbox.radius));
+        distanceToEdge = Math.abs(deltaMagnitude - hitbox.radius);
+        direction = normalized;
+      }
+
+      if (!edgePoint || distanceToEdge > snapDistance) continue;
+
+      const normalizedDirection =
+        direction && direction.squaredMagnitude() > 0
+          ? direction.toNormalized()
+          : new Vector(1, 0);
+      const candidates = [
+        edgePoint.toAdded(normalizedDirection.toMultiplied(nudgeDistance)),
+        edgePoint,
+      ];
+
+      for (const candidate of candidates) {
+        if (!this.isProxyPositionFree(proxy, candidate, obstacleHitboxes)) {
+          continue;
+        }
+
+        if (!bestCandidate || distanceToEdge < bestCandidate.distance) {
+          bestCandidate = { point: candidate, distance: distanceToEdge };
+        }
+      }
+    }
+
+    return bestCandidate ? bestCandidate.point.clone() : null;
+  }
+
+  private resolvePathNotFound(
+    startScenePosition: Vector,
+    goalScenePosition: Vector,
+    obstacleHitboxes: Array<SquareHitbox | CircleHitbox>,
+    proxy: PathfindingProxy
+  ): { stop: boolean } {
+    const context: WalkerPathNotFoundContext = {
+      walker: this,
+      gameObject: this.gameObject,
+      scene: this.gameObject.scene,
+      start: startScenePosition,
+      goal: goalScenePosition,
+      obstacleHitboxes,
+    };
+
+    const decision = this.pathfindingOptions.onPathNotFound(context);
+    const resolved =
+      typeof decision === "string" ? { behavior: decision } : decision;
+
+    const behavior =
+      resolved?.behavior ?? this.pathfindingOptions.pathNotFoundBehavior;
+
+    if (behavior === "throw") {
+      throw new Error(
+        `Walker could not find a path for ${this.gameObject.name} to ${goalScenePosition.x},${goalScenePosition.y}.`
+      );
+    }
+
+    if (behavior === "stop") {
+      this.currentPath = [];
+      this.currentPathIndex = 0;
+      this.adjustedWaypoint = null;
+      this.gameObject.speed = Vector.zero();
+      this.active = false;
+      return { stop: true };
+    }
+
+    if (behavior === "continue") {
+      this.currentPath = [];
+      this.currentPathIndex = 0;
+      this.adjustedWaypoint = null;
+      return { stop: false };
+    }
+
+    const snapGoal =
+      resolved && "goal" in resolved && resolved.goal
+        ? resolved.goal
+        : this.getSnappedGoal(goalScenePosition, obstacleHitboxes, proxy);
+
+    if (!snapGoal) {
+      this.currentPath = [];
+      this.currentPathIndex = 0;
+      this.adjustedWaypoint = null;
+      this.gameObject.speed = Vector.zero();
+      this.active = false;
+      return { stop: true };
+    }
+
+    const snapResult = this.computePathToTarget(startScenePosition, snapGoal);
+    if (snapResult.status === "found") {
+      this.currentPath = snapResult.path;
+      this.currentPathIndex = 0;
+      this.adjustedWaypoint = snapGoal.clone();
+      return { stop: false };
+    }
+
+    if (snapResult.status === "skipped") {
+      this.currentPath = [];
+      this.currentPathIndex = 0;
+      this.adjustedWaypoint = snapGoal.clone();
+      return { stop: false };
+    }
+
+    this.currentPath = [];
+    this.currentPathIndex = 0;
+    this.adjustedWaypoint = null;
+    this.gameObject.speed = Vector.zero();
+    this.active = false;
+    return { stop: true };
+  }
+
   private computePathToTarget(
     startScenePosition: Vector,
     goalScenePosition: Vector
-  ): Vector[] | null {
+  ): {
+    status: "skipped" | "found" | "no_path";
+    path: Vector[];
+    obstacleHitboxes?: Array<SquareHitbox | CircleHitbox>;
+    proxy?: PathfindingProxy;
+  } {
     if (!this.pathfindingOptions.avoidObstacles) {
-      return null;
+      return { status: "skipped", path: [] };
     }
 
     const scene = this.gameObject.scene;
     if (!scene) {
-      return null;
+      return { status: "skipped", path: [] };
     }
 
     const proxy = this.ensurePathfindingProxy();
     if (!proxy) {
-      return null;
+      return { status: "skipped", path: [] };
     }
 
-    const obstacleHitboxes: Array<SquareHitbox | CircleHitbox> = [];
-    for (const obj of scene.getGameObjects()) {
-      if (obj === this.gameObject) continue;
-      if (!obj.isActive()) continue;
-      const solid = this.getSolidHitboxes(obj);
-      if (solid.length === 0) continue;
-      obstacleHitboxes.push(...solid);
-    }
-
+    const obstacleHitboxes = this.getObstacleHitboxes(scene);
     if (obstacleHitboxes.length === 0) {
-      return null;
+      return { status: "skipped", path: [] };
     }
 
     const cellSize = this.pathfindingOptions.gridCellSize;
@@ -411,10 +644,10 @@ class Walker {
 
         const path = centers.slice(1);
         if (path.length === 0) {
-          return [];
+          return { status: "found", path: [] };
         }
 
-        return this.simplifyPath(path);
+        return { status: "found", path: this.simplifyPath(path) };
       }
 
       for (const dir of dirs) {
@@ -460,7 +693,7 @@ class Walker {
       }
     }
 
-    return null;
+    return { status: "no_path", path: [], obstacleHitboxes, proxy };
   }
 
   private simplifyPath(path: Vector[]): Vector[] {
@@ -508,6 +741,7 @@ class Walker {
       this.currentPath = [];
       this.currentPathIndex = 0;
       this.recalcRequested = false;
+      this.adjustedWaypoint = null;
     } else {
       const shouldRecalculate =
         this.recalcRequested ||
@@ -527,9 +761,29 @@ class Walker {
 
       if (shouldRecalculate) {
         this.recalcRequested = false;
-        this.currentPath =
-          this.computePathToTarget(currentPosition, targetedWaypoint) ?? [];
-        this.currentPathIndex = 0;
+        const pathResult = this.computePathToTarget(
+          currentPosition,
+          targetedWaypoint
+        );
+        if (pathResult.status === "found") {
+          this.currentPath = pathResult.path;
+          this.currentPathIndex = 0;
+          this.adjustedWaypoint = null;
+        } else if (pathResult.status === "skipped") {
+          this.currentPath = [];
+          this.currentPathIndex = 0;
+          this.adjustedWaypoint = null;
+        } else if (pathResult.obstacleHitboxes && pathResult.proxy) {
+          const result = this.resolvePathNotFound(
+            currentPosition,
+            targetedWaypoint,
+            pathResult.obstacleHitboxes,
+            pathResult.proxy
+          );
+          if (result.stop) {
+            return;
+          }
+        }
       }
     }
 
@@ -545,7 +799,8 @@ class Walker {
     this.compactCurrentPathIfNeeded();
 
     const movementTarget =
-      this.currentPath[this.currentPathIndex] ?? targetedWaypoint;
+      this.currentPath[this.currentPathIndex] ??
+      (this.adjustedWaypoint ?? targetedWaypoint);
 
     const movementVector = movementTarget.toSubtracted(currentPosition);
     const movementDirection = movementVector.toNormalized();
@@ -571,7 +826,9 @@ class Walker {
 
         if (isAtLastWaypoint) {
           // Snap to the final waypoint, stop, and notify listeners.
-          this.gameObject.setPosition(targetedWaypoint);
+          this.gameObject.setPosition(
+            (this.adjustedWaypoint ?? targetedWaypoint).clone()
+          );
           this.gameObject.speed = Vector.zero();
           this.active = false;
           this.onComplete?.();
@@ -582,6 +839,7 @@ class Walker {
         this.currentPath = [];
         this.currentPathIndex = 0;
         this.recalcRequested = true;
+        this.adjustedWaypoint = null;
         this.nextWaypoint();
       }
     }
@@ -652,4 +910,10 @@ class Walker {
 }
 
 export { Walker };
-export type { WalkerPathfindingOptions, WalkerPathRecalculationContext };
+export type {
+  WalkerPathfindingOptions,
+  WalkerPathRecalculationContext,
+  WalkerPathNotFoundBehavior,
+  WalkerPathNotFoundContext,
+  WalkerPathNotFoundResolution,
+};

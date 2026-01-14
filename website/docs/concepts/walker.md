@@ -104,6 +104,32 @@ walker.setPathfindingOptions({
 
 If there are no obstacles (or the object has no solid hitboxes), the walker falls back to moving directly toward the waypoint.
 
+### When no path is found
+
+If obstacle avoidance is enabled and the walker cannot find a path, it throws by default. You can control that behavior:
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  pathNotFoundBehavior: "snap", // "throw" | "stop" | "snap" | "continue"
+  snapTargetToEdgeDistance: 12,
+});
+```
+
+- `throw`: throw an error when no path is found.
+- `stop`: stop the walker and leave the object in place.
+- `snap`: if the waypoint is near the edge of a solid hitbox, snap to that edge and path to it instead.
+- `continue`: skip pathfinding and walk straight toward the waypoint.
+
+For custom handling, use `onPathNotFound`:
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  onPathNotFound: ({ goal }) => ({ behavior: "snap", goal }),
+});
+```
+
 ### Performance knobs
 
 For large scenes, tune:

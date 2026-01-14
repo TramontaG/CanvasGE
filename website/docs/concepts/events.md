@@ -8,6 +8,7 @@ Sliver’s default way to handle input is through **decorators** applied to a `G
 This gives you:
 
 - Hitbox-aware mouse events (`@onClick`, `@onHover`, …)
+- Screen-wide mouse events (`@onClickAnywhere`, `@onMouseWheel`)
 - Key handling (`@onKeyPressed` for one-shot, `@onKeyHold` for continuous; combos too)
 - Event propagation control (`event.stopPropagation`)
 - Composition: stack multiple decorators on the same method
@@ -92,6 +93,10 @@ Prerequisite: your object needs at least one hitbox for hitbox-based decorators 
 ### `@onClick(handler)`
 
 Runs on `mouseButtonPressed` if the pointer is inside the object’s hitboxes.
+
+### `@onClickAnywhere(handler)`
+
+Runs on `mouseButtonPressed` anywhere on the canvas (not hitbox-based).
 
 ### `@onMouseRelease(handler)`
 

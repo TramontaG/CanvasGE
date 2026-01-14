@@ -21,7 +21,7 @@ import {
   SoundManager,
   SquareHitbox,
   Vector,
-  onClick,
+  onClickAnywhere,
   onKeyPressed,
 } from "../index";
 import type { GameContext, GameEvent } from "../index";
@@ -92,7 +92,7 @@ class Bird extends GameObject {
   // Colliding with anything except the ceiling ends the run.
   override onColision(other: GameObject, _penetration: Vector): void {
     if (this.frozen) return;
-    if (other.name === "ceiling" || other.name === "input_surface") return;
+    if (other.name === "ceiling") return;
     this.sendMessage("game:over", null);
   }
 
@@ -102,6 +102,19 @@ class Bird extends GameObject {
       .getShapeDrawer()
       .drawRectangle(pos.x, pos.y, BIRD_SIZE.x, BIRD_SIZE.y, "#ffd166", true);
   };
+
+  // Space should always trigger, even if the bird is frozen.
+  @onKeyPressed<Bird>(" ", (obj) => {
+    obj.handleInput();
+  })
+  // Capture clicks anywhere on the canvas and stop propagation.
+  @onClickAnywhere<Bird>((obj, event) => {
+    event.stopPropagation = true;
+    obj.handleInput();
+  })
+  override handleEvent(event: GameEvent): void {
+    super.handleEvent(event);
+  }
 
   handleInput(): void {
     if (this.frozen) {
@@ -244,34 +257,6 @@ class Ceiling extends GameObject {
   }
 }
 
-class InputSurface extends GameObject {
-  constructor(private bird: Bird) {
-    super("input_surface", Vector.zero(), false);
-    // Full-canvas hitbox so clicks always register.
-    this.addHitbox(
-      new SquareHitbox(
-        Vector.zero(),
-        new Vector(CANVAS_WIDTH, CANVAS_HEIGHT),
-        this,
-        { solid: false }
-      )
-    );
-  }
-
-  // Space should always trigger, even if the bird is frozen.
-  @onKeyPressed<InputSurface>(" ", (obj) => {
-    obj.bird.handleInput();
-  })
-  // Capture clicks anywhere on the canvas and stop propagation.
-  @onClick<InputSurface>((obj, event) => {
-    event.stopPropagation = true;
-    obj.bird.handleInput();
-  })
-  override handleEvent(event: GameEvent): void {
-    super.handleEvent(event);
-  }
-}
-
 class PipeSpawner extends GameObject {
   private pipes: PipePair[] = [];
   private ticksSincePipe = PIPE_SPAWN_TICKS;
@@ -392,10 +377,9 @@ const spawner = new PipeSpawner(bird);
 const hud = new ScoreHud();
 const ground = new Ground();
 const ceiling = new Ceiling();
-const inputSurface = new InputSurface(bird);
 
 // Gameplay is in the main scene; UI/input overlays on top.
-mainScene.addGameObject([bird, spawner, ground, ceiling, inputSurface, hud]);
+mainScene.addGameObject([bird, spawner, ground, ceiling, hud]);
 
 const scenes = new SceneManager({ main: mainScene }, mainScene);
 const game = new Game({
