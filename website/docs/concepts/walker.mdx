@@ -1,0 +1,414 @@
+---
+title: Walker
+sidebar_position: 5
+---
+
+`Walker` is an optional movement helper for `GameObject`s. It can:
+
+- move an object along a list of waypoints (patrol paths, NPC routes)
+- loop those waypoints (cyclic) or stop at the end
+- optionally do simple grid-based pathfinding to avoid solid obstacles
+- draw debug visuals for waypoints and the computed path
+
+Under the hood, `Walker.tick()` sets `gameObject.speed` every tick. The object’s normal `tick()` then applies that speed to its position.
+
+## Attaching a Walker
+
+Create a walker and attach it to a game object:
+
+```ts
+import { GameObject, Vector, Walker } from "sliver-engine";
+
+const npc = new GameObject("npc", new Vector(100, 100));
+
+const walker = new Walker(
+  npc,
+  [new Vector(100, 100), new Vector(300, 100), new Vector(300, 300)],
+  2,        // speed (pixels per tick)
+  true,     // debug
+  true      // cyclic (loop)
+);
+
+npc.setWalker(walker);
+walker.start();
+```
+
+Notes:
+- Waypoints are interpreted in **scene/world space** (they’re compared to `getScenePosition()`).
+- `speed` is per tick, not per second. Convert from px/s using `1 / ctx.getTickRate()` if needed (see [`Game loop`](./game-loop.md)).
+- Debug drawing respects the scene offset (so it stays aligned if the camera moves).
+
+## Starting, stopping, and resetting
+
+- `start()`: activates movement (and requests path recalculation)
+- `toggle()`: switches active/inactive (stops by zeroing object speed)
+- `reset()`: resets indices/path but does not teleport
+- `hardReset()`: resets and teleports the object to the first waypoint (if it exists)
+
+```ts
+walker.toggle();
+walker.reset();
+walker.hardReset();
+```
+
+## Changing waypoints at runtime
+
+```ts
+walker.setWaypoints([a, b, c], true); // cyclic
+```
+
+`setWaypoints` also resets internal path state and stops the object momentarily (`speed = 0`) so the new route starts cleanly.
+
+## Completion callback
+
+If `ciclic` is `false`, the walker stops after reaching the final waypoint and calls `onComplete`:
+
+```ts
+walker.setOnComplete(() => {
+  npc.sendMessage("npc:arrived", { name: npc.name });
+});
+```
+
+## Obstacle avoidance (pathfinding)
+
+When enabled, the walker runs a lightweight grid A* search to route around obstacles.
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  gridCellSize: 16,
+  recalculateEveryTicks: 30,
+});
+```
+
+How obstacle avoidance works:
+- Only **solid** hitboxes are considered (`hitbox.solid === true`).
+- The walker builds a “proxy body” from the moving object’s solid hitboxes.
+- It treats other active objects’ solid hitboxes in the same scene as obstacles.
+- It searches on a 4-neighbor grid (up/down/left/right) and then simplifies the resulting path.
+
+### When paths recalculate
+
+The walker can recalculate when:
+
+- you call `requestPathRecalculation()`
+- `recalculateEveryTicks` elapses
+- `shouldRecalculatePath(ctx)` returns `true`
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  shouldRecalculatePath: ({ tick }) => tick % 10 === 0,
+});
+```
+
+If there are no obstacles (or the object has no solid hitboxes), the walker falls back to moving directly toward the waypoint.
+
+### When no path is found
+
+If obstacle avoidance is enabled and the walker cannot find a path, it throws by default. You can control that behavior:
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  pathNotFoundBehavior: "snap", // "throw" | "stop" | "snap" | "continue"
+  snapTargetToEdgeDistance: 12,
+});
+```
+
+- `throw`: throw an error when no path is found.
+- `stop`: stop the walker and leave the object in place.
+- `snap`: if the waypoint is near the edge of a solid hitbox, snap to that edge and path to it instead.
+- `continue`: skip pathfinding and walk straight toward the waypoint.
+
+For custom handling, use `onPathNotFound`:
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  onPathNotFound: ({ goal }) => ({ behavior: "snap", goal }),
+});
+```
+
+### Performance knobs
+
+For large scenes, tune:
+
+- `maxExpandedNodes`: cap the A* work per recalculation
+- `maxSearchRadiusTiles`: cap search distance (in tiles) around the start
+
+```ts
+walker.setPathfindingOptions({
+  avoidObstacles: true,
+  maxExpandedNodes: 5000,
+  maxSearchRadiusTiles: 64,
+});
+```
+
+## Debug drawing
+
+If `debug` is `true`, the walker draws:
+
+- waypoints (red circles) and waypoint links (red lines)
+- the current computed path nodes (cyan circles/lines)
+
+Walker debug rendering is called from the owning object’s render path, but it intentionally cancels object rotation so the path is drawn in world space.
+
+## Interaction with physics
+
+Since `Walker` sets `gameObject.speed`, it composes naturally with Sliver physics:
+
+- collisions can push the object off its ideal path; the walker will drop “already reached” nodes and continue
+- if you also set speed elsewhere (your own `tickFn`), last write wins—prefer one source of movement at a time
+
+For physics details (hitboxes, solid vs trigger, impulses), see [`Physics`](./physics).
+
+## Live example
+
+This sandbox is split into multiple files:
+
+- `Character.ts` defines the character object with a hardcoded start position and hitbox.
+- `createObstacles.ts` defines obstacle objects with hardcoded positions and hitboxes.
+- Only `createCharacter.ts` is visible, so you can focus on editing walker creation.
+- Press **Run** to apply your changes.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: `import "./main";
+`,
+			readOnly: true,
+		},
+		"/Character.ts": {
+			code: `import {
+	GameObject,
+	SquareHitbox,
+	Vector,
+	type CanvasController,
+	type Scene,
+} from "sliver-engine";
+
+const CHARACTER_START = new Vector(56, 56);
+const CHARACTER_SIZE = 20;
+
+export class Character extends GameObject {
+	constructor() {
+		super("walker-agent", CHARACTER_START.clone());
+		this.addHitbox(
+			new SquareHitbox(
+				Vector.zero(),
+				new Vector(CHARACTER_SIZE, CHARACTER_SIZE),
+				this,
+				{
+					solid: true,
+					debug: false,
+				},
+			),
+		);
+	}
+
+	override render(canvas: CanvasController, _scene: Scene): void {
+		const pos = this.getPosition();
+		canvas
+			.getShapeDrawer()
+			.drawRectangle(pos.x, pos.y, CHARACTER_SIZE, CHARACTER_SIZE, "#fbbf24", true);
+	}
+}
+`,
+			readOnly: true,
+		},
+		"/createCharacter.base.ts": {
+			code: `import {
+	type GameObject,
+	type Walker,
+} from "sliver-engine";
+import { Character } from "./Character";
+
+type WalkerFactory = (character: GameObject) => Walker;
+
+export const createCharacterBase = (walkerFactory: WalkerFactory): Character => {
+	const character = new Character();
+	character.setWalker(walkerFactory(character));
+	return character;
+};
+`,
+			readOnly: true,
+		},
+		"/createCharacter.ts": `import {
+	Walker,
+	Vector,
+	type GameObject,
+	type WalkerPathfindingOptions,
+} from "sliver-engine";
+import { createCharacterBase } from "./createCharacter.base";
+
+export const createWalker = (character: GameObject): Walker => {
+	// Edit this section only.
+	const waypoints = [
+		new Vector(56, 56),
+		new Vector(464, 56),
+		new Vector(464, 248),
+		new Vector(56, 248),
+	];
+
+	const speed = 2.1;
+	const debug = true;
+	const cyclic = true;
+
+	const pathfindingOptions: WalkerPathfindingOptions = {
+		avoidObstacles: true,
+		gridCellSize: 16,
+		recalculateEveryTicks: 20,
+		shouldRecalculatePath: ({ tick }) => tick % 45 === 0,
+		maxExpandedNodes: 6000,
+		maxSearchRadiusTiles: 64,
+		pathNotFoundBehavior: "snap",
+		snapTargetToEdgeDistance: 18,
+	};
+
+	return new Walker(
+		character,
+		waypoints,
+		speed,
+		debug,
+		cyclic,
+		pathfindingOptions,
+	);
+};
+
+export const createCharacter = () => {
+	return createCharacterBase(createWalker);
+};
+`,
+		"/createObstacles.ts": {
+			code: `import {
+	GameObject,
+	SquareHitbox,
+	Vector,
+	type CanvasController,
+	type Scene,
+} from "sliver-engine";
+
+const OBSTACLE_LAYOUT = [
+	{
+		position: new Vector(182, 88),
+		size: new Vector(54, 148),
+		color: "#334155",
+	},
+	{
+		position: new Vector(302, 88),
+		size: new Vector(54, 148),
+		color: "#334155",
+	},
+] as const;
+
+class Obstacle extends GameObject {
+	constructor(name: string, position: Vector, size: Vector, private readonly color: string) {
+		super(name, position);
+		this.addHitbox(
+			new SquareHitbox(Vector.zero(), size, this, {
+				solid: true,
+				debug: false,
+			}),
+		);
+	}
+
+	override render(canvas: CanvasController, _scene: Scene): void {
+		const pos = this.getPosition();
+		canvas
+			.getShapeDrawer()
+			.drawRectangle(pos.x, pos.y, this.getSize().x, this.getSize().y, this.color, true);
+	}
+
+	private getSize(): Vector {
+		return (this.getHitboxes()[0] as SquareHitbox).size;
+	}
+}
+
+export const createObstacles = (): Obstacle[] => {
+	return OBSTACLE_LAYOUT.map((item, index) => {
+		return new Obstacle(
+			"walker-wall-" + String(index),
+			item.position.clone(),
+			item.size.clone(),
+			item.color,
+		);
+	});
+};
+`,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: `import {
+	CanvasController,
+	Game,
+	Scene,
+	SceneManager,
+	SoundManager,
+} from "sliver-engine";
+import { createCharacter } from "./createCharacter";
+import { createObstacles } from "./createObstacles";
+
+const CANVAS_WIDTH = 520;
+const CANVAS_HEIGHT = 320;
+
+const canvas = new CanvasController(CANVAS_WIDTH, CANVAS_HEIGHT);
+const canvasElement = canvas.getCanvas();
+
+document.body.style.margin = "0";
+document.body.style.overflow = "hidden";
+
+canvasElement.style.width = CANVAS_WIDTH + "px";
+canvasElement.style.height = CANVAS_HEIGHT + "px";
+canvasElement.style.display = "block";
+canvasElement.style.margin = "0 auto";
+
+const mainScene = new Scene("walker-demo", "#0f172a");
+
+const character = createCharacter();
+const obstacles = createObstacles();
+
+mainScene.addGameObject([character, ...obstacles]);
+
+const scenes = new SceneManager({ main: mainScene }, mainScene);
+const game = new Game({
+	canvas,
+	scenes,
+	soundManager: new SoundManager(),
+	ticksPerSecond: 60,
+});
+
+game.start();
+character.walker?.start();
+`,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/createCharacter.ts"]}
+	activeFile="/createCharacter.ts"
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+		"/Character.ts",
+		"/createCharacter.base.ts",
+		"/createObstacles.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "latest",
+		},
+	}}
+/>

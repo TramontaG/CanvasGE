@@ -100,7 +100,7 @@ Each tick, `Scene.tick()`:
 1) calls `tick()` on every `GameObject` in the scene
 2) runs collision detection + resolution across objects that have hitboxes
 
-For a deeper dive (hitboxes, restitution/friction/mass, triggers, and collision hooks), see [`Physics`](./physics).
+For a deeper dive (hitboxes, restitution/friction/mass, triggers, and collision hooks), see [`Physics`](./physics.md).
 
 ### Gravity
 
@@ -133,7 +133,7 @@ If you want an object to be physical, you typically:
 - set `immovable: false`
 - optionally tweak `restitution`, `friction`, `mass`, and gravity behavior
 
-See [`Physics`](./physics) for collision/response details, and [`Game objects`](./game-objects.md) for the hitbox and gameplay patterns.
+See [`Physics`](./physics.md) for collision/response details, and [`Game objects`](./game-objects.md) for the hitbox and gameplay patterns.
 
 ## Render: background, objects, overlay
 

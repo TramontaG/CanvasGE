@@ -24,7 +24,7 @@ import {
   onClickAnywhere,
   onKeyPressed,
 } from "../index";
-import type { GameContext, GameEvent } from "sliver-engine";
+import type { GameContext, GameEvent } from "../index";
 
 // Core sizing + tuning constants.
 const CANVAS_WIDTH = 480;
@@ -138,11 +138,7 @@ class PipePair extends GameObject {
   private frozen = false;
   private gapTopHeight: number;
 
-  constructor(
-    x: number,
-    gapTopHeight: number,
-    private bird: Bird,
-  ) {
+  constructor(x: number, gapTopHeight: number, private bird: Bird) {
     super("pipe_pair", new Vector(x, 0));
     this.gapTopHeight = gapTopHeight;
     // Pipes move left at a fixed speed.
@@ -156,15 +152,15 @@ class PipePair extends GameObject {
       new SquareHitbox(
         Vector.zero(),
         new Vector(PIPE_WIDTH, gapTopHeight),
-        this,
-      ),
+        this
+      )
     );
     this.addHitbox(
       new SquareHitbox(
         new Vector(0, gapTopHeight + PIPE_GAP),
         new Vector(PIPE_WIDTH, bottomHeight),
-        this,
-      ),
+        this
+      )
     );
     this.setRenderFunction(this.renderPipes);
   }
@@ -205,7 +201,7 @@ class PipePair extends GameObject {
       PIPE_WIDTH,
       this.gapTopHeight,
       "#06d6a0",
-      true,
+      true
     );
     draw.drawRectangle(
       pos.x,
@@ -213,7 +209,7 @@ class PipePair extends GameObject {
       PIPE_WIDTH,
       bottomHeight,
       "#06d6a0",
-      true,
+      true
     );
   };
 }
@@ -226,8 +222,8 @@ class Ground extends GameObject {
       new SquareHitbox(
         Vector.zero(),
         new Vector(CANVAS_WIDTH, GROUND_HEIGHT),
-        this,
-      ),
+        this
+      )
     );
     this.setRenderFunction(this.renderGround);
   }
@@ -242,7 +238,7 @@ class Ground extends GameObject {
         CANVAS_WIDTH,
         GROUND_HEIGHT,
         "#073b4c",
-        true,
+        true
       );
   };
 }
@@ -255,8 +251,8 @@ class Ceiling extends GameObject {
       new SquareHitbox(
         Vector.zero(),
         new Vector(CANVAS_WIDTH, CEILING_HEIGHT),
-        this,
-      ),
+        this
+      )
     );
   }
 }
@@ -355,7 +351,7 @@ class ScoreHud extends GameObject {
       CANVAS_HEIGHT / 2 - 20,
       "white",
       "32px",
-      "center",
+      "center"
     );
     draw.drawText(
       "Press Space or Click to restart",
@@ -363,7 +359,7 @@ class ScoreHud extends GameObject {
       CANVAS_HEIGHT / 2 + 20,
       "white",
       "16px",
-      "center",
+      "center"
     );
   };
 }

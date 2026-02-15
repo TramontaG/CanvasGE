@@ -10,9 +10,16 @@ import {
 } from "..";
 import type { GameContext } from "../../Context";
 
+/**
+ * Executes the list of events in sequence. If any event fails, the sequence fails.
+ * Returns the state of the last event of the list
+ * @param events
+ * @param label
+ * @returns
+ */
 export const sequenceOf = <TState extends object>(
   events: ScriptEvent<TState>[],
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, _state) => {
     let state = _state;
@@ -25,9 +32,16 @@ export const sequenceOf = <TState extends object>(
   }, label);
 };
 
+/**
+ * Executes the list of events in parallel. If any event fails, the sequence fails.
+ * Returns the composite stat of all the events.
+ * @param events
+ * @param label
+ * @returns
+ */
 export const parallel = <TState extends object>(
   events: ScriptEvent<TState>[],
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, state) => {
     const promises = events.map((event) => runEvent(event, ctx, state));
@@ -43,9 +57,16 @@ export const parallel = <TState extends object>(
   }, label);
 };
 
+/**
+ * Execute the list of events in parallel. If any event fails, the sequence fails.
+ * Returns the first event to resolve.
+ * @param events
+ * @param label
+ * @returns
+ */
 export const first = <TState extends object>(
   events: ScriptEvent<TState>[],
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, state) => {
     const promises = events.map((event) => runEvent(event, ctx, state));
@@ -54,11 +75,19 @@ export const first = <TState extends object>(
   }, label);
 };
 
+/**
+ * Conditionally run an event based on a predicate of the scriptState.
+ * @param predicate
+ * @param thenEv
+ * @param elseEv
+ * @param label
+ * @returns
+ */
 export const conditional = <TState extends object>(
   predicate: (state: ScriptState<TState>) => boolean,
   thenEv: ScriptEvent<TState>,
   elseEv: ScriptEvent<TState>,
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, state) => {
     if (predicate(state)) {
@@ -71,7 +100,7 @@ export const conditional = <TState extends object>(
 
 export const all = <TState extends object>(
   events: ScriptEvent<TState>[],
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, _state) => {
     const promises = events.map((event) => () => runEvent(event, ctx, _state));
@@ -85,13 +114,13 @@ export const all = <TState extends object>(
 
           if (isAborted(state)) {
             resolve(
-              abort(state, `Aborted on ${label || "runAll"}\n${state.aborted}`)
+              abort(state, `Aborted on ${label || "runAll"}\n${state.aborted}`),
             );
           }
 
           if (isErrored(state)) {
             resolve(
-              failed(state, `Failed on ${label || "runAll"}\n${state.error}`)
+              failed(state, `Failed on ${label || "runAll"}\n${state.error}`),
             );
           }
 
@@ -105,7 +134,7 @@ export const all = <TState extends object>(
 export const repeatWhile = <TState extends object>(
   predicate: (ctx: GameContext, state: ScriptState<TState>) => boolean,
   event: ScriptEvent<TState>,
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, state) => {
     let newState = state;
@@ -113,14 +142,14 @@ export const repeatWhile = <TState extends object>(
       if (isAborted(newState)) {
         return abort(
           newState,
-          `Aborted on ${label || "repeatWhile"}\n${newState.aborted}`
+          `Aborted on ${label || "repeatWhile"}\n${newState.aborted}`,
         );
       }
 
       if (isErrored(newState)) {
         return failed(
           newState,
-          `Failed oon ${label || "repeatWhile"}\n${newState.error}`
+          `Failed oon ${label || "repeatWhile"}\n${newState.error}`,
         );
       }
 
@@ -134,7 +163,7 @@ export const repeatWhile = <TState extends object>(
 export const repeat = <TState extends object>(
   event: ScriptEvent<TState>,
   times: number,
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, _state) => {
     let state = _state;
@@ -147,10 +176,17 @@ export const repeat = <TState extends object>(
   }, label);
 };
 
+/**
+ * The event must be done befor the timeout. If not, the event will be aborted.
+ * @param event
+ * @param timeout
+ * @param label
+ * @returns
+ */
 export const withTimeout = <TState extends object>(
   event: ScriptEvent<TState>,
   timeout: number,
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return scripted<TState>(async (ctx, state) => {
     setTimeout(() => {
@@ -161,9 +197,7 @@ export const withTimeout = <TState extends object>(
   });
 };
 
-export const waitTicks = <TState extends object>(
-  timeInTicks: number
-) => {
+export const waitTicks = <TState extends object>(timeInTicks: number) => {
   return scripted<TState>(async (ctx, state) => {
     const currTicks = ctx.getTickCount();
     const tickRate = ctx.getGame().getTickRate();
@@ -179,9 +213,15 @@ export const waitTicks = <TState extends object>(
   });
 };
 
+/**
+ * Periodically checks the predicate and runs the event only when the predicate is true
+ * @param predicate
+ * @param opts
+ * @returns
+ */
 export const waitUntil = <TState extends object>(
   predicate: (ctx: GameContext, state: TState) => boolean,
-  opts?: { pollGameTicks?: number; label?: string }
+  opts?: { pollGameTicks?: number; label?: string },
 ) => {
   const pollGameTicks = opts?.pollGameTicks ?? 1;
   const label = opts?.label ?? "waitUntil";
@@ -203,7 +243,7 @@ export const waitUntil = <TState extends object>(
 
 export const waitForKeyPress = <TState extends object>(
   key: string,
-  label: string | null = null
+  label: string | null = null,
 ) => {
   return waitUntil<TState>(
     (ctx, state) => {
@@ -212,6 +252,6 @@ export const waitForKeyPress = <TState extends object>(
     {
       pollGameTicks: 1,
       label: label ?? `waitForKeyPress(${key})`,
-    }
+    },
   );
 };

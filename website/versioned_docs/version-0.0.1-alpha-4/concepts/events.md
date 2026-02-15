@@ -232,7 +232,7 @@ override handleEvent(event: GameEvent): void {
 }
 ```
 
-Because grabbing sets `beingGrabbed`, it interacts with physics: gravity is not applied while the object is being dragged. See [`Physics`](./physics).
+Because grabbing sets `beingGrabbed`, it interacts with physics: gravity is not applied while the object is being dragged. See [`Physics`](./physics.md).
 
 ## Forwarding events to children: `@onChildrenEvents()`
 
@@ -255,4 +255,4 @@ Tip: since the same `event` object is forwarded, a child can see `event.stopProp
 
 `@solidTo` is a convenience decorator for collision filtering on `beforeColision(other)`.
 
-It lives in the same decorators module, but it’s part of the physics/collision story. See [`Physics`](./physics) for recommended usage patterns.
+It lives in the same decorators module, but it’s part of the physics/collision story. See [`Physics`](./physics.md) for recommended usage patterns.

@@ -5,6 +5,41 @@ import type { GameContext } from "../Context";
 import { Vector } from "../Lib/Vector";
 import { ColisionHandler } from "../GameObject/Hitboxes/ColisionHandler";
 
+const LINEAR_VELOCITY_SNAP_EPSILON = 0.001;
+const RESTING_TANGENTIAL_VELOCITY_SNAP_EPSILON = 0.01;
+const RESTING_NORMAL_VELOCITY_SNAP_EPSILON = 0.35;
+const ROTATION_SNAP_STEP = Math.PI / 2;
+const ROTATION_SNAP_EPSILON = 0.02;
+const RESTING_ANGULAR_VELOCITY_SNAP_EPSILON = 0.02;
+const RESTING_ROTATION_ALIGNMENT_DELTA = 0.12;
+const RESTING_FULL_SLEEP_ANGULAR_EPSILON = 0.08;
+const TAU = Math.PI * 2;
+
+const normalizeRotation = (value: number): number => {
+  const normalized = value % TAU;
+  return normalized < 0 ? normalized + TAU : normalized;
+};
+
+const snapRotationToQuarterTurn = (
+  value: number,
+  epsilon: number = ROTATION_SNAP_EPSILON
+): number => {
+  const snapped = Math.round(value / ROTATION_SNAP_STEP) * ROTATION_SNAP_STEP;
+  return Math.abs(value - snapped) < epsilon ? snapped : value;
+};
+
+const snapRotationToNearestQuarterTurn = (value: number): number =>
+  Math.round(value / ROTATION_SNAP_STEP) * ROTATION_SNAP_STEP;
+
+const getDistanceToNearestQuarterTurn = (value: number): number => {
+  const snapped = snapRotationToNearestQuarterTurn(value);
+  const directDistance = Math.abs(value - snapped);
+  return Math.min(directDistance, TAU - directDistance);
+};
+
+const isRotationNearQuarterTurn = (value: number, delta: number): boolean =>
+  getDistanceToNearestQuarterTurn(value) <= delta;
+
 class Scene {
   private gameObjects: GameObject[] = [];
   private context: GameContext | null = null;
@@ -17,7 +52,10 @@ class Scene {
   private isActive: boolean = false;
   private pendingEnter: boolean = false;
 
-  constructor(private name: string, private backgroundColor?: string) {}
+  constructor(
+    private name: string,
+    private backgroundColor?: string,
+  ) {}
 
   setup() {
     console.log(`Setting up scene: ${this.name}`);
@@ -213,6 +251,8 @@ class Scene {
 
     const notifiedPairs = new Set<string>();
     const allowedPairs = new Map<string, boolean>();
+    const objectsInResolvedCollisions = new Set<GameObject>();
+    const supportedBySurface = new Set<GameObject>();
     const maxPasses = 4;
 
     for (let pass = 0; pass < maxPasses; pass++) {
@@ -266,9 +306,18 @@ class Scene {
               if (!resolution) continue;
 
               resolvedAny = true;
+              objectsInResolvedCollisions.add(a);
+              objectsInResolvedCollisions.add(b);
 
               const aImmovable = !!a.phisics.immovable;
               const bImmovable = !!b.phisics.immovable;
+
+              if (!aImmovable && resolution.normal.y < -0.5) {
+                supportedBySurface.add(a);
+              }
+              if (!bImmovable && resolution.normal.y > 0.5) {
+                supportedBySurface.add(b);
+              }
 
               if (!aImmovable) {
                 a.translate(resolution.deltaA);
@@ -287,7 +336,6 @@ class Scene {
                   b.angularVelocity = resolution.angularVelocityB;
                 }
               }
-
             }
           }
         }
@@ -295,6 +343,64 @@ class Scene {
 
       if (!resolvedAny) {
         break;
+      }
+    }
+
+    for (const object of objectsInResolvedCollisions) {
+      const isSupported = supportedBySurface.has(object);
+      object.rotation = normalizeRotation(object.rotation);
+      const isRotationAlignedOnSupport = isRotationNearQuarterTurn(
+        object.rotation,
+        RESTING_ROTATION_ALIGNMENT_DELTA
+      );
+
+      if (
+        isSupported &&
+        object.speed.y > 0 &&
+        object.speed.y < RESTING_NORMAL_VELOCITY_SNAP_EPSILON
+      ) {
+        object.speed.y = 0;
+      }
+
+      if (
+        isSupported &&
+        isRotationAlignedOnSupport &&
+        Math.abs(object.angularVelocity) < RESTING_ANGULAR_VELOCITY_SNAP_EPSILON
+      ) {
+        object.angularVelocity = 0;
+      }
+
+      const shouldFullSleepOnSupport =
+        isSupported &&
+        isRotationAlignedOnSupport &&
+        Math.abs(object.speed.x) < RESTING_TANGENTIAL_VELOCITY_SNAP_EPSILON &&
+        object.speed.y >= 0 &&
+        object.speed.y < RESTING_NORMAL_VELOCITY_SNAP_EPSILON &&
+        Math.abs(object.angularVelocity) < RESTING_FULL_SLEEP_ANGULAR_EPSILON;
+
+      if (shouldFullSleepOnSupport) {
+        object.speed = Vector.zero();
+        object.angularVelocity = 0;
+        object.rotation = snapRotationToNearestQuarterTurn(object.rotation);
+      }
+
+      if (object.angularVelocity === 0) {
+        object.rotation = snapRotationToQuarterTurn(
+          object.rotation,
+          isSupported ? RESTING_ROTATION_ALIGNMENT_DELTA : ROTATION_SNAP_EPSILON
+        );
+      }
+
+      if (Math.abs(object.speed.x) < LINEAR_VELOCITY_SNAP_EPSILON) {
+        object.speed.x = 0;
+      }
+
+      if (Math.abs(object.speed.y) < LINEAR_VELOCITY_SNAP_EPSILON) {
+        object.speed.y = 0;
+      }
+
+      if (object.speed.x === 0 && object.speed.y === 0) {
+        object.speed = Vector.zero();
       }
     }
   }

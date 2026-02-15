@@ -16,8 +16,12 @@ type CollisionResolution = {
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 const cross = (a: Vector, b: Vector): number => a.x * b.y - a.y * b.x;
+const RESTING_RESTITUTION_SPEED_EPSILON = 0.5;
 
-const getInverseMass = (immovable: boolean, mass: number | undefined): number => {
+const getInverseMass = (
+  immovable: boolean,
+  mass: number | undefined,
+): number => {
   if (immovable) return 0;
   const resolved = mass ?? 1;
   if (!Number.isFinite(resolved) || resolved <= 0) return 1;
@@ -69,7 +73,7 @@ const getBodyCenter = (hitboxes: Hitbox[]): Vector => {
   const bounds = getBodyBounds(hitboxes);
   return new Vector(
     (bounds.minX + bounds.maxX) / 2,
-    (bounds.minY + bounds.maxY) / 2
+    (bounds.minY + bounds.maxY) / 2,
   );
 };
 
@@ -99,7 +103,7 @@ const getInverseInertia = (hitboxes: Hitbox[]): number => {
 
 const projectVertices = (
   vertices: Vector[],
-  axis: Vector
+  axis: Vector,
 ): { min: number; max: number } => {
   let min = Number.POSITIVE_INFINITY;
   let max = Number.NEGATIVE_INFINITY;
@@ -123,7 +127,7 @@ type ObbData = {
 
 const getObbData = (
   vertices: [Vector, Vector, Vector, Vector],
-  size: Vector
+  size: Vector,
 ): ObbData => {
   const center = vertices[0].toAdded(vertices[2]).toMultiplied(0.5);
   const axisX = vertices[1].toSubtracted(vertices[0]).normalize();
@@ -140,7 +144,7 @@ const getObbData = (
 const obbToWorld = (obb: ObbData, localX: number, localY: number): Vector =>
   new Vector(
     obb.center.x + obb.axisX.x * localX + obb.axisY.x * localY,
-    obb.center.y + obb.axisX.y * localX + obb.axisY.y * localY
+    obb.center.y + obb.axisX.y * localX + obb.axisY.y * localY,
   );
 
 const closestPointOnObb = (point: Vector, obb: ObbData): Vector => {
@@ -158,7 +162,7 @@ const closestPointOnObb = (point: Vector, obb: ObbData): Vector => {
 const closestPointOnObbBoundary = (
   point: Vector,
   obb: ObbData,
-  preferredNormal?: Vector
+  preferredNormal?: Vector,
 ): Vector => {
   const dx = point.x - obb.center.x;
   const dy = point.y - obb.center.y;
@@ -182,7 +186,7 @@ const closestPointOnObbBoundary = (
       return obbToWorld(
         obb,
         signX * obb.halfX,
-        clamp(distY, -obb.halfY, obb.halfY)
+        clamp(distY, -obb.halfY, obb.halfY),
       );
     }
 
@@ -190,7 +194,7 @@ const closestPointOnObbBoundary = (
     return obbToWorld(
       obb,
       clamp(distX, -obb.halfX, obb.halfX),
-      signY * obb.halfY
+      signY * obb.halfY,
     );
   }
 
@@ -202,7 +206,7 @@ const closestPointOnObbBoundary = (
     return obbToWorld(
       obb,
       signX * obb.halfX,
-      clamp(distY, -obb.halfY, obb.halfY)
+      clamp(distY, -obb.halfY, obb.halfY),
     );
   }
 
@@ -210,13 +214,13 @@ const closestPointOnObbBoundary = (
   return obbToWorld(
     obb,
     clamp(distX, -obb.halfX, obb.halfX),
-    signY * obb.halfY
+    signY * obb.halfY,
   );
 };
 
 const getSupportFeatureCenter = (
   vertices: Vector[],
-  direction: Vector
+  direction: Vector,
 ): Vector => {
   let bestProjection = Number.NEGATIVE_INFINITY;
 
@@ -251,7 +255,7 @@ const getSupportFeatureCenter = (
 const getContactPoint = (
   hitboxA: Hitbox,
   hitboxB: Hitbox,
-  normal: Vector
+  normal: Vector,
 ): Vector => {
   if (hitboxA instanceof CircleHitbox && hitboxB instanceof CircleHitbox) {
     const aCenter = hitboxA.getTransformedPosition();
@@ -275,7 +279,7 @@ const getContactPoint = (
     return closestPointOnObbBoundary(
       circleCenter,
       obb,
-      new Vector(-normal.x, -normal.y)
+      new Vector(-normal.x, -normal.y),
     );
   }
 
@@ -304,11 +308,11 @@ const getContactPoint = (
     } else {
       const alignmentA = Math.max(
         Math.abs(normal.dotProduct(obbA.axisX)),
-        Math.abs(normal.dotProduct(obbA.axisY))
+        Math.abs(normal.dotProduct(obbA.axisY)),
       );
       const alignmentB = Math.max(
         Math.abs(normal.dotProduct(obbB.axisX)),
-        Math.abs(normal.dotProduct(obbB.axisY))
+        Math.abs(normal.dotProduct(obbB.axisY)),
       );
 
       if (alignmentB > alignmentA) {
@@ -321,18 +325,18 @@ const getContactPoint = (
 
     const incidentSupport = getSupportFeatureCenter(
       incidentVertices,
-      referenceToIncidentNormal.toMultiplied(-1)
+      referenceToIncidentNormal.toMultiplied(-1),
     );
 
     const pointOnReference = closestPointOnObbBoundary(
       incidentSupport,
       reference,
-      referenceToIncidentNormal
+      referenceToIncidentNormal,
     );
     const pointOnIncident = closestPointOnObbBoundary(
       pointOnReference,
       incident,
-      new Vector(-referenceToIncidentNormal.x, -referenceToIncidentNormal.y)
+      new Vector(-referenceToIncidentNormal.x, -referenceToIncidentNormal.y),
     );
 
     return pointOnReference.toAdded(pointOnIncident).toMultiplied(0.5);
@@ -344,7 +348,7 @@ const getContactPoint = (
 class ColisionHandler {
   static resolveCollision(
     hitboxA: Hitbox,
-    hitboxB: Hitbox
+    hitboxB: Hitbox,
   ): CollisionResolution | null {
     if (!hitboxA.solid || !hitboxB.solid) return null;
 
@@ -407,24 +411,22 @@ class ColisionHandler {
     const velocityAtContact = (
       velocity: Vector,
       angularVelocity: number,
-      offset: Vector
+      offset: Vector,
     ): Vector => {
       const angularComponent = new Vector(
         -angularVelocity * offset.y,
-        angularVelocity * offset.x
+        angularVelocity * offset.x,
       );
-      return velocity.toAdded(angularComponent);
+      return new Vector(velocity.x, velocity.y).add(angularComponent);
     };
 
     const applyImpulse = (impulse: Vector): void => {
       if (invMassA > 0) {
-        resolvedVelocityA = resolvedVelocityA.toAdded(
-          impulse.toMultiplied(invMassA)
-        );
+        resolvedVelocityA.add(new Vector(impulse.x, impulse.y).multiply(invMassA));
       }
       if (invMassB > 0) {
-        resolvedVelocityB = resolvedVelocityB.toSubtracted(
-          impulse.toMultiplied(invMassB)
+        resolvedVelocityB.subtract(
+          new Vector(impulse.x, impulse.y).multiply(invMassB)
         );
       }
 
@@ -442,14 +444,16 @@ class ColisionHandler {
       const vAContact = velocityAtContact(
         resolvedVelocityA,
         resolvedAngularVelocityA,
-        contactOffsetA
+        contactOffsetA,
       );
       const vBContact = velocityAtContact(
         resolvedVelocityB,
         resolvedAngularVelocityB,
-        contactOffsetB
+        contactOffsetB,
       );
-      const relativeVelocity = vAContact.toSubtracted(vBContact);
+      const relativeVelocity = new Vector(vAContact.x, vAContact.y).subtract(
+        vBContact
+      );
 
       const velocityAlongNormal = relativeVelocity.dotProduct(normal);
 
@@ -457,7 +461,10 @@ class ColisionHandler {
       if (velocityAlongNormal < 0) {
         const restitutionA = clamp01(goA.phisics.restitution ?? 1);
         const restitutionB = clamp01(goB.phisics.restitution ?? 1);
-        const restitution = Math.min(restitutionA, restitutionB);
+        const restitution =
+          Math.abs(velocityAlongNormal) < RESTING_RESTITUTION_SPEED_EPSILON
+            ? 0
+            : Math.min(restitutionA, restitutionB);
 
         const raCrossN = cross(contactOffsetA, normal);
         const rbCrossN = cross(contactOffsetB, normal);
@@ -469,7 +476,9 @@ class ColisionHandler {
         if (denom > 0) {
           normalImpulseScalar =
             (-(1 + restitution) * velocityAlongNormal) / denom;
-          const impulse = normal.toMultiplied(normalImpulseScalar);
+          const impulse = new Vector(normal.x, normal.y).multiply(
+            normalImpulseScalar
+          );
           applyImpulse(impulse);
           appliedImpulse = normalImpulseScalar !== 0;
         }
@@ -483,18 +492,26 @@ class ColisionHandler {
         const postVAContact = velocityAtContact(
           resolvedVelocityA,
           resolvedAngularVelocityA,
-          contactOffsetA
+          contactOffsetA,
         );
         const postVBContact = velocityAtContact(
           resolvedVelocityB,
           resolvedAngularVelocityB,
-          contactOffsetB
+          contactOffsetB,
         );
-        const postRelativeVelocity = postVAContact.toSubtracted(postVBContact);
+        const postRelativeVelocity = new Vector(
+          postVAContact.x,
+          postVAContact.y
+        ).subtract(
+          postVBContact
+        );
 
         const normalComponent = postRelativeVelocity.dotProduct(normal);
-        const tangent = postRelativeVelocity.toSubtracted(
-          normal.toMultiplied(normalComponent)
+        const tangent = new Vector(
+          postRelativeVelocity.x,
+          postRelativeVelocity.y
+        ).subtract(
+          new Vector(normal.x, normal.y).multiply(normalComponent)
         );
 
         if (tangent.squaredMagnitude() > 0) {
@@ -513,11 +530,11 @@ class ColisionHandler {
             const maxFriction = friction * normalImpulseScalar;
             const clampedTangentImpulse = Math.max(
               -maxFriction,
-              Math.min(maxFriction, tangentImpulseScalar)
+              Math.min(maxFriction, tangentImpulseScalar),
             );
 
             if (clampedTangentImpulse !== 0) {
-              const frictionImpulse = tangent.toMultiplied(
+              const frictionImpulse = new Vector(tangent.x, tangent.y).multiply(
                 clampedTangentImpulse
               );
               applyImpulse(frictionImpulse);
@@ -636,7 +653,7 @@ class ColisionHandler {
 
   private static mtvSquareCircle(
     rect: SquareHitbox,
-    circle: CircleHitbox
+    circle: CircleHitbox,
   ): Vector {
     const circleCenter = circle.getTransformedPosition();
     const rectVertices = rect.getTransformedVertices();
@@ -678,7 +695,7 @@ class ColisionHandler {
 
   private static mtvCircleSquare(
     circle: CircleHitbox,
-    rect: SquareHitbox
+    rect: SquareHitbox,
   ): Vector {
     return this.mtvSquareCircle(rect, circle);
   }

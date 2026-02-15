@@ -10,7 +10,7 @@ At runtime, a `GameObject` can:
 - Update on every tick (`tick()`)
 - Draw on every frame (`render(...)`)
 - React to input via decorated `handleEvent(event)` (see [`Input & events`](./events.md))
-- Participate in collisions via hitboxes (see [`Physics`](./physics))
+- Participate in collisions via hitboxes (see [`Physics`](./physics.md))
 - Communicate through the [`GameContext`](./game-context.md) message bus
 - Own `children` (a parent/“mothership” relationship)
 
@@ -225,7 +225,7 @@ Collision flow is:
 - `beforeColision(other)` (return `false` to ignore)
 - `onColision(other, penetration)` (react to overlap)
 
-See [`Physics`](./physics) for hitbox creation, triggers (`solid: false`), and how impulses/translation are applied.
+See [`Physics`](./physics.md) for hitbox creation, triggers (`solid: false`), and how impulses/translation are applied.
 
 ## Scene control from a GameObject
 
@@ -244,4 +244,4 @@ await ctx.transitionToScene("level2", transition, "replace");
 
 Sliver includes a `Walker` helper you can attach to an object via `setWalker(...)`. It can move an object along waypoints and optionally avoid obstacles.
 
-See [`Walker`](./walker) for usage and configuration.
+See [`Walker`](./walker.md) for usage and configuration.
