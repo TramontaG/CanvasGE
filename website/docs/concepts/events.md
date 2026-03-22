@@ -2,6 +2,17 @@
 title: Input & events
 sidebar_position: 7
 ---
+import sandpack1IndexTs from "../sandpack/concepts/events/live-example-all-mouse-decorators-stacked/index.ts?raw";
+import sandpack1MouseDecoratorsObjectBaseTs from "../sandpack/concepts/events/live-example-all-mouse-decorators-stacked/MouseDecoratorsObject.base.ts?raw";
+import sandpack1MouseDecoratorsObjectTs from "../sandpack/concepts/events/live-example-all-mouse-decorators-stacked/MouseDecoratorsObject.ts?raw";
+import sandpack1MouseDecoratorsHudTs from "../sandpack/concepts/events/live-example-all-mouse-decorators-stacked/MouseDecoratorsHud.ts?raw";
+import sandpack1CreateBoundsTs from "../sandpack/concepts/events/live-example-all-mouse-decorators-stacked/createBounds.ts?raw";
+import sandpack1MainTs from "../sandpack/concepts/events/live-example-all-mouse-decorators-stacked/main.ts?raw";
+import sandpack2IndexTs from "../sandpack/concepts/events/live-example-all-key-decorators-stacked/index.ts?raw";
+import sandpack2KeyboardDecoratorsObjectBaseTs from "../sandpack/concepts/events/live-example-all-key-decorators-stacked/KeyboardDecoratorsObject.base.ts?raw";
+import sandpack2KeyboardDecoratorsObjectTs from "../sandpack/concepts/events/live-example-all-key-decorators-stacked/KeyboardDecoratorsObject.ts?raw";
+import sandpack2CreateBoundsTs from "../sandpack/concepts/events/live-example-all-key-decorators-stacked/createBounds.ts?raw";
+import sandpack2MainTs from "../sandpack/concepts/events/live-example-all-key-decorators-stacked/main.ts?raw";
 
 Sliver’s default way to handle input is through **decorators** applied to a `GameObject`’s `handleEvent(event)` method.
 
@@ -40,8 +51,8 @@ Mouse events include `x`/`y` in **canvas coordinates** (top-left is `0,0`).
 
 When an event occurs:
 
-1) `Game` dispatches it to **active scenes in reverse order** (top-most scene first).
-2) Each `Scene` dispatches it to **game objects in reverse order** (last added object first).
+1. `Game` dispatches it to **active scenes in reverse order** (top-most scene first).
+2. Each `Scene` dispatches it to **game objects in reverse order** (last added object first).
 
 ### Stopping propagation
 
@@ -81,6 +92,7 @@ class StartButton extends GameObject {
 ```
 
 Why call `super.handleEvent(event)`:
+
 - The base `GameObject.handleEvent` includes built-in hover state management.
 - If you skip the `super` call, you opt out of that base behavior.
 
@@ -119,6 +131,74 @@ Runs on every `mouseWheelScrolled` anywhere on the canvas (not hitbox-based).
 ### `@onMouseWheelOverHitbox(handler)`
 
 Runs on `mouseWheelScrolled` only if the pointer is inside the hitboxes.
+
+### Live example: all mouse decorators stacked
+
+This sandbox uses all mouse decorators on one object:
+
+- `@onClick`
+- `@onClickAnywhere`
+- `@onMouseRelease`
+- `@onHover`
+- `@onStopHovering`
+- `@onMouseMoved`
+- `@onMouseWheel`
+- `@onMouseWheelOverHitbox`
+
+Only `MouseDecoratorsObject.ts` is editable. The base class (`MouseDecoratorsObject.base.ts`) contains the box behavior/state, and `MouseDecoratorsHud.ts` renders the text/counters.
+
+<SandpackExample
+files={{
+"/index.ts": {
+code: sandpack1IndexTs,
+readOnly: true,
+},
+"/MouseDecoratorsObject.base.ts": {
+code: sandpack1MouseDecoratorsObjectBaseTs,
+			readOnly: true,
+		},
+		"/MouseDecoratorsObject.ts": sandpack1MouseDecoratorsObjectTs,
+		"/MouseDecoratorsHud.ts": {
+			code: sandpack1MouseDecoratorsHudTs,
+			readOnly: true,
+		},
+		"/createBounds.ts": {
+			code: sandpack1CreateBoundsTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+readOnly: true,
+},
+}}
+visibleFiles={["/MouseDecoratorsObject.ts"]}
+activeFile="/MouseDecoratorsObject.ts"
+editorHeight={320}
+showRunButton
+hiddenFiles={[
+"/index.html",
+"/styles.css",
+"/package.json",
+"/index.ts",
+	"/main.ts",
+	"/createBounds.ts",
+	"/MouseDecoratorsObject.base.ts",
+	"/MouseDecoratorsHud.ts",
+	]}
+options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>
 
 ## Keyboard decorators
 
@@ -175,6 +255,7 @@ override handleEvent(event: GameEvent): void {
 ```
 
 Notes:
+
 - Keys are compared against `KeyboardEvent.key` (e.g. `"ArrowLeft"`, `"a"`, `"Shift"`).
 - These are tick handlers; they don’t require you to react to raw `keyPressed` events.
 
@@ -192,6 +273,72 @@ override handleEvent(event: GameEvent): void {
   super.handleEvent(event);
 }
 ```
+
+### Live example: all key decorators stacked
+
+This sandbox uses all key decorators on one object:
+
+- `@onKeyPressed`
+- `@onKeyHold`
+- `@onKeyComboPressed`
+- `@onKeyComboHold`
+
+Try these key inputs:
+
+- Hold `W/A/S/D` to move the box
+- Hold `Shift + A` or `Shift + D` to rotate the box
+- Tap `Shift + Space` to restore it's rotation
+- Tap `Space` to make it have a random opacity
+
+Only `KeyboardDecoratorsObject.ts` is editable. The base class (`KeyboardDecoratorsObject.base.ts`) contains the box state and rendering boilerplate.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack2IndexTs,
+			readOnly: true,
+		},
+		"/KeyboardDecoratorsObject.base.ts": {
+			code: sandpack2KeyboardDecoratorsObjectBaseTs,
+			readOnly: true,
+		},
+"/KeyboardDecoratorsObject.ts": sandpack2KeyboardDecoratorsObjectTs,
+		"/createBounds.ts": {
+			code: sandpack2CreateBoundsTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack2MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/KeyboardDecoratorsObject.ts"]}
+	activeFile="/KeyboardDecoratorsObject.ts"
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+		"/createBounds.ts",
+		"/KeyboardDecoratorsObject.base.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>
 
 ## Composition: stacking multiple decorators
 

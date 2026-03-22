@@ -14,6 +14,7 @@ import styles from "./SandpackExample.module.css";
 
 const TS_CONFIG_PATH = "/tsconfig.json";
 const DEFAULT_EDITOR_HEIGHT = 420;
+const DEFAULT_CODE_HEAVY_PREVIEW_WIDTH = 400;
 
 const DECORATOR_TS_CONFIG = {
   compilerOptions: {
@@ -28,9 +29,13 @@ type SandpackExampleProps = {
   hiddenFiles?: readonly string[];
   visibleFiles?: readonly string[];
   activeFile?: string;
+  preserveFileReadOnly?: boolean;
   showRunButton?: boolean;
   showOpenInCodeSandbox?: boolean;
+  layout?: "side-by-side" | "preview-first" | "editor-first" | "code-heavy";
   editorHeight?: number;
+  previewHeight?: number;
+  previewWidth?: number;
   options?: Omit<
     SandpackOptions,
     "visibleFiles" | "activeFile" | "editorHeight"
@@ -101,14 +106,30 @@ export const SandpackExample = ({
   hiddenFiles = [],
   visibleFiles,
   activeFile,
+  preserveFileReadOnly = false,
   showRunButton = false,
   showOpenInCodeSandbox = false,
+  layout = "side-by-side",
   editorHeight = DEFAULT_EDITOR_HEIGHT,
+  previewHeight,
+  previewWidth,
   options,
   customSetup,
 }: SandpackExampleProps): JSX.Element => {
   const { colorMode } = useColorMode();
   const sandpackTheme = colorMode === "dark" ? "dark" : "light";
+  const resolvedPreviewHeight = previewHeight ?? editorHeight;
+  const resolvedPreviewWidth =
+    previewWidth ?? DEFAULT_CODE_HEAVY_PREVIEW_WIDTH;
+  const isStackedLayout = layout === "preview-first" || layout === "editor-first";
+  const isPreviewFirst = layout === "preview-first";
+  const isCodeHeavyLayout = layout === "code-heavy";
+  const resolvedCodeHeavyPreviewHeight = isCodeHeavyLayout
+    ? editorHeight
+    : resolvedPreviewHeight;
+  const wrapperClassName = isCodeHeavyLayout
+    ? `${styles.wrapper} ${styles.codeHeavyWrapper}`
+    : styles.wrapper;
 
   const normalizedPaths = useMemo(() => {
     return {
@@ -124,10 +145,17 @@ export const SandpackExample = ({
     Object.entries(files).forEach(([rawPath, rawFile]) => {
       const path = normalizePath(rawPath);
       const file = toSandpackFile(rawFile);
+      const normalizedFile =
+        !preserveFileReadOnly && typeof file === "object"
+          ? (() => {
+              const { readOnly: _readOnly, ...rest } = file;
+              return rest;
+            })()
+          : file;
 
       nextFiles[path] = normalizedPaths.hidden.has(path)
-        ? { ...file, hidden: true }
-        : file;
+        ? { ...normalizedFile, hidden: true }
+        : normalizedFile;
     });
 
     const existingTsConfig = nextFiles[TS_CONFIG_PATH];
@@ -143,7 +171,7 @@ export const SandpackExample = ({
     };
 
     return nextFiles;
-  }, [files, normalizedPaths.hidden]);
+  }, [files, normalizedPaths.hidden, preserveFileReadOnly]);
 
   const resolvedVisibleFiles = useMemo(() => {
     if (normalizedPaths.visible && normalizedPaths.visible.length > 0) {
@@ -172,7 +200,7 @@ export const SandpackExample = ({
   const resolvedActiveFile = normalizedPaths.active ?? resolvedVisibleFiles[0];
 
   return (
-    <div className={styles.wrapper}>
+    <div className={wrapperClassName}>
       <SandpackProvider
         template="vanilla-ts"
         theme={sandpackTheme}
@@ -197,29 +225,128 @@ export const SandpackExample = ({
           classes: options?.classes,
         }}
       >
-        <SandpackLayout>
-          <SandpackCodeEditor
-            showTabs={options?.showTabs ?? true}
-            showLineNumbers={options?.showLineNumbers ?? true}
-            showInlineErrors={options?.showInlineErrors ?? true}
-						wrapContent={options?.wrapContent ?? false}
-            closableTabs={options?.closableTabs}
-            showRunButton={showRunButton}
-            initMode={options?.initMode}
-            readOnly={options?.readOnly}
-            showReadOnly={options?.showReadOnly}
-            extensions={options?.codeEditor?.extensions}
-            extensionsKeymap={options?.codeEditor?.extensionsKeymap}
-            additionalLanguages={options?.codeEditor?.additionalLanguages}
-            style={{ height: editorHeight }}
-          />
-          <SandpackPreview
-            showNavigator={options?.showNavigator ?? true}
-            showRefreshButton={options?.showRefreshButton ?? true}
-            showOpenInCodeSandbox={showOpenInCodeSandbox}
-            startRoute={options?.startRoute}
-            style={{ height: editorHeight }}
-          />
+        <SandpackLayout
+          style={
+            isStackedLayout
+              ? { flexDirection: "column", flexWrap: "nowrap" }
+              : isCodeHeavyLayout
+                ? { flexDirection: "row", flexWrap: "nowrap", alignItems: "stretch" }
+              : undefined
+          }
+        >
+          {isStackedLayout ? (
+            <>
+              {isPreviewFirst ? (
+                <>
+                  <SandpackPreview
+                    showNavigator={options?.showNavigator ?? true}
+                    showRefreshButton={options?.showRefreshButton ?? true}
+                    showOpenInCodeSandbox={showOpenInCodeSandbox}
+                    startRoute={options?.startRoute}
+                    style={{
+                      width: "100%",
+                      minWidth: "100%",
+                      height: resolvedPreviewHeight,
+                      flex: "0 0 auto",
+                    }}
+                  />
+                  <SandpackCodeEditor
+                    showTabs={options?.showTabs ?? true}
+                    showLineNumbers={options?.showLineNumbers ?? true}
+                    showInlineErrors={options?.showInlineErrors ?? true}
+                    wrapContent={options?.wrapContent ?? false}
+                    closableTabs={options?.closableTabs}
+                    showRunButton={showRunButton}
+                    initMode={options?.initMode}
+                    readOnly={options?.readOnly}
+                    showReadOnly={options?.showReadOnly}
+                    extensions={options?.codeEditor?.extensions}
+                    extensionsKeymap={options?.codeEditor?.extensionsKeymap}
+                    additionalLanguages={options?.codeEditor?.additionalLanguages}
+                    style={{
+                      width: "100%",
+                      minWidth: "100%",
+                      height: editorHeight,
+                      flex: "0 0 auto",
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <SandpackCodeEditor
+                    showTabs={options?.showTabs ?? true}
+                    showLineNumbers={options?.showLineNumbers ?? true}
+                    showInlineErrors={options?.showInlineErrors ?? true}
+                    wrapContent={options?.wrapContent ?? false}
+                    closableTabs={options?.closableTabs}
+                    showRunButton={showRunButton}
+                    initMode={options?.initMode}
+                    readOnly={options?.readOnly}
+                    showReadOnly={options?.showReadOnly}
+                    extensions={options?.codeEditor?.extensions}
+                    extensionsKeymap={options?.codeEditor?.extensionsKeymap}
+                    additionalLanguages={options?.codeEditor?.additionalLanguages}
+                    style={{
+                      width: "100%",
+                      minWidth: "100%",
+                      height: editorHeight,
+                      flex: "0 0 auto",
+                    }}
+                  />
+                  <SandpackPreview
+                    showNavigator={options?.showNavigator ?? true}
+                    showRefreshButton={options?.showRefreshButton ?? true}
+                    showOpenInCodeSandbox={showOpenInCodeSandbox}
+                    startRoute={options?.startRoute}
+                    style={{
+                      width: "100%",
+                      minWidth: "100%",
+                      height: resolvedPreviewHeight,
+                      flex: "0 0 auto",
+                    }}
+                  />
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <SandpackCodeEditor
+                showTabs={options?.showTabs ?? true}
+                showLineNumbers={options?.showLineNumbers ?? true}
+                showInlineErrors={options?.showInlineErrors ?? true}
+                wrapContent={options?.wrapContent ?? false}
+                closableTabs={options?.closableTabs}
+                showRunButton={showRunButton}
+                initMode={options?.initMode}
+                readOnly={options?.readOnly}
+                showReadOnly={options?.showReadOnly}
+                extensions={options?.codeEditor?.extensions}
+                extensionsKeymap={options?.codeEditor?.extensionsKeymap}
+                additionalLanguages={options?.codeEditor?.additionalLanguages}
+                style={
+                  isCodeHeavyLayout
+                    ? { height: editorHeight, flex: "1 1 auto", minWidth: 0 }
+                    : { height: editorHeight }
+                }
+              />
+              <SandpackPreview
+                showNavigator={options?.showNavigator ?? true}
+                showRefreshButton={options?.showRefreshButton ?? true}
+                showOpenInCodeSandbox={showOpenInCodeSandbox}
+                startRoute={options?.startRoute}
+                style={
+                  isCodeHeavyLayout
+                    ? {
+                        height: resolvedCodeHeavyPreviewHeight,
+                        width: resolvedPreviewWidth,
+                        minWidth: resolvedPreviewWidth,
+                        flex: `0 0 ${resolvedPreviewWidth}px`,
+                      }
+                    : { height: resolvedPreviewHeight }
+                }
+              />
+            </>
+          )}
         </SandpackLayout>
       </SandpackProvider>
     </div>

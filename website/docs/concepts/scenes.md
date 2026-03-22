@@ -2,6 +2,10 @@
 title: Scenes
 sidebar_position: 3
 ---
+import sandpack1IndexTs from "../sandpack/concepts/scenes/interactive-scene-transitions/index.ts?raw";
+import sandpack1TransitionsTs from "../sandpack/concepts/scenes/interactive-scene-transitions/transitions.ts?raw";
+import sandpack1CreateScenesTs from "../sandpack/concepts/scenes/interactive-scene-transitions/createScenes.ts?raw";
+import sandpack1MainTs from "../sandpack/concepts/scenes/interactive-scene-transitions/main.ts?raw";
 
 Scenes represent a “screen” (or state) in your game: main gameplay, main menu, pause overlay, cutscene, etc.
 
@@ -98,7 +102,7 @@ On removal, `go.onRemovedFromScene(scene)` runs after `onAddedToScene`.
 Each tick, `Scene.tick()`:
 
 1) calls `tick()` on every `GameObject` in the scene
-2) runs collision detection + resolution across objects that have hitboxes
+2) runs collision detection + iterative velocity-based resolution across objects that have hitboxes
 
 For a deeper dive (hitboxes, restitution/friction/mass, triggers, and collision hooks), see [`Physics`](./physics).
 
@@ -127,6 +131,7 @@ After objects tick, the scene resolves collisions between hitboxes:
 - Objects with `phisics.immovable === true` won’t be moved by resolution.
 - `beforeColision(other)` runs on both objects the first time a pair is checked; if either returns `false`, that pair is ignored for the rest of the tick.
 - `onColision(other, penetration)` is called once per pair per tick when overlap is detected.
+- Solid hitboxes enter an iterative impulse solver; non-solid hitboxes still notify overlap hooks but skip physical response.
 
 If you want an object to be physical, you typically:
 - give it one or more hitboxes
@@ -237,3 +242,54 @@ const zoomFade = createSceneTransition(
   { duration: 600 }
 );
 ```
+
+## Interactive scene transitions
+
+This playground has three scenes:
+
+- `Scene A`: opaque, solid background, buttons to replace with `Scene B` or push `Scene C`
+- `Scene B`: opaque, solid background, buttons to replace with `Scene A` or push `Scene C`
+- `Scene C`: semitransparent background, button to pop scene
+
+Edit `transitions.ts` and comment/uncomment transition presets to see how each transition feels.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/transitions.ts": sandpack1TransitionsTs,
+		"/createScenes.ts": sandpack1CreateScenesTs,
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/transitions.ts", "/createScenes.ts"]}
+	activeFile="/transitions.ts"
+	layout="editor-first"
+	previewHeight={380}
+	editorHeight={300}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>

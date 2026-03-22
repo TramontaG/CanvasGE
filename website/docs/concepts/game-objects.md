@@ -2,6 +2,11 @@
 title: Game objects
 sidebar_position: 4
 ---
+import sandpack1IndexTs from "../sandpack/concepts/game-objects/interactive-example-object-to-object-messages/index.ts?raw";
+import sandpack1MessageObjectBaseTs from "../sandpack/concepts/game-objects/interactive-example-object-to-object-messages/MessageObjectBase.ts?raw";
+import sandpack1ObjectATs from "../sandpack/concepts/game-objects/interactive-example-object-to-object-messages/ObjectA.ts?raw";
+import sandpack1ObjectBTs from "../sandpack/concepts/game-objects/interactive-example-object-to-object-messages/ObjectB.ts?raw";
+import sandpack1MainTs from "../sandpack/concepts/game-objects/interactive-example-object-to-object-messages/main.ts?raw";
 
 `GameObject` is the base building block in Sliver. Most of your gameplay code lives in objects: players, enemies, UI widgets, triggers, effects, etc.
 
@@ -216,6 +221,59 @@ this.onceOnMessage("ui:clicked", () => {
 
 Use messages when you want loose coupling (UI talks to gameplay without direct references, enemies broadcast “died”, etc.).
 
+### Interactive example: object-to-object messages
+
+This sandbox has one scene with two objects:
+
+- clicking `Object A` sends a message that makes `Object B` change color
+- clicking `Object B` sends a message that makes `Object A` change color
+- both objects extend a shared `MessageObjectBase`
+- each object has its own file and its own decorators
+
+`Object A` uses `@onClick`, while `Object B` stacks `@onHover`, `@onStopHovering`, and `@onClick`.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/MessageObjectBase.ts": sandpack1MessageObjectBaseTs,
+		"/ObjectA.ts": sandpack1ObjectATs,
+		"/ObjectB.ts": sandpack1ObjectBTs,
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/ObjectA.ts", "/ObjectB.ts", "/MessageObjectBase.ts"]}
+	activeFile="/ObjectA.ts"
+	layout="editor-first"
+	previewHeight={380}
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>
+
 ## Collisions, hitboxes, and physics hooks
 
 To make an object participate in collisions, give it one or more hitboxes and set physics flags (`immovable`, `mass`, `restitution`, etc.).
@@ -225,7 +283,7 @@ Collision flow is:
 - `beforeColision(other)` (return `false` to ignore)
 - `onColision(other, penetration)` (react to overlap)
 
-See [`Physics`](./physics) for hitbox creation, triggers (`solid: false`), and how impulses/translation are applied.
+See [`Physics`](./physics) for hitbox creation, triggers (`solid: false`), and how velocity-based collision response is applied.
 
 ## Scene control from a GameObject
 

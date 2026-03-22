@@ -51,10 +51,76 @@ const config = {
 
   plugins: [
     function webpackAliasesPlugin() {
+      const sandpackDocsPath = path.resolve(__dirname, "docs/sandpack");
+
+      const hasBabelLoader = (rule) => {
+        if (!rule || typeof rule !== "object" || !Array.isArray(rule.use)) {
+          return false;
+        }
+
+        return rule.use.some((useEntry) => {
+          if (typeof useEntry === "string") {
+            return useEntry.includes("babel-loader");
+          }
+
+          return (
+            useEntry &&
+            typeof useEntry.loader === "string" &&
+            useEntry.loader.includes("babel-loader")
+          );
+        });
+      };
+
+      const appendExclude = (exclude) => {
+        if (!exclude) {
+          return [sandpackDocsPath];
+        }
+
+        if (Array.isArray(exclude)) {
+          return [...exclude, sandpackDocsPath];
+        }
+
+        return [exclude, sandpackDocsPath];
+      };
+
       return {
         name: "webpack-aliases-plugin",
-        configureWebpack() {
+        configureWebpack(config) {
+          const existingRules =
+            config &&
+            config.module &&
+            Array.isArray(config.module.rules)
+              ? config.module.rules
+              : [];
+          const patchedRules = existingRules.map((rule) => {
+            if (!hasBabelLoader(rule)) {
+              return rule;
+            }
+
+            return {
+              ...rule,
+              exclude: appendExclude(rule.exclude),
+            };
+          });
+
           return {
+            mergeStrategy: {
+              "module.rules": "replace",
+            },
+            module: {
+              rules: [
+                {
+                  test: /\.ts$/,
+                  include: [sandpackDocsPath],
+                  type: "asset/source",
+                },
+                {
+                  resourceQuery: /raw/,
+                  type: "asset/source",
+                },
+                ...patchedRules,
+              ],
+            },
             resolve: {
               alias: {
                 shallowequal: path.resolve(__dirname, "src/shims/shallowequal.js"),

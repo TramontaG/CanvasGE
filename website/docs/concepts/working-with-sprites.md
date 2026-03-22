@@ -2,6 +2,13 @@
 title: Working With Sprites
 sidebar_position: 10
 ---
+import sandpack1IndexTs from "../sandpack/concepts/working-with-sprites/interactive-example/index.ts?raw";
+import sandpack1ConstantsTs from "../sandpack/concepts/working-with-sprites/interactive-example/constants.ts?raw";
+import sandpack1HumanSheetDataTs from "../sandpack/concepts/working-with-sprites/interactive-example/humanSheetData.ts?raw";
+import sandpack1SpriteSetupTs from "../sandpack/concepts/working-with-sprites/interactive-example/spriteSetup.ts?raw";
+import sandpack1SpriteHeroTs from "../sandpack/concepts/working-with-sprites/interactive-example/SpriteHero.ts?raw";
+import sandpack1SpriteHudTs from "../sandpack/concepts/working-with-sprites/interactive-example/SpriteHud.ts?raw";
+import sandpack1MainTs from "../sandpack/concepts/working-with-sprites/interactive-example/main.ts?raw";
 
 Sprite definitions let you name a selection of tiles from a sprite sheet and draw them later by name. They work with rectangle selections and tile grids (for reusing tiles across a larger object).
 
@@ -189,6 +196,76 @@ sprites.drawSpriteDefinition(
 })
 override render(): void {}
 ```
+
+## Interactive example
+
+This sandbox demonstrates the full sprite workflow in a compact setup:
+
+- loads the same `human.png` sprite sheet used in this page (embedded as base64 so it works in Sandpack)
+- defines sprite names with `defineSpriteFromSheet(...)` using `[col, row]` coordinates
+- animates the hero using `@renderSpriteAnimation(...)`
+- uses up/down/left frame sets from the table and mirrors left frames for right movement
+
+Try this:
+
+- Edit `spriteSetup.ts` to change frame definitions.
+- Edit `SpriteHero.ts` to change controls, animation speed, or frame lists.
+- Press **Run** to apply changes.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/constants.ts": {
+			code: sandpack1ConstantsTs,
+			readOnly: true,
+		},
+		"/humanSheetData.ts": {
+			code: sandpack1HumanSheetDataTs,
+			readOnly: true,
+		},
+		"/spriteSetup.ts": sandpack1SpriteSetupTs,
+		"/SpriteHero.ts": sandpack1SpriteHeroTs,
+		"/SpriteHud.ts": {
+			code: sandpack1SpriteHudTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/spriteSetup.ts", "/SpriteHero.ts", "/main.ts"]}
+	activeFile="/spriteSetup.ts"
+	layout="editor-first"
+	previewHeight={320}
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/constants.ts",
+		"/humanSheetData.ts",
+		"/SpriteHud.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>
 
 ## Pre-baking behavior
 

@@ -3,6 +3,9 @@ title: Interactive examples
 description: Configure Sandpack for decorators, hidden boilerplate, and multi-file examples.
 sidebar_position: 13
 ---
+import sandpack1IndexTs from "../sandpack/concepts/interactive-examples/multi-file-hidden-boilerplate/index.ts?raw";
+import sandpack1PlayerTs from "../sandpack/concepts/interactive-examples/multi-file-hidden-boilerplate/Player.ts?raw";
+import sandpack1DecoratorsTs from "../sandpack/concepts/interactive-examples/multi-file-hidden-boilerplate/decorators.ts?raw";
 
 CanvasGE docs use a shared `<SandpackExample />` wrapper around Sandpack.
 
@@ -23,7 +26,7 @@ It is configured for engine docs by default:
   activeFile="/index.ts"
   customSetup={{
     dependencies: {
-      "sliver-engine": "latest",
+      "sliver-engine": "0.0.1-alpha-5",
     },
   }}
 />
@@ -35,35 +38,9 @@ The example below keeps the decorator helper hidden from the reader while still 
 
 <SandpackExample
 	files={{
-		"/index.ts": `import { Player } from "./Player";
-
-const player = new Player();
-player.spawn();
-`,
-		"/Player.ts": `import { onSpawn } from "./decorators";
-
-export class Player {
-	@onSpawn()
-	public spawn(): void {
-		console.log("Player spawned");
-	}
-}
-`,
-		"/decorators.ts": `export const onSpawn = () => {
-	return function (
-		_target: object,
-		_propertyKey: string,
-		descriptor: PropertyDescriptor
-	): void {
-		const original = descriptor.value as (() => void) | undefined;
-
-		descriptor.value = function (): void {
-			console.log("Running @onSpawn decorator");
-			original?.call(this);
-		};
-	};
-};
-`,
+		"/index.ts": sandpack1IndexTs,
+		"/Player.ts": sandpack1PlayerTs,
+		"/decorators.ts": sandpack1DecoratorsTs,
 	}}
 	visibleFiles={["/index.ts", "/Player.ts"]}
 	hiddenFiles={["/decorators.ts", "/index.html", "/styles.css", "/package.json"]}

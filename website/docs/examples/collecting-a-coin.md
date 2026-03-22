@@ -2,153 +2,149 @@
 title: Collecting a coin
 sidebar_position: 1
 ---
+import sandpack1IndexTs from "../sandpack/examples/collecting-a-coin/interactive-example/index.ts?raw";
+import sandpack1CoinTs from "../sandpack/examples/collecting-a-coin/interactive-example/Coin.ts?raw";
+import sandpack1WalkerPlayerTs from "../sandpack/examples/collecting-a-coin/interactive-example/WalkerPlayer.ts?raw";
+import sandpack1HudTs from "../sandpack/examples/collecting-a-coin/interactive-example/Hud.ts?raw";
+import sandpack1CoinSoundTs from "../sandpack/examples/collecting-a-coin/interactive-example/coinSound.ts?raw";
+import sandpack1CoinSpawnerTs from "../sandpack/examples/collecting-a-coin/interactive-example/CoinSpawner.ts?raw";
+import sandpack1MainTs from "../sandpack/examples/collecting-a-coin/interactive-example/main.ts?raw";
 
-This example shows a “coin pickup” with:
+This example focuses on the core pickup loop:
 
-- a preloaded SFX (`SoundManager.loadSound`)
-- a preloaded sprite sheet (`SpriteLibrary.loadSpriteSheet`)
-- coin rendering + player rendering (via render decorators)
-- a trigger hitbox (`solid: false`) and `onColision`
-- a HUD listening to `score:coin_collected`
+- `Coin` is a non-solid trigger hitbox.
+- On overlap with the player, coin plays SFX, sends a score message, and destroys itself.
+- `CoinCounter` listens to the score message and updates HUD text.
+- `WalkerPlayer` moves with `W/A/S/D` inside fixed bounds.
 
-## 1) Preload the sound + sprites
+## 1) Coin trigger (the important part)
 
-Load assets during your game setup (or scene setup):
-
-```ts
-const ctx = game.getContext();
-
-// Audio
-await ctx
-  .getSoundManager()
-  .loadSound("coin_pickup", new URL("/audio/coin.wav", window.location.href), [
-    "sfx",
-  ]);
-
-// Sprites (fixed-grid sprite sheet)
-const sprites = ctx.getCanvas().getSpriteLibrary();
-await sprites.loadSpriteSheet(
-  "items",
-  new URL("/sprites/items.png", window.location.href),
-  16, // frameWidth
-  16 // frameHeight
-);
-
-// Recommended: unlock audio on first user gesture.
-window.addEventListener(
-  "pointerdown",
-  () => {
-    ctx.getSoundManager().unlock();
-  },
-  { once: true }
-);
-```
-
-Tip: define constants for frame indexes so you don’t spread magic numbers:
+The coin does not block movement (`solid: false`), it only reacts to overlap:
 
 ```ts
-export const ITEMS = {
-  Coin: 0,
-  Player: 1,
-} as const;
-```
-
-## 2) Coin object (trigger + render + sound)
-
-```ts
-import { GameObject, SquareHitbox, Vector, renderTile } from "sliver-engine";
-import type { CanvasController, Scene } from "sliver-engine";
-
-const ITEMS = {
-  Coin: 0,
-  Player: 1,
-} as const;
-
 class Coin extends GameObject {
   constructor(position: Vector) {
-    super("coin", position);
-
-    // Trigger: overlap detection without collision resolution.
+    super("coin", position.clone());
     this.addHitbox(
       new SquareHitbox(Vector.zero(), new Vector(16, 16), this, {
         solid: false,
-      })
+      }),
     );
   }
 
   override onColision(other: GameObject): void {
-    // Play SFX from the SoundManager, then destroy the coin.
+    if (other.name !== "player") return;
+
     this.getContext()?.getSoundManager().playSound("coin_pickup");
-    this.destroy();
-
-    // Notify whoever tracks score.
     this.sendMessage("score:coin_collected", { amount: 1 });
-  }
-
-  @renderTile("items", ITEMS.Coin, { scale: 4 })
-  override render(_canvas: CanvasController, _scene: Scene): void {
-    // Render is handled by the decorator.
+    this.destroy();
   }
 }
 ```
 
-## 3) Player (hitbox + sprite rendering)
+## 2) Message-based HUD update
+
+The HUD does not need to know where the coin is. It only listens to a channel:
 
 ```ts
-import { GameObject, SquareHitbox, Vector, renderTile } from "sliver-engine";
-import type { CanvasController, Scene } from "sliver-engine";
-
-const ITEMS = {
-  Coin: 0,
-  Player: 1,
-} as const;
-
-class Player extends GameObject {
-  constructor(position: Vector) {
-    super("player", position);
-
-    this.addHitbox(new SquareHitbox(Vector.zero(), new Vector(16, 16), this));
-    this.setPhisics({ immovable: false });
-  }
-
-  @renderTile("items", ITEMS.Player, { scale: 4 })
-  override render(_canvas: CanvasController, _scene: Scene): void {
-    // Render is handled by the decorator.
-  }
-}
-```
-
-## 4) HUD listens to `score:coin_collected`
-
-This HUD object keeps a counter and renders it as text:
-
-```ts
-import { GameObject, Vector } from "sliver-engine";
-import type { CanvasController, Scene } from "sliver-engine";
-
 class CoinCounter extends GameObject {
   private coins = 0;
 
-  constructor() {
-    super("hud:coins", new Vector(0, 0));
-  }
-
-  override tick(): void {
-    if (this.getContext()) {
-      this.onMessage<{ amount: number }>(
-        "score:coin_collected",
-        ({ amount }) => {
-          this.coins += amount;
-        }
-      );
-    }
-    super.tick();
-  }
-
-  override render(canvas: CanvasController, _scene: Scene): void {
-    canvas
-      .getShapeDrawer()
-      .drawText(`Coins: ${this.coins}`, 16, 24, "white", "16px", "left");
+  override onAddedToScene(): void {
+    this.onMessage<{ amount: number }>("score:coin_collected", ({ amount }) => {
+      this.coins += amount;
+    });
   }
 }
 ```
+
+## 3) Player movement
+
+The player uses key decorators for continuous movement and clamps position to the canvas bounds:
+
+```ts
+@onKeyHold<WalkerPlayer>("w", (obj) => obj.moveBy(new Vector(0, -PLAYER_SPEED)))
+@onKeyHold<WalkerPlayer>("a", (obj) => obj.moveBy(new Vector(-PLAYER_SPEED, 0)))
+@onKeyHold<WalkerPlayer>("s", (obj) => obj.moveBy(new Vector(0, PLAYER_SPEED)))
+@onKeyHold<WalkerPlayer>("d", (obj) => obj.moveBy(new Vector(PLAYER_SPEED, 0)))
+override handleEvent(event: GameEvent): void {
+  super.handleEvent(event);
+}
+```
+
+## 4) Scene wiring + sound preload
+
+We preload the sound before starting the game and unlock audio on first user input:
+
+```ts
+const boot = async (): Promise<void> => {
+  const ctx = game.getContext();
+
+  await ctx.getSoundManager().loadSound("coin_pickup", coinAudioUrl, ["sfx"]);
+
+  const unlockAudio = () => void ctx.getSoundManager().unlock();
+  window.addEventListener("pointerdown", unlockAudio, { once: true });
+  window.addEventListener("keydown", unlockAudio, { once: true });
+
+  game.start();
+};
+```
+
+## Interactive example
+
+This sandbox demonstrates trigger pickups and score messages.
+
+- Edit `Coin.ts` to change pickup behavior.
+- Edit `WalkerPlayer.ts`, `Hud.ts`, and `main.ts` to tweak movement, HUD, and scene setup.
+- Press **Run** to apply changes.
+
+<SandpackExample
+files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/Coin.ts": sandpack1CoinTs,
+		"/WalkerPlayer.ts": sandpack1WalkerPlayerTs,
+		"/Hud.ts": sandpack1HudTs,
+		"/coinSound.ts": {
+			code: sandpack1CoinSoundTs,
+			readOnly: true,
+		},
+		"/CoinSpawner.ts": {
+			code: sandpack1CoinSpawnerTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+visibleFiles={["/Coin.ts", "/WalkerPlayer.ts", "/Hud.ts", "/main.ts"]}
+activeFile="/Coin.ts"
+layout="editor-first"
+previewHeight={380}
+editorHeight={260}
+showRunButton
+hiddenFiles={[
+"/index.html",
+"/styles.css",
+"/package.json",
+"/index.ts",
+"/CoinSpawner.ts",
+"/coinSound.ts",
+]}
+options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>

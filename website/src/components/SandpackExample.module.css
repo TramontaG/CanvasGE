@@ -1,3 +1,22 @@
 .wrapper {
-	margin: 1.5rem 0;
+  margin: 1.5rem 0;
+}
+
+.wrapper :global(.sp-cm .cm-content) {
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+@media (max-width: 996px) {
+  .codeHeavyWrapper :global(.sp-layout) {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .codeHeavyWrapper :global(.sp-layout > :first-child),
+  .codeHeavyWrapper :global(.sp-layout > :last-child) {
+    width: 100% !important;
+    min-width: 100% !important;
+    flex: 0 0 auto !important;
+  }
 }

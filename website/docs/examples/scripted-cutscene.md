@@ -2,6 +2,12 @@
 title: Scripted cutscene (state + combinators)
 sidebar_position: 8
 ---
+import sandpack1IndexTs from "../sandpack/examples/scripted-cutscene/interactive-example/index.ts?raw";
+import sandpack1MakeIntroCutsceneTs from "../sandpack/examples/scripted-cutscene/interactive-example/makeIntroCutscene.ts?raw";
+import sandpack1CutsceneActorTs from "../sandpack/examples/scripted-cutscene/interactive-example/CutsceneActor.ts?raw";
+import sandpack1CutsceneHudTs from "../sandpack/examples/scripted-cutscene/interactive-example/CutsceneHud.ts?raw";
+import sandpack1CutsceneRunnerTs from "../sandpack/examples/scripted-cutscene/interactive-example/CutsceneRunner.ts?raw";
+import sandpack1MainTs from "../sandpack/examples/scripted-cutscene/interactive-example/main.ts?raw";
 
 This example shows how to build a bigger scripted sequence using:
 
@@ -144,3 +150,64 @@ const runIntro = (ctx: GameContext, elder: GameObject, hero: GameObject) => {
   })();
 };
 ```
+
+## Interactive example
+
+This sandbox runs a small scripted cutscene with state + combinators.
+
+- press `Space` to advance text boxes
+- watch the elder walk in and optionally award coins
+- edit `makeIntroCutscene.ts` to tweak sequence logic
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/makeIntroCutscene.ts": sandpack1MakeIntroCutsceneTs,
+		"/CutsceneActor.ts": {
+			code: sandpack1CutsceneActorTs,
+			readOnly: true,
+		},
+		"/CutsceneHud.ts": {
+			code: sandpack1CutsceneHudTs,
+			readOnly: true,
+		},
+		"/CutsceneRunner.ts": {
+			code: sandpack1CutsceneRunnerTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/makeIntroCutscene.ts"]}
+	activeFile="/makeIntroCutscene.ts"
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+		"/CutsceneActor.ts",
+		"/CutsceneHud.ts",
+		"/CutsceneRunner.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>

@@ -2,6 +2,11 @@
 title: Pause menu
 sidebar_position: 3
 ---
+import sandpack1IndexTs from "../sandpack/examples/pause-menu/interactive-example/index.ts?raw";
+import sandpack1PauseControllerTs from "../sandpack/examples/pause-menu/interactive-example/PauseController.ts?raw";
+import sandpack1CreatePauseSceneTs from "../sandpack/examples/pause-menu/interactive-example/createPauseScene.ts?raw";
+import sandpack1CreateMainSceneTs from "../sandpack/examples/pause-menu/interactive-example/createMainScene.ts?raw";
+import sandpack1MainTs from "../sandpack/examples/pause-menu/interactive-example/main.ts?raw";
 
 This example shows a pause menu that **really pauses gameplay**.
 
@@ -67,3 +72,56 @@ One simple pattern:
 - push the pause scene (`pushScene("pause")`) so it renders on top and captures input (make sure it's background is transparent)
 - set a flag on the scene to stop ticking
 - override the method tick() of the scene to return early if this flag is set
+
+## Interactive example
+
+This sandbox demonstrates the pause flow with two scenes:
+
+- `main`: moving gameplay box + `PauseController`
+- `pause`: resume button that returns to `main`
+
+Press `Escape` to pause and click **Resume** to continue.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/PauseController.ts": sandpack1PauseControllerTs,
+		"/createPauseScene.ts": sandpack1CreatePauseSceneTs,
+		"/createMainScene.ts": {
+			code: sandpack1CreateMainSceneTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/PauseController.ts", "/createPauseScene.ts"]}
+	activeFile="/PauseController.ts"
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+		"/createMainScene.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>

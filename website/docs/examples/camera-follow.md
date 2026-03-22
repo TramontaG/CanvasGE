@@ -2,6 +2,11 @@
 title: Camera follow (scene offset)
 sidebar_position: 4
 ---
+import sandpack1IndexTs from "../sandpack/examples/camera-follow/interactive-example/index.ts?raw";
+import sandpack1CameraFollowerTs from "../sandpack/examples/camera-follow/interactive-example/CameraFollower.ts?raw";
+import sandpack1PlayerTs from "../sandpack/examples/camera-follow/interactive-example/Player.ts?raw";
+import sandpack1CreateWorldMarkersTs from "../sandpack/examples/camera-follow/interactive-example/createWorldMarkers.ts?raw";
+import sandpack1MainTs from "../sandpack/examples/camera-follow/interactive-example/main.ts?raw";
 
 This example shows a simple “camera follow” by updating the scene’s `offset` every tick.
 
@@ -46,3 +51,57 @@ mainScene.addGameObject(new CameraFollower(player));
 - Clamp the offset if you want camera bounds (so it won’t show outside the level).
 - If you want “smooth” camera, interpolate towards the desired offset instead of snapping.
 
+## Interactive example
+
+This sandbox follows a moving player and updates the scene offset every tick.
+
+- Edit `CameraFollower.ts` to tweak follow behavior.
+- Press **Run** to apply changes.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/CameraFollower.ts": sandpack1CameraFollowerTs,
+		"/Player.ts": {
+			code: sandpack1PlayerTs,
+			readOnly: true,
+		},
+		"/createWorldMarkers.ts": {
+			code: sandpack1CreateWorldMarkersTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/CameraFollower.ts"]}
+	activeFile="/CameraFollower.ts"
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+		"/Player.ts",
+		"/createWorldMarkers.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>

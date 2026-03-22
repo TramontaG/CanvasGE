@@ -2,6 +2,10 @@
 title: Enemy patrol (Walker)
 sidebar_position: 6
 ---
+import sandpack1IndexTs from "../sandpack/examples/enemy-patrol/interactive-example/index.ts?raw";
+import sandpack1PatrollingEnemyTs from "../sandpack/examples/enemy-patrol/interactive-example/PatrollingEnemy.ts?raw";
+import sandpack1CreateArenaTs from "../sandpack/examples/enemy-patrol/interactive-example/createArena.ts?raw";
+import sandpack1MainTs from "../sandpack/examples/enemy-patrol/interactive-example/main.ts?raw";
 
 This example shows a basic enemy patrol using `Walker`:
 
@@ -47,3 +51,52 @@ mainScene.addGameObject(new PatrollingEnemy(new Vector(100, 100)));
 
 If you don’t want pathfinding, remove the `pathfindingOptions` (or set `avoidObstacles: false`).
 
+## Interactive example
+
+This sandbox runs a patrolling enemy with `Walker`.
+
+- Edit `PatrollingEnemy.ts` to tweak waypoints and walker options.
+- Press **Run** to apply changes.
+
+<SandpackExample
+	files={{
+		"/index.ts": {
+			code: sandpack1IndexTs,
+			readOnly: true,
+		},
+		"/PatrollingEnemy.ts": sandpack1PatrollingEnemyTs,
+		"/createArena.ts": {
+			code: sandpack1CreateArenaTs,
+			readOnly: true,
+		},
+		"/main.ts": {
+			code: sandpack1MainTs,
+			readOnly: true,
+		},
+	}}
+	visibleFiles={["/PatrollingEnemy.ts"]}
+	activeFile="/PatrollingEnemy.ts"
+	editorHeight={320}
+	showRunButton
+	hiddenFiles={[
+		"/index.html",
+		"/styles.css",
+		"/package.json",
+		"/index.ts",
+		"/main.ts",
+		"/createArena.ts",
+	]}
+	options={{
+		autoReload: false,
+		showNavigator: true,
+		showRefreshButton: true,
+		showTabs: true,
+		showLineNumbers: true,
+		wrapContent: false,
+	}}
+	customSetup={{
+		dependencies: {
+			"sliver-engine": "0.0.1-alpha-5",
+		},
+	}}
+/>
