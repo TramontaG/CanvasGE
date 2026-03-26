@@ -16,7 +16,7 @@ import sandpack1MainTs from "../sandpack/concepts/walker/live-example/main.ts?ra
 - optionally do simple grid-based pathfinding to avoid solid obstacles
 - draw debug visuals for waypoints and the computed path
 
-Under the hood, `Walker.tick()` sets `gameObject.speed` every tick. The object’s normal `tick()` then applies that speed to its position.
+Under the hood, `Walker.tick()` updates `gameObject.speed` every tick, and the scene physics step integrates that velocity afterward.
 
 ## Attaching a Walker
 
@@ -30,7 +30,7 @@ const npc = new GameObject("npc", new Vector(100, 100));
 const walker = new Walker(
   npc,
   [new Vector(100, 100), new Vector(300, 100), new Vector(300, 300)],
-  2,        // speed (pixels per tick)
+  2,        // movement speed
   true,     // debug
   true      // cyclic (loop)
 );
@@ -41,7 +41,7 @@ walker.start();
 
 Notes:
 - Waypoints are interpreted in **scene/world space** (they’re compared to `getScenePosition()`).
-- `speed` is per tick, not per second. Convert from px/s using `1 / ctx.getTickRate()` if needed (see [`Game loop`](./game-loop.md)).
+- Tune `speed` together with your scene scale and tick rate until the pathing feels right for your game.
 - Debug drawing respects the scene offset (so it stays aligned if the camera moves).
 
 ## Starting, stopping, and resetting

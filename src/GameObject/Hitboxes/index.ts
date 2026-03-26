@@ -123,47 +123,10 @@ class SquareHitbox {
     ];
   }
 
-  private getFutureRotation(): number {
-    return (
-      (this.gameObject.rotation ?? 0) + (this.gameObject.angularVelocity ?? 0)
-    );
-  }
-
-  private getFutureRotationCenter(): Vector {
-    return this.gameObject.getRotationCenter().toAdded(this.gameObject.speed);
-  }
-
-  public getFutureTransformedVertices(): [Vector, Vector, Vector, Vector] {
-    const topLeft = this.getFutureIntendedPosition();
-    const topRight = new Vector(topLeft.x + this.size.x, topLeft.y);
-    const bottomRight = new Vector(
-      topLeft.x + this.size.x,
-      topLeft.y + this.size.y
-    );
-    const bottomLeft = new Vector(topLeft.x, topLeft.y + this.size.y);
-
-    const angle = this.getFutureRotation();
-    if (angle === 0) {
-      return [topLeft, topRight, bottomRight, bottomLeft];
-    }
-
-    const pivot = this.getFutureRotationCenter();
-    return [
-      rotateAround(topLeft, pivot, angle),
-      rotateAround(topRight, pivot, angle),
-      rotateAround(bottomRight, pivot, angle),
-      rotateAround(bottomLeft, pivot, angle),
-    ];
-  }
-
-  public getAbsolutePosition() {
-    const gameObjectPosition = this.gameObject.getPosition();
-    return gameObjectPosition.toAdded(this.offset);
-  }
-
-  public getFutureIntendedPosition(): Vector {
-    return this.gameObject.getIntendedNextPosition().toAdded(this.offset);
-  }
+	public getAbsolutePosition() {
+		const gameObjectPosition = this.gameObject.getPosition();
+		return gameObjectPosition.toAdded(this.offset);
+	}
 
   private intersectsWithSquare(other: SquareHitbox): boolean {
     const verticesA = this.getTransformedVertices();
@@ -213,49 +176,9 @@ class SquareHitbox {
     return false;
   }
 
-  public willIntersectWith(other: CircleHitbox | SquareHitbox): boolean {
-    if (other instanceof CircleHitbox) {
-      const circleCenter = other.getFutureTransformedPosition();
-      const vertices = this.getFutureTransformedVertices();
-      const obb = getObbData(vertices, this.size);
-      const closest = closestPointOnObb(circleCenter, obb);
-
-      const dx = circleCenter.x - closest.x;
-      const dy = circleCenter.y - closest.y;
-      return dx * dx + dy * dy <= other.radius * other.radius;
-    }
-
-    if (other instanceof SquareHitbox) {
-      const verticesA = this.getFutureTransformedVertices();
-      const verticesB = other.getFutureTransformedVertices();
-
-      const axes: Vector[] = [
-        verticesA[1].toSubtracted(verticesA[0]).normalize(),
-        verticesA[3].toSubtracted(verticesA[0]).normalize(),
-        verticesB[1].toSubtracted(verticesB[0]).normalize(),
-        verticesB[3].toSubtracted(verticesB[0]).normalize(),
-      ];
-
-      for (const axis of axes) {
-        if (axis.squaredMagnitude() === 0) continue;
-
-        const projA = projectVertices(verticesA, axis);
-        const projB = projectVertices(verticesB, axis);
-
-        if (projA.max < projB.min || projB.max < projA.min) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    return false;
-  }
-
-  public intersectsWithPoint(point: Vector): boolean {
-    const angle = this.gameObject.rotation ?? 0;
-    if (angle === 0) {
+	public intersectsWithPoint(point: Vector): boolean {
+		const angle = this.gameObject.rotation ?? 0;
+		if (angle === 0) {
       const thisPos = this.getAbsolutePosition();
       return !(
         point.x < thisPos.x ||
@@ -311,31 +234,9 @@ class CircleHitbox {
     return rotateAround(pos, pivot, angle);
   }
 
-  private getFutureRotation(): number {
-    return (
-      (this.gameObject.rotation ?? 0) + (this.gameObject.angularVelocity ?? 0)
-    );
-  }
-
-  private getFutureRotationCenter(): Vector {
-    return this.gameObject.getRotationCenter().toAdded(this.gameObject.speed);
-  }
-
-  public getFutureTransformedPosition(): Vector {
-    const pos = this.getFutureIntendedPosition();
-    const angle = this.getFutureRotation();
-    if (angle === 0) return pos;
-    const pivot = this.getFutureRotationCenter();
-    return rotateAround(pos, pivot, angle);
-  }
-
-  public getFutureIntendedPosition(): Vector {
-    return this.gameObject.getIntendedNextPosition().toAdded(this.offset);
-  }
-
-  private intersectWithCircle(
-    other: CircleHitbox,
-    thisPos: Vector,
+	private intersectWithCircle(
+		other: CircleHitbox,
+		thisPos: Vector,
     otherPos: Vector
   ): boolean {
     const dx = thisPos.x - otherPos.x;
@@ -379,31 +280,9 @@ class CircleHitbox {
     return false;
   }
 
-  public willIntersectWith(other: CircleHitbox | SquareHitbox): boolean {
-    const thisPos = this.getFutureTransformedPosition();
-
-    if (other instanceof CircleHitbox) {
-      return this.intersectWithCircle(
-        other,
-        thisPos,
-        other.getFutureTransformedPosition()
-      );
-    }
-    if (other instanceof SquareHitbox) {
-      const vertices = other.getFutureTransformedVertices();
-      const obb = getObbData(vertices, other.size);
-      const closest = closestPointOnObb(thisPos, obb);
-      const dx = thisPos.x - closest.x;
-      const dy = thisPos.y - closest.y;
-      return dx * dx + dy * dy <= this.radius * this.radius;
-    }
-
-    return false;
-  }
-
-  public intersectsWithPoint(point: Vector): boolean {
-    const thisPos = this.getTransformedPosition();
-    const dx = point.x - thisPos.x;
+	public intersectsWithPoint(point: Vector): boolean {
+		const thisPos = this.getTransformedPosition();
+		const dx = point.x - thisPos.x;
     const dy = point.y - thisPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     return distance < this.radius;

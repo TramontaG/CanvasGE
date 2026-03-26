@@ -1,110 +1,137 @@
 class Vector {
-  public x: number;
-  public y: number;
+	public x: number;
+	public y: number;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
+	constructor(x: number, y: number) {
+		this.x = x;
+		this.y = y;
+	}
 
-  private roundToZero() {
-    if (Math.abs(this.x) < 0.05) this.x = 0;
-    if (Math.abs(this.y) < 0.05) this.y = 0;
-  }
+	magnitude(): number {
+		return Math.sqrt(this.squaredMagnitude());
+	}
 
-  magnitude() {
-    return Math.sqrt(this.x * this.x + this.y * this.y);
-  }
+	squaredMagnitude(): number {
+		return this.x * this.x + this.y * this.y;
+	}
 
-  squaredMagnitude() {
-    return this.x * this.x + this.y * this.y;
-  }
+	isZero(epsilon: number = 0): boolean {
+		const resolvedEpsilon = Math.max(0, epsilon);
+		return this.squaredMagnitude() <= resolvedEpsilon * resolvedEpsilon;
+	}
 
-  add(other: Vector): Vector {
-    this.x += other.x;
-    this.y += other.y;
-    return this;
-  }
+	add(other: Vector): Vector {
+		this.x += other.x;
+		this.y += other.y;
+		return this;
+	}
 
-  toAdded(other: Vector): Vector {
-    const result = new Vector(this.x + other.x, this.y + other.y);
-    result.roundToZero();
-    return result;
-  }
+	toAdded(other: Vector): Vector {
+		return new Vector(this.x + other.x, this.y + other.y);
+	}
 
-  subtract(other: Vector): Vector {
-    this.x -= other.x;
-    this.y -= other.y;
-    return this;
-  }
+	subtract(other: Vector): Vector {
+		this.x -= other.x;
+		this.y -= other.y;
+		return this;
+	}
 
-  toSubtracted(other: Vector): Vector {
-    const result = new Vector(this.x - other.x, this.y - other.y);
-    result.roundToZero();
-    return result;
-  }
+	toSubtracted(other: Vector): Vector {
+		return new Vector(this.x - other.x, this.y - other.y);
+	}
 
-  multiply(scalar: number): Vector {
-    this.x *= scalar;
-    this.y *= scalar;
-    return this;
-  }
+	multiply(scalar: number): Vector {
+		this.x *= scalar;
+		this.y *= scalar;
+		return this;
+	}
 
-  toMultiplied(scalar: number): Vector {
-    const result = new Vector(this.x * scalar, this.y * scalar);
-    result.roundToZero();
-    return result;
-  }
+	toMultiplied(scalar: number): Vector {
+		return new Vector(this.x * scalar, this.y * scalar);
+	}
 
-  dotProduct(other: Vector): number {
-    return this.x * other.x + this.y * other.y;
-  }
+	dotProduct(other: Vector): number {
+		return this.x * other.x + this.y * other.y;
+	}
 
-  clone(): Vector {
-    const result = new Vector(this.x, this.y);
-    result.roundToZero();
-    return result;
-  }
+	crossProduct(other: Vector): number {
+		return this.x * other.y - this.y * other.x;
+	}
 
-  equals(other: Vector): boolean {
-    return this.x === other.x && this.y === other.y;
-  }
+	leftPerpendicular(): Vector {
+		const nextX = -this.y;
+		const nextY = this.x;
+		this.x = nextX;
+		this.y = nextY;
+		return this;
+	}
 
-  static zero(): Vector {
-    const result = new Vector(0, 0);
-    result.roundToZero();
-    return result;
-  }
+	toLeftPerpendicular(): Vector {
+		return this.clone().leftPerpendicular();
+	}
 
-  normalize(): Vector {
-    const length = Math.sqrt(this.x * this.x + this.y * this.y);
-    if (length > 0) {
-      this.x /= length;
-      this.y /= length;
-    }
-    return this;
-  }
+	rightPerpendicular(): Vector {
+		const nextX = this.y;
+		const nextY = -this.x;
+		this.x = nextX;
+		this.y = nextY;
+		return this;
+	}
 
-  toNormalized(): Vector {
-    const result = this.clone().normalize();
-    result.roundToZero();
-    return result;
-  }
+	toRightPerpendicular(): Vector {
+		return this.clone().rightPerpendicular();
+	}
 
-  rotate(angle: number): Vector {
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const x = this.x * cos - this.y * sin;
-    const y = this.x * sin + this.y * cos;
-    this.x = x;
-    this.y = y;
-    this.roundToZero();
-    return this;
-  }
+	clone(): Vector {
+		return new Vector(this.x, this.y);
+	}
 
-  toRotated(angle: number): Vector {
-    return this.clone().rotate(angle);
-  }
+	equals(other: Vector): boolean {
+		return this.x === other.x && this.y === other.y;
+	}
+
+	static zero(): Vector {
+		return new Vector(0, 0);
+	}
+
+	normalize(minMagnitude: number = 0): Vector {
+		const resolvedMinMagnitude = Math.max(0, minMagnitude);
+		const length = this.magnitude();
+
+		if (length <= resolvedMinMagnitude) {
+			return this;
+		}
+
+		this.x /= length;
+		this.y /= length;
+		return this;
+	}
+
+	toNormalized(minMagnitude: number = 0): Vector {
+		return this.clone().normalize(minMagnitude);
+	}
+
+	rotate(angle: number): Vector {
+		const cos = Math.cos(angle);
+		const sin = Math.sin(angle);
+		const nextX = this.x * cos - this.y * sin;
+		const nextY = this.x * sin + this.y * cos;
+		this.x = nextX;
+		this.y = nextY;
+		return this;
+	}
+
+	toRotated(angle: number): Vector {
+		return this.clone().rotate(angle);
+	}
+
+	toWorldSpace(origin: Vector, angle: number): Vector {
+		return this.toRotated(angle).add(origin);
+	}
+
+	toLocalSpace(origin: Vector, angle: number): Vector {
+		return this.toSubtracted(origin).rotate(-angle);
+	}
 }
 
 export { Vector };

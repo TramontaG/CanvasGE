@@ -69,20 +69,6 @@ class GameObject {
 
       this.walker?.tick();
 
-      if (
-        this.phisics.affectedByGravity &&
-        !this.phisics.immovable &&
-        !this.beingGrabbed
-      ) {
-        const gravity = this.scene?.getGravity();
-        if (gravity) {
-          this.speed.add(gravity);
-        }
-      }
-
-      this.position.add(this.speed);
-      this.rotation += this.angularVelocity;
-
       for (const child of this.children) {
         child.tick();
       }
@@ -271,8 +257,9 @@ class GameObject {
   }
 
   getDominantDirection(): "up" | "down" | "left" | "right" | null {
+    if (this.speed.isZero()) return this.lastDominantDirection;
+
     const movement = this.speed.toNormalized();
-    if (movement.equals(Vector.zero())) return this.lastDominantDirection;
 
     const directions: Array<{
       dir: "up" | "down" | "left" | "right";
@@ -437,61 +424,6 @@ class GameObject {
     handlers.forEach((handler) => handler(this));
   }
 
-  getIntendedNextPosition(): Vector {
-    return this.getPosition().toAdded(this.speed);
-  }
-
-  isCollidingWith(other: GameObject): boolean {
-    const selfHitboxes = this.hitboxes;
-    const otherHitboxes = other.hitboxes;
-
-    if (selfHitboxes.length === 0 || otherHitboxes.length === 0) {
-      return false;
-    }
-
-    return selfHitboxes.some((selfHitbox) => {
-      return otherHitboxes.some((otherHitbox) => {
-        if (
-          selfHitbox instanceof SquareHitbox &&
-          otherHitbox instanceof SquareHitbox
-        ) {
-          return selfHitbox.intersects(otherHitbox);
-        }
-        if (
-          selfHitbox instanceof CircleHitbox &&
-          otherHitbox instanceof CircleHitbox
-        ) {
-          return selfHitbox.intersects(otherHitbox);
-        }
-      });
-    });
-  }
-
-  willCollideWith(other: GameObject): boolean {
-    const selfHitboxes = this.hitboxes;
-    const otherHitboxes = other.hitboxes;
-
-    if (selfHitboxes.length === 0 || otherHitboxes.length === 0) {
-      return false;
-    }
-
-    return selfHitboxes.some((selfHitbox) => {
-      return otherHitboxes.some((otherHitbox) => {
-        if (
-          selfHitbox instanceof SquareHitbox &&
-          otherHitbox instanceof SquareHitbox
-        ) {
-          return selfHitbox.willIntersectWith(otherHitbox);
-        }
-        if (
-          selfHitbox instanceof CircleHitbox &&
-          otherHitbox instanceof CircleHitbox
-        ) {
-          return selfHitbox.willIntersectWith(otherHitbox);
-        }
-      });
-    });
-  }
 }
 
 export { GameObject };

@@ -99,7 +99,7 @@ const dt = 1 / this.getContext()!.getTickRate();
 this.position.add(new Vector(speed * dt, 0));
 ```
 
-If you want purely tick-based movement (no seconds), just treat “1 tick” as your unit and tune speeds accordingly.
+For fixed-step gameplay code, derive motion from the scene tick rate and keep your velocities expressed in consistent world units per second.
 
 ### Render loop (drawing)
 

@@ -27,7 +27,7 @@ class PatrollingEnemy extends GameObject {
     const walker = new Walker(
       this,
       [new Vector(100, 100), new Vector(300, 100), new Vector(300, 220)],
-      1.5,   // speed: px per tick
+      1.5,   // movement speed
       true,  // debug
       true,  // cyclic
       {

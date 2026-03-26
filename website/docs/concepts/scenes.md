@@ -14,7 +14,7 @@ In Sliver, a `Scene` is responsible for:
 - Holding and updating a list of `GameObject`s
 - Rendering its background + objects + optional overlay
 - Dispatching input/events to its objects (with propagation control)
-- Running simple physics helpers: gravity + collision resolution
+- Running scene physics: body integration, overlap callbacks, and collision solving
 - Supporting camera-like movement via a scene `offset` (used by transitions too)
 
 Scenes receive a shared [`GameContext`](./game-context.md) from the engine (via `SceneManager`), so game objects can access input, audio, scene switching, and the message bus.
@@ -102,7 +102,7 @@ On removal, `go.onRemovedFromScene(scene)` runs after `onAddedToScene`.
 Each tick, `Scene.tick()`:
 
 1) calls `tick()` on every `GameObject` in the scene
-2) runs collision detection + iterative velocity-based resolution across objects that have hitboxes
+2) steps the scene physics world with the scene gravity and the current `dt`
 
 For a deeper dive (hitboxes, restitution/friction/mass, triggers, and collision hooks), see [`Physics`](./physics).
 
@@ -116,22 +116,23 @@ import { Vector } from "sliver-engine";
 scene.setGravity(new Vector(0, 0.4));
 ```
 
-Gravity is applied by `GameObject.tick()` when:
+Gravity is applied by the scene physics world when:
 - `phisics.affectedByGravity === true`
 - `phisics.immovable === false`
 - the object isn’t being dragged (`beingGrabbed === false`)
 
-Gravity is added directly to `speed` once per tick, so treat it as “acceleration per tick” rather than per-second.
+Gravity is integrated with `dt`, so treat it as acceleration in world units per second squared.
 
 ### Collisions
 
-After objects tick, the scene resolves collisions between hitboxes:
+After objects tick, the scene physics world resolves collisions between hitboxes:
 
 - Only **active** objects with at least one hitbox participate.
-- Objects with `phisics.immovable === true` won’t be moved by resolution.
+- Each object contributes one physics body, and each of its hitboxes becomes a shape on that body.
+- Objects with `phisics.immovable === true` are mapped to static bodies.
 - `beforeColision(other)` runs on both objects the first time a pair is checked; if either returns `false`, that pair is ignored for the rest of the tick.
 - `onColision(other, penetration)` is called once per pair per tick when overlap is detected.
-- Solid hitboxes enter an iterative impulse solver; non-solid hitboxes still notify overlap hooks but skip physical response.
+- Solid hitboxes enter the solver; non-solid hitboxes still notify overlap hooks but skip physical response.
 
 If you want an object to be physical, you typically:
 - give it one or more hitboxes

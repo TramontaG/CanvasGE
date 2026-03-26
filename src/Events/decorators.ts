@@ -378,10 +378,12 @@ export const grabbable = <TObj extends GameObject = GameObject>() => {
 
           // If the pointer has been still for at least ~1 tick before release,
           // drop the throw velocity to avoid "stale" inertia.
+          // state.throwSpeed stores recent drag displacement per tick, so
+          // convert it into velocity units before handing it to physics.
           this.speed =
             timeSinceMove >= tickIntervalMs
               ? Vector.zero()
-              : state.throwSpeed.clone();
+              : state.throwSpeed.clone().multiply(tickRate);
           event.stopPropagation = true;
         }
       }
