@@ -175,7 +175,7 @@ Why this works:
 - `GameObject.getPosition()` includes the scene offset, so most objects automatically render with the camera shift.
 - Some input helpers/decorators convert mouse coordinates to “scene space” by subtracting the offset, so hit tests line up while the camera moves.
 
-This same offset is also used by slide transitions.
+Slide transitions use a separate internal render offset, so camera movement does not drag the scene background color across the canvas.
 
 ## Scene stack and scene switching
 

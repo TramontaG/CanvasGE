@@ -13,6 +13,7 @@ class Scene {
   private gameObjects: GameObject[] = [];
   private context: GameContext | null = null;
   private offset: Vector = new Vector(0, 0);
+  private renderOffset: Vector = Vector.zero();
   private gravity: Vector = Vector.zero();
   private opacity: number = 1;
   private overlayColor: string | null = null;
@@ -70,9 +71,8 @@ class Scene {
     ctx.globalAlpha = previousAlpha * this.opacity;
 
     if (this.backgroundColor) {
-      // Offset the background so it moves with the scene.
       ctx.save();
-      ctx.translate(this.offset.x, this.offset.y);
+      ctx.translate(this.renderOffset.x, this.renderOffset.y);
       this.context
         ?.getCanvas()
         .getShapeDrawer()
@@ -151,6 +151,18 @@ class Scene {
 
   setOffset(offset: Vector): void {
     this.offset = offset;
+  }
+
+  getRenderOffset(): Vector {
+    return this.renderOffset;
+  }
+
+  setRenderOffset(offset: Vector): void {
+    this.renderOffset = offset;
+  }
+
+  getVisualOffset(): Vector {
+    return this.offset.toAdded(this.renderOffset);
   }
 
   getGravity(): Vector {

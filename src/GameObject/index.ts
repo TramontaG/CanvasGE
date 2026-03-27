@@ -302,7 +302,7 @@ class GameObject {
   }
 
   getPosition(): Vector {
-    const sceneOffset = this.scene ? this.scene.getOffset() : Vector.zero();
+    const sceneOffset = this.scene ? this.scene.getVisualOffset() : Vector.zero();
     const absolute = this.getAbsolutePosition();
     return absolute.toAdded(sceneOffset);
   }

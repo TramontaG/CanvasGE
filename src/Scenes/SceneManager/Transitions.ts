@@ -102,11 +102,11 @@ const slideReplace = (
   return createSceneTransition(
     (progress, { from, to }) => {
       const incomingOffset = offsetVector.toMultiplied(1 - progress);
-      to.setOffset(incomingOffset);
+      to.setRenderOffset(incomingOffset);
 
       if (from) {
         const outgoingOffset = offsetVector.toMultiplied(-progress);
-        from.setOffset(outgoingOffset);
+        from.setRenderOffset(outgoingOffset);
       }
     },
     {
@@ -127,13 +127,13 @@ const slideReplace = (
         offsetVector = directionVectorMap[direction];
 
         const { to } = scenes;
-        to.setOffset(offsetVector);
+        to.setRenderOffset(offsetVector);
         to.setOpacity(1);
       },
       cleanup: (_, { from, to }) => {
-        to.setOffset(Vector.zero());
+        to.setRenderOffset(Vector.zero());
         if (from) {
-          from.setOffset(Vector.zero());
+          from.setRenderOffset(Vector.zero());
         }
       },
     }
@@ -150,7 +150,7 @@ const slidePush = (
   return createSceneTransition(
     (progress, { from, to }) => {
       const incomingOffset = offsetVector.toMultiplied(1 - progress);
-      to.setOffset(incomingOffset);
+      to.setRenderOffset(incomingOffset);
     },
     {
       duration,
@@ -170,11 +170,11 @@ const slidePush = (
         offsetVector = directionVectorMap[direction];
 
         const { to } = scenes;
-        to.setOffset(offsetVector);
+        to.setRenderOffset(offsetVector);
         to.setOpacity(1);
       },
       cleanup: (_, { from, to }) => {
-        to.setOffset(Vector.zero());
+        to.setRenderOffset(Vector.zero());
       },
     }
   );
@@ -191,7 +191,7 @@ const slidePop = (
     (progress, { from, to }) => {
       if (from) {
         const outgoingOffset = offsetVector.toMultiplied(-progress);
-        from.setOffset(outgoingOffset);
+        from.setRenderOffset(outgoingOffset);
       }
     },
     {
@@ -217,7 +217,7 @@ const slidePop = (
       },
       cleanup: (_, { from, to }) => {
         if (from) {
-          from.setOffset(Vector.zero());
+          from.setRenderOffset(Vector.zero());
         }
       },
     }

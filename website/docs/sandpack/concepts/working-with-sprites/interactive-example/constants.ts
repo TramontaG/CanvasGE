@@ -3,7 +3,7 @@ import { Vector } from "sliver-engine";
 export const CANVAS_WIDTH = 520;
 export const CANVAS_HEIGHT = 320;
 
-export const HERO_SPRITE_SIZE = new Vector(16, 32);
+export const HERO_SPRITE_SIZE = new Vector(32, 32);
 export const HERO_SCALE = 4;
 export const HERO_SPEED = 120;
 export const HERO_PADDING = 24;

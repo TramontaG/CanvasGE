@@ -312,7 +312,7 @@ class Walker {
     proxy.rotation = this.gameObject.rotation ?? 0;
     proxy.speed = Vector.zero();
 
-    const sceneOffset = this.gameObject.scene?.getOffset() ?? Vector.zero();
+    const sceneOffset = this.gameObject.scene?.getVisualOffset() ?? Vector.zero();
     proxy.setPosition(proxyScenePosition.toAdded(sceneOffset));
 
     for (const selfHitbox of proxy.hitboxes) {
@@ -853,7 +853,7 @@ class Walker {
     const rotation = this.gameObject.rotation ?? 0;
 
     const draw = () => {
-      const sceneOffset = this.gameObject.scene?.getOffset() ?? Vector.zero();
+      const sceneOffset = this.gameObject.scene?.getVisualOffset() ?? Vector.zero();
 
       this.waypoints.forEach((waypoint, index) => {
         const renderedWaypoint = waypoint.toAdded(sceneOffset);

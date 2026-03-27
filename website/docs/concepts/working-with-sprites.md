@@ -21,33 +21,22 @@ width={640}
 style={{ imageRendering: "pixelated" }}
 />
 
-This sheet is **4x3 frames**. Each frame is **16x32**, but we load the sheet as **16x16 tiles** so each frame becomes a 2-tile-tall sprite definition.
+This sheet is **128x96 px**, arranged as **4x3 animation frames**. Each frame is **32x32**, and we load the sheet as **16x16 tiles**. That means each animation frame occupies a **2x2** block in the tile grid.
 
-To address the tiles by IDs, we do it like this (4 columns total):
-_Check these numbers for the tile-id array examples below_
+Because the tile grid is `8x6`, using a `1x2` rect would only grab the left half of a frame.
 
-| Col 0 | Col 1 | Col 2 | Col 3 | Description |
-| ----- | ----- | ----- | ----- | ----------- |
-| 0     | 1     | 2     | 3     | down (head) |
-| 4     | 5     | 6     | 7     | down (body) |
-| 8     | 9     | 10    | 11    | up (head)   |
-| 12    | 13    | 14    | 15    | up (body)   |
-| 16    | 17    | 18    | 19    | left (head) |
-| 20    | 21    | 22    | 23    | left (body) |
+Use the full `2x2` tile block for each animation frame:
 
-_Right is the same as left row mirrored horizontally._
+| Frame | Tile ids | Grid rect |
+| ----- | -------- | --------- |
+| `down_0` | `[[0, 1], [8, 9]]` | `[0, 0] -> [1, 1]` |
+| `down_1` | `[[2, 3], [10, 11]]` | `[2, 0] -> [3, 1]` |
+| `down_2` | `[[4, 5], [12, 13]]` | `[4, 0] -> [5, 1]` |
+| `down_3` | `[[6, 7], [14, 15]]` | `[6, 0] -> [7, 1]` |
+| `up_0` | `[[16, 17], [24, 25]]` | `[0, 2] -> [1, 3]` |
+| `left_0` | `[[32, 33], [40, 41]]` | `[0, 4] -> [1, 5]` |
 
-Another way to read the tiles is by their grid position `[col, row]`:
-_Check these coordinates for the rect examples below_
-
-| Col 0 | Col 1 | Col 2 | Col 3 | Description |
-| ----- | ----- | ----- | ----- | ----------- |
-| [0,0] | [1,0] | [2,0] | [3,0] | down (head) |
-| [0,1] | [1,1] | [2,1] | [3,1] | down (body) |
-| [0,2] | [1,2] | [2,2] | [3,2] | up (head)   |
-| [0,3] | [1,3] | [2,3] | [3,3] | up (body)   |
-| [0,4] | [1,4] | [2,4] | [3,4] | left (head) |
-| [0,5] | [1,5] | [2,5] | [3,5] | left (body) |
+_Right is the same as the left row mirrored horizontally._
 
 Both approaches are valid and supported by Sliver.
 
@@ -70,23 +59,26 @@ sprites.defineSpriteFromSheet(
   "human_down_0", // sprite name
   "human", // spritesheet name
   new Vector(0, 0), // [col, row] top-left
-  new Vector(0, 1) // [col, row] bottom-right (2 tiles tall)
+  new Vector(1, 1) // [col, row] bottom-right (2x2 tiles)
 );
 
 // Defining a sprite as a 2D array of tile ids
 sprites.defineSpriteFromSheetIndexes("human_down_1", "human", [
-  [1], // head
-  [5], // body
+  [2, 3],
+  [10, 11],
 ]);
 
 // Another definition by tile ids
-sprites.defineSpriteFromSheetIndexes("human_down_2", "human", [[2], [6]]);
+sprites.defineSpriteFromSheetIndexes("human_down_2", "human", [
+  [4, 5],
+  [12, 13],
+]);
 
 sprites.defineSpriteFromSheet(
   "human_down_3",
   "human",
-  new Vector(3, 0), // head
-  new Vector(3, 1) // body
+  new Vector(6, 0),
+  new Vector(7, 1)
 );
 
 const WALK_DOWN = [
@@ -129,25 +121,25 @@ You can define sprites in JSON and load them in bulk. Each sprite chooses how ti
   "sprites": {
     "human_down_0": {
       "sheet": "human",
-      "rect": { "mode": "grid", "from": [0, 0], "to": [0, 1] }
+      "rect": { "mode": "grid", "from": [0, 0], "to": [1, 1] }
     },
     "human_down_1": {
       "sheet": "human",
-      "rect": { "mode": "id", "from": 1, "to": 5 }
+      "rect": { "mode": "id", "from": 2, "to": 11 }
     },
     "human_up_0": {
       "sheet": "human",
-      "rect": { "mode": "grid", "from": [0, 2], "to": [0, 3] }
+      "rect": { "mode": "grid", "from": [0, 2], "to": [1, 3] }
     },
     "human_left_0": {
       "sheet": "human",
-      "rect": { "mode": "grid", "from": [0, 4], "to": [0, 5] }
+      "rect": { "mode": "grid", "from": [0, 4], "to": [1, 5] }
     },
     "human_down_2": {
       "sheet": "human",
       "grid": {
         "mode": "id",
-        "tiles": [[2], [6]]
+        "tiles": [[4, 5], [12, 13]]
       }
     }
   }
@@ -202,7 +194,7 @@ override render(): void {}
 This sandbox demonstrates the full sprite workflow in a compact setup:
 
 - loads the same `human.png` sprite sheet used in this page (embedded as base64 so it works in Sandpack)
-- defines sprite names with `defineSpriteFromSheet(...)` using `[col, row]` coordinates
+- defines sprite names with `defineSpriteFromSheet(...)` using `2x2` tile rects
 - animates the hero using `@renderSpriteAnimation(...)`
 - uses up/down/left frame sets from the table and mirrors left frames for right movement
 

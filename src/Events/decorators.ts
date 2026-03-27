@@ -322,7 +322,7 @@ export const grabbable = <TObj extends GameObject = GameObject>() => {
     ) {
       const state = getState(this);
 
-      const sceneOffset = this.scene?.getOffset() ?? Vector.zero();
+      const sceneOffset = this.scene?.getVisualOffset() ?? Vector.zero();
       const mouseToScene = (x: number, y: number): Vector =>
         new Vector(x, y).toSubtracted(sceneOffset);
 
