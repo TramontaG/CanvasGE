@@ -23,11 +23,10 @@ export class MouseDecoratorsObject extends MouseDecoratorsObjectBase {
 
 	@onClick<MouseDecoratorsObject>((obj) => {
 		obj.decoratorCounters.onClick += 1;
-		obj.translate(new Vector(BOX_STEP_X, 0));
 		obj.fillColor = "#f97316";
 		const pos = obj.getPosition();
 		obj.setPosition(
-			new Vector(Math.max(BOX_MIN_X, Math.min(BOX_MAX_X, pos.x)), pos.y),
+			new Vector(Math.max(BOX_MIN_X, Math.min(BOX_MAX_X, pos.x + BOX_STEP_X)), pos.y),
 		);
 	})
 	@onClickAnywhere<MouseDecoratorsObject>((obj) => {

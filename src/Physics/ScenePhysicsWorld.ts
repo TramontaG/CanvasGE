@@ -25,6 +25,7 @@ import { CircleShape } from "./Shapes";
 
 const DEFAULT_SCENE_TICK_RATE = 60;
 const DEFAULT_DYNAMIC_MASS = 1;
+const DEFAULT_INERTIA_SCALE = 1;
 const WAKE_EPSILON = 1e-8;
 
 const EMPTY_GAMEPLAY_COLLISION_STEP_RESULT: GameplayCollisionStepResult = {
@@ -56,14 +57,18 @@ const resolveLegacyMass = (gameObject: GameObject): number => {
 
 const scaleMassProperties = (
 	massProperties: MassProperties,
-	targetMass: number
+	targetMass: number,
+	inertiaScale: number = DEFAULT_INERTIA_SCALE
 ): MassProperties => {
 	if (!Number.isFinite(targetMass) || targetMass <= 0) {
 		throw new Error("Target mass must be a finite positive number.");
 	}
+	if (!Number.isFinite(inertiaScale) || inertiaScale <= 0) {
+		throw new Error("Inertia scale must be a finite positive number.");
+	}
 
 	const massScale = targetMass / massProperties.mass;
-	const scaledInertia = massProperties.inertia * massScale;
+	const scaledInertia = massProperties.inertia * massScale * inertiaScale;
 
 	return {
 		area: massProperties.area,
@@ -73,6 +78,25 @@ const scaleMassProperties = (
 		inertia: scaledInertia,
 		invInertia: scaledInertia > 0 ? 1 / scaledInertia : 0,
 	};
+};
+
+const resolveInertiaScale = (gameObject: GameObject): number => {
+	const requestedInertiaScale =
+		gameObject.phisics.inertiaScale ?? DEFAULT_INERTIA_SCALE;
+
+	if (!Number.isFinite(requestedInertiaScale) || requestedInertiaScale <= 0) {
+		return DEFAULT_INERTIA_SCALE;
+	}
+
+	return requestedInertiaScale;
+};
+
+const resolveStaticFriction = (gameObject: GameObject): number => {
+	return gameObject.phisics.staticFriction ?? gameObject.phisics.friction ?? 0;
+};
+
+const resolveDynamicFriction = (gameObject: GameObject): number => {
+	return gameObject.phisics.dynamicFriction ?? gameObject.phisics.friction ?? 0;
 };
 
 const computeMassPropertiesFromHitbox = (hitbox: Hitbox): MassProperties => {
@@ -97,15 +121,17 @@ const computeMassPropertiesFromGameObject = (
 ): MassProperties => {
 	const hitboxes = gameObject.getHitboxes();
 	const requestedMass = resolveLegacyMass(gameObject);
+	const inertiaScale = resolveInertiaScale(gameObject);
 
 	if (hitboxes.length === 0) {
+		const inertia = requestedMass * inertiaScale;
 		return {
 			area: 1,
 			mass: requestedMass,
 			invMass: 1 / requestedMass,
 			centroid: Vector.zero(),
-			inertia: requestedMass,
-			invInertia: 1 / requestedMass,
+			inertia,
+			invInertia: 1 / inertia,
 		};
 	}
 
@@ -117,7 +143,11 @@ const computeMassPropertiesFromGameObject = (
 			? contributions[0]!
 			: computeCompoundMassProperties(contributions);
 
-	return scaleMassProperties(combinedMassProperties, requestedMass);
+	return scaleMassProperties(
+		combinedMassProperties,
+		requestedMass,
+		inertiaScale
+	);
 };
 
 const shouldWakeForTransformChange = (
@@ -160,8 +190,8 @@ const syncBodyFromGameObject = (
 	body.angle = gameObject.rotation;
 	body.linearVelocity = gameObject.speed.clone();
 	body.angularVelocity = gameObject.angularVelocity;
-	body.staticFriction = gameObject.phisics.friction ?? 0;
-	body.dynamicFriction = gameObject.phisics.friction ?? 0;
+	body.staticFriction = resolveStaticFriction(gameObject);
+	body.dynamicFriction = resolveDynamicFriction(gameObject);
 	body.restitution = gameObject.phisics.restitution ?? 1;
 };
 
@@ -233,8 +263,8 @@ class ScenePhysicsWorld {
 					angle: gameObject.rotation,
 					linearVelocity: gameObject.speed,
 					angularVelocity: gameObject.angularVelocity,
-					staticFriction: gameObject.phisics.friction ?? 0,
-					dynamicFriction: gameObject.phisics.friction ?? 0,
+					staticFriction: resolveStaticFriction(gameObject),
+					dynamicFriction: resolveDynamicFriction(gameObject),
 					restitution: gameObject.phisics.restitution ?? 1,
 					massProperties: computeMassPropertiesFromGameObject(gameObject),
 				});

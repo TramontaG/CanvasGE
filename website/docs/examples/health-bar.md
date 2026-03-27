@@ -60,12 +60,17 @@ import {
 class Player extends GameObject {
   public hp = 10;
   public maxHp = 10;
-  private static readonly SPEED = 2;
+  private static readonly SPEED = 120;
 
   constructor(position: Vector) {
     super("player", position);
     this.addHitbox(new SquareHitbox(Vector.zero(), new Vector(16, 16), this));
-    this.setPhisics({ immovable: false });
+    this.setPhisics({
+      immovable: false,
+      affectedByGravity: false,
+      friction: 0,
+      restitution: 0,
+    });
 
     // Attach UI as a child so it follows the player automatically.
     const healthBar = new HealthBar();
@@ -76,10 +81,15 @@ class Player extends GameObject {
     this.hp = Math.max(0, this.hp - amount);
   }
 
-  @onKeyHold<Player>("w", (obj) => obj.translate(new Vector(0, -Player.SPEED)))
-  @onKeyHold<Player>("a", (obj) => obj.translate(new Vector(-Player.SPEED, 0)))
-  @onKeyHold<Player>("s", (obj) => obj.translate(new Vector(0, Player.SPEED)))
-  @onKeyHold<Player>("d", (obj) => obj.translate(new Vector(Player.SPEED, 0)))
+  override tick(): void {
+    this.speed = Vector.zero();
+    super.tick();
+  }
+
+  @onKeyHold<Player>("w", (obj) => obj.speed = new Vector(0, -Player.SPEED))
+  @onKeyHold<Player>("a", (obj) => obj.speed = new Vector(-Player.SPEED, 0))
+  @onKeyHold<Player>("s", (obj) => obj.speed = new Vector(0, Player.SPEED))
+  @onKeyHold<Player>("d", (obj) => obj.speed = new Vector(Player.SPEED, 0))
   override handleEvent(event: GameEvent): void {
     super.handleEvent(event);
   }

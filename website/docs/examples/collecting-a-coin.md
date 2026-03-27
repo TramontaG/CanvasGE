@@ -60,13 +60,18 @@ class CoinCounter extends GameObject {
 
 ## 3) Player movement
 
-The player uses key decorators for continuous movement and clamps position to the canvas bounds:
+The player resets velocity each tick, lets the held keys write the current movement direction, and clamps position to the play area in `tick()`:
 
 ```ts
-@onKeyHold<WalkerPlayer>("w", (obj) => obj.moveBy(new Vector(0, -PLAYER_SPEED)))
-@onKeyHold<WalkerPlayer>("a", (obj) => obj.moveBy(new Vector(-PLAYER_SPEED, 0)))
-@onKeyHold<WalkerPlayer>("s", (obj) => obj.moveBy(new Vector(0, PLAYER_SPEED)))
-@onKeyHold<WalkerPlayer>("d", (obj) => obj.moveBy(new Vector(PLAYER_SPEED, 0)))
+override tick(): void {
+  this.speed = Vector.zero();
+  super.tick();
+}
+
+@onKeyHold<WalkerPlayer>("w", (obj) => obj.speed = new Vector(0, -PLAYER_SPEED))
+@onKeyHold<WalkerPlayer>("a", (obj) => obj.speed = new Vector(-PLAYER_SPEED, 0))
+@onKeyHold<WalkerPlayer>("s", (obj) => obj.speed = new Vector(0, PLAYER_SPEED))
+@onKeyHold<WalkerPlayer>("d", (obj) => obj.speed = new Vector(PLAYER_SPEED, 0))
 override handleEvent(event: GameEvent): void {
   super.handleEvent(event);
 }

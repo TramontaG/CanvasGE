@@ -17,7 +17,10 @@ type GameObjectPhisicsDescriptor = {
   restitution?: number;
   affectedByGravity?: boolean;
   friction?: number;
+  staticFriction?: number;
+  dynamicFriction?: number;
   mass?: number;
+  inertiaScale?: number;
 };
 
 class GameObject {
@@ -45,6 +48,7 @@ class GameObject {
     affectedByGravity: false,
     friction: 0,
     mass: 1,
+    inertiaScale: 1,
   };
 
   public id: string = Math.floor(Math.random() * 0xffffffff).toString(16);

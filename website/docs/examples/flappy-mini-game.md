@@ -18,6 +18,12 @@ This example shows a complete Flappy-style loop:
 - pipe spawning and scoring
 - game over and reset flow
 
+The movement constants in this demo use the current physics units:
+
+- `GRAVITY` is acceleration in world units per second squared.
+- `FLAP_VELOCITY` and `PIPE_SPEED` are velocities in world units per second.
+- The playable tuning uses the same scale as the debug scene: gravity around `1200` and lateral speeds around `120`.
+
 Tip: this uses decorators, so `experimentalDecorators: true` should be enabled in your `tsconfig.json`.
 
 ## Interactive example

@@ -228,11 +228,16 @@ Runs the handler every tick while `key` is held (good for movement).
 import { onKeyHold } from "sliver-engine";
 import { Vector } from "sliver-engine";
 
+override tick(): void {
+  this.speed = Vector.zero();
+  super.tick();
+}
+
 @onKeyHold("ArrowLeft", (obj) => {
-  obj.speed = new Vector(-2, 0);
+  obj.speed = new Vector(-120, 0);
 })
 @onKeyHold("ArrowRight", (obj) => {
-  obj.speed = new Vector(2, 0);
+  obj.speed = new Vector(120, 0);
 })
 override handleEvent(event: GameEvent): void {
   super.handleEvent(event);

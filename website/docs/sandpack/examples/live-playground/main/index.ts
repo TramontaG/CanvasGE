@@ -4,25 +4,44 @@ import {
 	GameObject,
 	Scene,
 	SceneManager,
+	SquareHitbox,
 	SoundManager,
 	Vector,
 } from "sliver-engine";
 import { BOX_SIZE, CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants";
+
+const BOX_SPEED = 120;
 
 class BouncingBox extends GameObject {
 	private direction = 1;
 
 	constructor() {
 		super("box", new Vector(40, CANVAS_HEIGHT / 2 - BOX_SIZE / 2));
+		this.addHitbox(
+			new SquareHitbox(Vector.zero(), new Vector(BOX_SIZE, BOX_SIZE), this, {
+				solid: false,
+				debug: false,
+			}),
+		);
+		this.setPhisics({
+			immovable: false,
+			affectedByGravity: false,
+			friction: 0,
+			restitution: 0,
+		});
 
 		this.setTickFunction((obj) => {
-			const pos = obj.getScenePosition();
+			const pos = obj.getPosition();
+			const nextX = Math.max(0, Math.min(CANVAS_WIDTH - BOX_SIZE, pos.x));
+			obj.setPosition(new Vector(nextX, pos.y));
 
-			if (pos.x <= 0 || pos.x + BOX_SIZE >= CANVAS_WIDTH) {
-				this.direction *= -1;
+			if (nextX <= 0) {
+				this.direction = 1;
+			} else if (nextX + BOX_SIZE >= CANVAS_WIDTH) {
+				this.direction = -1;
 			}
 
-			obj.translate(new Vector(2.5 * this.direction, 0));
+			obj.speed = new Vector(BOX_SPEED * this.direction, 0);
 		});
 
 		this.setRenderFunction((obj, canvas) => {

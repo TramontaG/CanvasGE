@@ -5,7 +5,7 @@ export const CANVAS_HEIGHT = 320;
 
 export const HERO_SPRITE_SIZE = new Vector(16, 32);
 export const HERO_SCALE = 4;
-export const HERO_SPEED = 2.2;
+export const HERO_SPEED = 120;
 export const HERO_PADDING = 24;
 
 export const HERO_WALK_DOWN_FRAMES = [

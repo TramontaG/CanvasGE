@@ -97,7 +97,7 @@ const idle = () =>
 
 const flee = () =>
   npc.setTickFunction(() => {
-    npc.speed = new Vector(-2, 0);
+    npc.speed = new Vector(-120, 0);
   });
 
 idle();

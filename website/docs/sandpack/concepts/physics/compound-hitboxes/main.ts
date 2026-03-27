@@ -1,13 +1,14 @@
 import {
-CanvasController,
-Game,
-Scene,
-SceneManager,
-SoundManager,
-Vector,
+	CanvasController,
+	Game,
+	Scene,
+	SceneManager,
+	SoundManager,
+	Vector,
 } from "sliver-engine";
 import { createBounds } from "./createBounds";
 import { createHitboxObjects } from "./createHitboxObjects";
+import { scaleEnclosureScalar } from "./enclosureDimensions";
 
 const CANVAS_WIDTH = 520;
 const CANVAS_HEIGHT = 320;
@@ -35,7 +36,7 @@ syncCanvasSize();
 window.addEventListener("resize", syncCanvasSize);
 
 const mainScene = new Scene("hitbox-detach-demo", "#0f172a");
-mainScene.setGravity(new Vector(0, 16.8));
+mainScene.setGravity(new Vector(0, scaleEnclosureScalar(1200)));
 
 const bounds = createBounds();
 const objects = createHitboxObjects();

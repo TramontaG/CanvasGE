@@ -9,13 +9,11 @@ import {
 } from "sliver-engine";
 
 const SIZE = new Vector(20, 20);
-const STEP = 2;
-const MIN_X = 36;
-const MAX_X = 520 - 56;
-const MIN_Y = 36;
-const MAX_Y = 320 - 56;
+const PLAYER_SPEED = 120;
 
 export class Player extends GameObject {
+	private pendingVelocity = Vector.zero();
+
 	constructor(position: Vector) {
 		super("player", position.clone());
 		this.addHitbox(
@@ -30,23 +28,22 @@ export class Player extends GameObject {
 		});
 	}
 
-	@onKeyHold<Player>("w", (obj) => obj.moveBy(new Vector(0, -STEP)))
-	@onKeyHold<Player>("a", (obj) => obj.moveBy(new Vector(-STEP, 0)))
-	@onKeyHold<Player>("s", (obj) => obj.moveBy(new Vector(0, STEP)))
-	@onKeyHold<Player>("d", (obj) => obj.moveBy(new Vector(STEP, 0)))
+	override tick(): void {
+		this.pendingVelocity = Vector.zero();
+		super.tick();
+		this.speed = this.pendingVelocity.clone();
+	}
+
+	@onKeyHold<Player>("w", (obj) => obj.queueVelocity(new Vector(0, -PLAYER_SPEED)))
+	@onKeyHold<Player>("a", (obj) => obj.queueVelocity(new Vector(-PLAYER_SPEED, 0)))
+	@onKeyHold<Player>("s", (obj) => obj.queueVelocity(new Vector(0, PLAYER_SPEED)))
+	@onKeyHold<Player>("d", (obj) => obj.queueVelocity(new Vector(PLAYER_SPEED, 0)))
 	override handleEvent(event: GameEvent): void {
 		super.handleEvent(event);
 	}
 
-	private moveBy(delta: Vector): void {
-		this.translate(delta);
-		const pos = this.getPosition();
-		this.setPosition(
-			new Vector(
-				Math.max(MIN_X, Math.min(MAX_X, pos.x)),
-				Math.max(MIN_Y, Math.min(MAX_Y, pos.y)),
-			),
-		);
+	private queueVelocity(delta: Vector): void {
+		this.pendingVelocity.add(delta);
 	}
 
 	override render(canvas: CanvasController, _scene: Scene): void {

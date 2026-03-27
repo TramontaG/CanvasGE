@@ -85,6 +85,8 @@ class Door extends GameObject {
 
 This keeps coupling low: the key doesn’t need to know where the door is.
 
+In the interactive example, the player is driven by velocity through the scene physics step, so the closed door and the arena walls block movement physically instead of relying on manual position checks.
+
 ## Interactive example
 
 This sandbox demonstrates key pickup + message-driven door behavior.

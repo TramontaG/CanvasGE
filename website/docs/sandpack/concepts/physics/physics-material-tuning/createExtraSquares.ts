@@ -29,7 +29,7 @@ const CYAN_SQUARES: SquareConfig[] = [
 		position: mapEnclosurePoint(68, 44),
 		size: scaleEnclosureSize(14, 14),
 		color: "#22d3ee",
-		initialSpeed: scaleEnclosureOffset(21, 0),
+		initialSpeed: scaleEnclosureOffset(120, 0),
 	},
 	{
 		name: "cyan-2",
@@ -50,7 +50,7 @@ const CYAN_SQUARES: SquareConfig[] = [
 		position: mapEnclosurePoint(194, 64),
 		size: scaleEnclosureSize(20, 20),
 		color: "#22d3ee",
-		initialSpeed: scaleEnclosureOffset(-15, 0),
+		initialSpeed: scaleEnclosureOffset(-90, 0),
 	},
 ];
 
@@ -60,7 +60,7 @@ const ROSE_SQUARES: SquareConfig[] = [
 		position: mapEnclosurePoint(280, 48),
 		size: scaleEnclosureSize(15, 15),
 		color: "#fb7185",
-		initialSpeed: scaleEnclosureOffset(-18, 0),
+		initialSpeed: scaleEnclosureOffset(-120, 0),
 	},
 	{
 		name: "rose-2",
@@ -81,7 +81,7 @@ const ROSE_SQUARES: SquareConfig[] = [
 		position: mapEnclosurePoint(404, 66),
 		size: scaleEnclosureSize(13, 13),
 		color: "#fb7185",
-		initialSpeed: scaleEnclosureOffset(12, 0),
+		initialSpeed: scaleEnclosureOffset(90, 0),
 	},
 ];
 

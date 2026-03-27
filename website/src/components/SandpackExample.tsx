@@ -10,15 +10,27 @@ import {
   type SandpackSetup,
 } from "@codesandbox/sandpack-react";
 import { useColorMode } from "@docusaurus/theme-common";
+import { SANDPACK_LOCAL_ENGINE_FILES } from "../generated/sandpackLocalEngine";
 import styles from "./SandpackExample.module.css";
 
 const TS_CONFIG_PATH = "/tsconfig.json";
 const DEFAULT_EDITOR_HEIGHT = 420;
 const DEFAULT_CODE_HEAVY_PREVIEW_WIDTH = 400;
+const SANDBOX_ENGINE_VERSION = "0.0.1-alpha-5";
 
-const DECORATOR_TS_CONFIG = {
+const DEFAULT_TS_CONFIG_OVERRIDES = {
   compilerOptions: {
+    target: "ESNext",
+    module: "Preserve",
+    moduleResolution: "bundler",
+    moduleDetection: "force",
+    allowImportingTsExtensions: true,
+    verbatimModuleSyntax: true,
+    resolveJsonModule: true,
     experimentalDecorators: true,
+    useDefineForClassFields: true,
+    strict: false,
+    skipLibCheck: true,
   },
 };
 
@@ -83,10 +95,10 @@ const buildTsConfig = (existingCode?: string): string => {
 
   const mergedConfig = {
     ...current,
-    ...DECORATOR_TS_CONFIG,
+    ...DEFAULT_TS_CONFIG_OVERRIDES,
     compilerOptions: {
       ...compilerOptions,
-      ...DECORATOR_TS_CONFIG.compilerOptions,
+      ...DEFAULT_TS_CONFIG_OVERRIDES.compilerOptions,
     },
   };
 
@@ -99,6 +111,19 @@ const isHidden = (
   hiddenFilesSet: ReadonlySet<string>,
 ): boolean => {
   return Boolean(file.hidden) || hiddenFilesSet.has(path);
+};
+
+const ensureEngineDependency = (
+  setup: SandpackSetup | undefined,
+): SandpackSetup => {
+  return {
+    ...setup,
+    dependencies: {
+      ...setup?.dependencies,
+      "sliver-engine":
+        setup?.dependencies?.["sliver-engine"] ?? SANDBOX_ENGINE_VERSION,
+    },
+  };
 };
 
 export const SandpackExample = ({
@@ -142,6 +167,10 @@ export const SandpackExample = ({
   const normalizedFiles = useMemo<SandpackFiles>(() => {
     const nextFiles: SandpackFiles = {};
 
+    Object.entries(SANDPACK_LOCAL_ENGINE_FILES).forEach(([path, rawFile]) => {
+      nextFiles[path] = rawFile;
+    });
+
     Object.entries(files).forEach(([rawPath, rawFile]) => {
       const path = normalizePath(rawPath);
       const file = toSandpackFile(rawFile);
@@ -172,6 +201,10 @@ export const SandpackExample = ({
 
     return nextFiles;
   }, [files, normalizedPaths.hidden, preserveFileReadOnly]);
+
+  const resolvedCustomSetup = useMemo(() => {
+    return ensureEngineDependency(customSetup);
+  }, [customSetup]);
 
   const resolvedVisibleFiles = useMemo(() => {
     if (normalizedPaths.visible && normalizedPaths.visible.length > 0) {
@@ -205,7 +238,7 @@ export const SandpackExample = ({
         template="vanilla-ts"
         theme={sandpackTheme}
         files={normalizedFiles}
-        customSetup={customSetup}
+        customSetup={resolvedCustomSetup}
         options={{
           visibleFiles: resolvedVisibleFiles,
           activeFile: resolvedActiveFile,

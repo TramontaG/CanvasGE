@@ -27,13 +27,15 @@ export class KeyboardDecoratorsObjectBase extends GameObject {
 		super(name, BOX_START.clone());
 		this.addHitbox(
 			new SquareHitbox(Vector.zero(), BOX_SIZE.clone(), this, {
-				solid: false,
+				solid: true,
 				debug: false,
 			}),
 		);
 		this.setPhisics({
-			immovable: true,
+			immovable: false,
 			affectedByGravity: false,
+			friction: 0,
+			restitution: 0,
 		});
 		this.setRenderFunction((obj, canvas) => {
 			const pos = obj.getPosition();
@@ -46,9 +48,8 @@ export class KeyboardDecoratorsObjectBase extends GameObject {
 				BOX_SIZE.y + 4,
 				this.outlineColor,
 				true,
-			);
+				);
 			draw.drawRectangle(pos.x, pos.y, BOX_SIZE.x, BOX_SIZE.y, this.fillColor, true);
 		});
 	}
-
-	}
+}

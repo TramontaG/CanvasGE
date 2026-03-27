@@ -10,21 +10,21 @@ const CANVAS_WIDTH = 520;
 const BOX_SIZE = 30;
 const MIN_X = 30;
 const MAX_X = CANVAS_WIDTH - BOX_SIZE - 30;
-const SPEED_X = 2.2;
+const SPEED_X = 120;
 
 class MovingBox extends GameObject {
 	private direction = 1;
 
 	constructor() {
 		super("moving-box", new Vector(70, 156));
-		this.setPhisics({ immovable: true, affectedByGravity: false });
+		this.setPhisics({ immovable: false, affectedByGravity: false, friction: 0 });
 	}
 
 	override tick(): void {
 		const x = this.getScenePosition().x;
 		if (x <= MIN_X) this.direction = 1;
 		if (x >= MAX_X) this.direction = -1;
-		this.translate(new Vector(SPEED_X * this.direction, 0));
+		this.speed = new Vector(SPEED_X * this.direction, 0);
 		super.tick();
 	}
 

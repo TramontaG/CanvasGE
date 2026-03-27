@@ -13,6 +13,7 @@ It is configured for engine docs by default:
 
 - Uses `template="vanilla-ts"` for TypeScript examples.
 - Injects a hidden, read-only `/tsconfig.json` with `experimentalDecorators: true`.
+- Injects the current local `sliver-engine` build into Sandpack, so previews run against the same engine code as the repo.
 - Accepts a multi-file `files` object.
 - Lets you hide boilerplate files with `hiddenFiles` or file-level `hidden: true`.
 
@@ -24,11 +25,6 @@ It is configured for engine docs by default:
   hiddenFiles={["/package.json"]}
   visibleFiles={["/index.ts"]}
   activeFile="/index.ts"
-  customSetup={{
-    dependencies: {
-      "sliver-engine": "0.0.1-alpha-5",
-    },
-  }}
 />
 ```
 

@@ -5,12 +5,12 @@ export const CANVAS_HEIGHT = 480;
 export const GROUND_HEIGHT = 44;
 export const CEILING_HEIGHT = 20;
 
-export const GRAVITY = 0.28;
-export const FLAP_VELOCITY = -4.8;
+export const GRAVITY = 1200;
+export const FLAP_VELOCITY = -320;
 
 export const PIPE_WIDTH = 56;
 export const PIPE_GAP = 104;
-export const PIPE_SPEED = -2.1;
+export const PIPE_SPEED = -120;
 export const PIPE_SPAWN_TICKS = 92;
 export const PIPE_MIN_TOP = 40;
 export const PIPE_MAX_TOP = CANVAS_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 40;

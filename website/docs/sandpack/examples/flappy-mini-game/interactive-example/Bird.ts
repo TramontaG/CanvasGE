@@ -66,7 +66,6 @@ export class Bird extends GameObject {
   }
 
   @onKeyPressed<Bird>(" ", (obj) => {
-    console.log("aaaa");
     obj.handleInput();
   })
   @onClickAnywhere<Bird>((obj, event) => {

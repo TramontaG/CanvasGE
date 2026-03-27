@@ -2,6 +2,7 @@
 title: Physics
 sidebar_position: 6
 ---
+
 import sandpack1IndexTs from "../sandpack/concepts/physics/physics-material-tuning/index.ts?raw";
 import sandpack1EnclosureDimensionsTs from "../sandpack/concepts/physics/physics-material-tuning/enclosureDimensions.ts?raw";
 import sandpack1CreateBoundsTs from "../sandpack/concepts/physics/physics-material-tuning/createBounds.ts?raw";
@@ -28,16 +29,42 @@ import sandpack4MovingBoxBaseTs from "../sandpack/concepts/physics/non-solid-tri
 import sandpack4TeleportingBoxTs from "../sandpack/concepts/physics/non-solid-trigger-hitboxes/TeleportingBox.ts?raw";
 import sandpack4MainTs from "../sandpack/concepts/physics/non-solid-trigger-hitboxes/main.ts?raw";
 
-Sliver’s physics is a scene-owned rigid-body pipeline.
+Most games should use physics through `Scene` and `GameObject`.
 
-- Motion is integrated with a real time step (`dt`).
-- Each `GameObject` contributes one rigid body, and each hitbox on that object becomes a shape on that body.
-- The scene runs broad phase, narrow phase, contact generation, and contact solving after your objects tick.
-- Gameplay callbacks stay on `GameObject`, so you work with the same high-level scene/object API throughout the engine.
+In practice, the workflow is:
 
-For most games, you work with `Scene`, `GameObject`, hitboxes, `speed`, `angularVelocity`, and `setPhisics(...)`.
+1. Set gravity on the scene.
+2. Call `setPhisics(...)` on the objects that should participate.
+3. Add one or more hitboxes.
+4. Optionally author `speed` / `angularVelocity`.
+5. React with `beforeColision(...)` and `onColision(...)`.
 
-## High-level physics API on `GameObject`
+Typical setup:
+
+```ts
+import { GameObject, Scene, SquareHitbox, Vector } from "sliver-engine";
+
+const scene = new Scene("level");
+scene.setGravity(new Vector(0, 1200));
+
+const crate = new GameObject("crate", new Vector(100, 100));
+crate.setPhisics({
+  immovable: false,
+  affectedByGravity: true,
+  mass: 2,
+  staticFriction: 0.5,
+  dynamicFriction: 0.3,
+});
+crate.addHitbox(
+  new SquareHitbox(Vector.zero(), new Vector(32, 32), crate, {
+    solid: true,
+  }),
+);
+
+scene.addGameObject(crate);
+```
+
+## Configuring a body
 
 Use `setPhisics(...)` to configure how a `GameObject` behaves in the physics world:
 
@@ -47,27 +74,32 @@ gameObject.setPhisics({
   affectedByGravity: true,
   restitution: 0.2,
   friction: 0.4,
+  staticFriction: 0.5,
+  dynamicFriction: 0.3,
   mass: 2,
+  inertiaScale: 0.85,
 });
 ```
 
 Physics settings:
 
-- `immovable: true` maps the object to a static body.
-- `immovable: false` maps it to a dynamic body.
-- `affectedByGravity` controls whether scene gravity is applied during integration.
+- `immovable: true` is what you usually want for floors, walls, ramps, and fixed props.
+- `immovable: false` makes the object dynamic so it can be pushed, fall, and rotate.
+- `affectedByGravity` is the main switch for platformer-style falling vs top-down or scripted motion.
 - `restitution` controls bounce.
-- `friction` is copied into both static and dynamic friction on the physics body.
-- `mass` is used to compute the body’s mass and inertia from its hitboxes.
+- `friction` is the simple one-value option and acts as a fallback for both friction coefficients.
+- `staticFriction` is useful when you want objects to hold more firmly before they start slipping.
+- `dynamicFriction` is useful when you want to control how slippery a contact feels once it is already sliding.
+- `mass` changes how strongly dynamic bodies push each other around.
+- `inertiaScale` changes how easily the object spins without changing its mass. Lower values tumble more easily; higher values resist rotation more.
 
 ## Units and timing
 
 `speed` and `angularVelocity` are integrated with `dt`.
 
-- `speed` is a linear velocity in world units per second.
+- `speed` is a linear velocity in world units (pixels) per second.
 - `angularVelocity` is a rotational velocity per second in the same angle unit as `rotation`.
-- `Scene.tick(dt?)` passes `dt` into the physics world.
-- If you do not provide `dt`, the scene derives it from the game tick rate (`1 / tickRate`).
+- under ideal circustances, the dt is always 1 tick. If the tick rate starts to fall (due to lag), you should absolutely consider to decrease lag. Physics won´t immediately break, but you can face some issues like objects falling through thin floors or clipping through walls.
 
 Example:
 
@@ -82,14 +114,14 @@ At `60` ticks per second, that moves about `2` pixels each tick because the phys
 Scene gravity is also time-based acceleration:
 
 ```ts
-scene.setGravity(new Vector(0, 10));
+scene.setGravity(new Vector(0, 1200));
 ```
 
-That means a dynamic body with `affectedByGravity: true` gains roughly `10 * dt` units/s of vertical velocity each step.
+That means a dynamic body with `affectedByGravity: true` gains roughly `20` units/s of vertical velocity each step at `60` ticks per second.
 
-## Hitboxes, Compound Bodies, and Rotation
+## Hitboxes, compound bodies, and rotation
 
-Sliver uses `SquareHitbox` and `CircleHitbox` on `GameObject`s:
+Physics only exists where hitboxes exist, so a physical object should usually have at least one `SquareHitbox` or `CircleHitbox`:
 
 ```ts
 import { GameObject, SquareHitbox, Vector } from "sliver-engine";
@@ -100,52 +132,45 @@ crate.addHitbox(
   new SquareHitbox(Vector.zero(), new Vector(32, 32), crate, {
     solid: true,
     debug: false,
-  })
+  }),
 );
 ```
 
-How hitboxes behave:
+How hitboxes are used:
 
-- One `GameObject` becomes one rigid body.
+- One `GameObject` becomes one physics body.
 - Every hitbox on that object becomes a shape on that same body.
-- Multiple hitboxes behave as a single compound body.
-- Physics rotation uses the same pivot as rendering, so detached hitboxes rotate coherently with the visible object.
+- Multiple hitboxes act like one compound body.
+- Physics rotation uses the same pivot as rendering, so offset hitboxes still rotate with the visible object.
 
-Hitbox options still matter:
+Hitbox options:
 
-- `solid: true` means the hitbox participates in physical collision response.
-- `solid: false` means the hitbox is a sensor/trigger only.
-- `debug: true` still draws the hitbox overlay.
+- `solid: true` makes the hitbox participate in physical collision response.
+- `solid: false` turns it into a trigger/sensor.
+- `debug: true` draws the hitbox overlay.
 
-## What Happens Each Scene Tick
+## How scenes apply physics
 
-Each `Scene.tick()` does this:
+You should not step physics manually. `Scene.tick()` handles it for you:
 
-1. Calls `tick()` on every `GameObject`.
-2. Builds or updates one rigid body per object in the scene physics world.
-3. Copies the authored object state (`position`, `rotation`, `speed`, `angularVelocity`, `phisics`) into those bodies.
-4. Integrates dynamic bodies with gravity and `dt`.
-5. Runs broad phase candidate generation from body + shape bounds.
-6. Runs narrow phase contact manifold generation.
-7. Calls `beforeColision(...)` and `onColision(...)` on gameplay objects.
-8. Solves solid contacts.
-9. Writes solved body state back to each `GameObject`.
+- your objects run `tick()` first
+- the scene applies gravity and resolves overlaps/collisions
+- the solved `position`, `rotation`, `speed`, and `angularVelocity` are written back to each object
 
-Your own `tick()` functions still run first, and the scene physics step produces the resulting motion and collision response afterward.
+That means you can author intent in `tick()` and then let the scene physics step produce the resulting motion.
 
 ## Sensors, Callbacks, and Suppression
 
-The gameplay collision hooks still work the same way conceptually:
+The main gameplay hooks are:
 
 - `beforeColision(other)` is the filter hook.
 - `onColision(other, penetration)` is the overlap notification hook.
 
-Collision rules:
+Use them like this:
 
-- If either side returns `false` from `beforeColision`, the pair is suppressed.
-- Suppressed pairs do not receive `onColision`.
-- Suppressed pairs do not enter the solid solver.
-- `solid: false` hitboxes still generate overlap callbacks, but they do not generate physical response.
+- return `false` from `beforeColision` to ignore a pair for that tick
+- use `onColision` to react to overlaps, pickups, triggers, damage zones, and simple collision responses
+- mark a hitbox `solid: false` when you want notifications without physical pushing
 
 Example trigger:
 
@@ -153,7 +178,7 @@ Example trigger:
 trigger.addHitbox(
   new SquareHitbox(Vector.zero(), new Vector(64, 64), trigger, {
     solid: false,
-  })
+  }),
 );
 ```
 
@@ -188,11 +213,9 @@ This is useful for:
 - inspecting which pairs were actually solved
 - writing deterministic physics tests
 
-## Advanced APIs
+## Lower-level physics APIs
 
-Most games should stay with `Scene` + `GameObject` + hitboxes.
-
-If you need more control than the scene/object API exposes, Sliver also exports lower-level physics pieces such as:
+Most games should stay with `Scene` + `GameObject` + hitboxes. Reach for the lower-level exports only when the high-level API is no longer enough. Common reasons are:
 
 - explicit `PhysicsBody` creation
 - `kinematic` body types
@@ -214,58 +237,58 @@ import {
 
 ### Physics Material Tuning
 
-This sandbox compares two groups of draggable boxes with different mass, friction, and restitution settings.
+This sandbox compares two groups of draggable boxes with different mass, static friction, dynamic friction, restitution, and inertia scaling settings.
 
 <SandpackExample
-	files={{
-		"/index.ts": {
-			code: sandpack1IndexTs,
-			readOnly: true,
-		},
-		"/enclosureDimensions.ts": {
-			code: sandpack1EnclosureDimensionsTs,
-			readOnly: true,
-		},
-		"/createBounds.ts": {
-			code: sandpack1CreateBoundsTs,
-			readOnly: true,
-		},
-		"/createColorPhysicsOptions.ts": sandpack1CreateColorPhysicsOptionsTs,
-		"/createExtraSquares.ts": {
-			code: sandpack1CreateExtraSquaresTs,
-			readOnly: true,
-		},
-		"/main.ts": {
-			code: sandpack1MainTs,
-			readOnly: true,
-		},
-	}}
-	visibleFiles={["/createColorPhysicsOptions.ts"]}
-	activeFile="/createColorPhysicsOptions.ts"
-	layout="editor-first"
-	previewHeight={380}
-	editorHeight={300}
-	showRunButton
-	hiddenFiles={[
-		"/index.html",
-		"/styles.css",
-		"/package.json",
-		"/index.ts",
-		"/main.ts",
-	]}
-	options={{
-		autoReload: false,
-		showNavigator: true,
-		showRefreshButton: true,
-		showTabs: true,
-		showLineNumbers: true,
-		wrapContent: false,
-	}}
-	customSetup={{
-		dependencies: {
-			"sliver-engine": "0.0.1-alpha-5",
-		},
-	}}
+  files={{
+    "/index.ts": {
+      code: sandpack1IndexTs,
+      readOnly: true,
+    },
+    "/enclosureDimensions.ts": {
+      code: sandpack1EnclosureDimensionsTs,
+      readOnly: true,
+    },
+    "/createBounds.ts": {
+      code: sandpack1CreateBoundsTs,
+      readOnly: true,
+    },
+    "/createColorPhysicsOptions.ts": sandpack1CreateColorPhysicsOptionsTs,
+    "/createExtraSquares.ts": {
+      code: sandpack1CreateExtraSquaresTs,
+      readOnly: true,
+    },
+    "/main.ts": {
+      code: sandpack1MainTs,
+      readOnly: true,
+    },
+  }}
+  visibleFiles={["/createColorPhysicsOptions.ts"]}
+  activeFile="/createColorPhysicsOptions.ts"
+  layout="editor-first"
+  previewHeight={380}
+  editorHeight={300}
+  showRunButton
+  hiddenFiles={[
+    "/index.html",
+    "/styles.css",
+    "/package.json",
+    "/index.ts",
+    "/main.ts",
+  ]}
+  options={{
+    autoReload: false,
+    showNavigator: true,
+    showRefreshButton: true,
+    showTabs: true,
+    showLineNumbers: true,
+    wrapContent: false,
+  }}
+  customSetup={{
+    dependencies: {
+      "sliver-engine": "0.0.1-alpha-5",
+    },
+  }}
 />
 
 ### Scene Gravity
@@ -273,56 +296,56 @@ This sandbox compares two groups of draggable boxes with different mass, frictio
 This sandbox shows a single draggable dynamic box under scene gravity. Edit the gravity vector to change the feel of the simulation.
 
 <SandpackExample
-	files={{
-		"/index.ts": {
-			code: sandpack2IndexTs,
-			readOnly: true,
-		},
-		"/enclosureDimensions.ts": {
-			code: sandpack2EnclosureDimensionsTs,
-			readOnly: true,
-		},
-		"/createGravity.ts": sandpack2CreateGravityTs,
-		"/createBounds.ts": {
-			code: sandpack2CreateBoundsTs,
-			readOnly: true,
-		},
-		"/GravityBox.ts": {
-			code: sandpack2GravityBoxTs,
-			readOnly: true,
-		},
-		"/main.ts": {
-			code: sandpack2MainTs,
-			readOnly: true,
-		},
-	}}
-	visibleFiles={["/createGravity.ts"]}
-	activeFile="/createGravity.ts"
-	layout="editor-first"
-	previewHeight={380}
-	editorHeight={280}
-	showRunButton
-	hiddenFiles={[
-		"/index.html",
-		"/styles.css",
-		"/package.json",
-		"/index.ts",
-		"/main.ts",
-		"/GravityBox.ts",
-	]}
-	options={{
-		autoReload: false,
-		showNavigator: true,
-		showRefreshButton: true,
-		showTabs: true,
-		showLineNumbers: true,
-		wrapContent: false,
-	}}
-	customSetup={{
-		dependencies: {
-			"sliver-engine": "0.0.1-alpha-5",
-		},
-	}}
+  files={{
+    "/index.ts": {
+      code: sandpack2IndexTs,
+      readOnly: true,
+    },
+    "/enclosureDimensions.ts": {
+      code: sandpack2EnclosureDimensionsTs,
+      readOnly: true,
+    },
+    "/createGravity.ts": sandpack2CreateGravityTs,
+    "/createBounds.ts": {
+      code: sandpack2CreateBoundsTs,
+      readOnly: true,
+    },
+    "/GravityBox.ts": {
+      code: sandpack2GravityBoxTs,
+      readOnly: true,
+    },
+    "/main.ts": {
+      code: sandpack2MainTs,
+      readOnly: true,
+    },
+  }}
+  visibleFiles={["/createGravity.ts"]}
+  activeFile="/createGravity.ts"
+  layout="editor-first"
+  previewHeight={380}
+  editorHeight={280}
+  showRunButton
+  hiddenFiles={[
+    "/index.html",
+    "/styles.css",
+    "/package.json",
+    "/index.ts",
+    "/main.ts",
+    "/GravityBox.ts",
+  ]}
+  options={{
+    autoReload: false,
+    showNavigator: true,
+    showRefreshButton: true,
+    showTabs: true,
+    showLineNumbers: true,
+    wrapContent: false,
+  }}
+  customSetup={{
+    dependencies: {
+      "sliver-engine": "0.0.1-alpha-5",
+    },
+  }}
 />
 
 ### Compound Hitboxes
@@ -330,56 +353,56 @@ This sandbox shows a single draggable dynamic box under scene gravity. Edit the 
 This sandbox shows objects whose visible shape and collision shape do not have to match one simple rectangle. Edit the hitbox configs to see how one object can behave as a compound body.
 
 <SandpackExample
-	files={{
-		"/index.ts": {
-			code: sandpack3IndexTs,
-			readOnly: true,
-		},
-		"/enclosureDimensions.ts": {
-			code: sandpack3EnclosureDimensionsTs,
-			readOnly: true,
-		},
-		"/createHitboxConfigs.ts": sandpack3CreateHitboxConfigsTs,
-		"/createHitboxObjects.ts": {
-			code: sandpack3CreateHitboxObjectsTs,
-			readOnly: true,
-		},
-		"/createBounds.ts": {
-			code: sandpack3CreateBoundsTs,
-			readOnly: true,
-		},
-		"/main.ts": {
-			code: sandpack3MainTs,
-			readOnly: true,
-		},
-	}}
-	visibleFiles={["/createHitboxConfigs.ts"]}
-	activeFile="/createHitboxConfigs.ts"
-	layout="editor-first"
-	previewHeight={380}
-	editorHeight={320}
-	showRunButton
-	hiddenFiles={[
-		"/index.html",
-		"/styles.css",
-		"/package.json",
-		"/index.ts",
-		"/main.ts",
-		"/createHitboxObjects.ts",
-	]}
-	options={{
-		autoReload: false,
-		showNavigator: true,
-		showRefreshButton: true,
-		showTabs: true,
-		showLineNumbers: true,
-		wrapContent: false,
-	}}
-	customSetup={{
-		dependencies: {
-			"sliver-engine": "0.0.1-alpha-5",
-		},
-	}}
+  files={{
+    "/index.ts": {
+      code: sandpack3IndexTs,
+      readOnly: true,
+    },
+    "/enclosureDimensions.ts": {
+      code: sandpack3EnclosureDimensionsTs,
+      readOnly: true,
+    },
+    "/createHitboxConfigs.ts": sandpack3CreateHitboxConfigsTs,
+    "/createHitboxObjects.ts": {
+      code: sandpack3CreateHitboxObjectsTs,
+      readOnly: true,
+    },
+    "/createBounds.ts": {
+      code: sandpack3CreateBoundsTs,
+      readOnly: true,
+    },
+    "/main.ts": {
+      code: sandpack3MainTs,
+      readOnly: true,
+    },
+  }}
+  visibleFiles={["/createHitboxConfigs.ts"]}
+  activeFile="/createHitboxConfigs.ts"
+  layout="editor-first"
+  previewHeight={380}
+  editorHeight={320}
+  showRunButton
+  hiddenFiles={[
+    "/index.html",
+    "/styles.css",
+    "/package.json",
+    "/index.ts",
+    "/main.ts",
+    "/createHitboxObjects.ts",
+  ]}
+  options={{
+    autoReload: false,
+    showNavigator: true,
+    showRefreshButton: true,
+    showTabs: true,
+    showLineNumbers: true,
+    wrapContent: false,
+  }}
+  customSetup={{
+    dependencies: {
+      "sliver-engine": "0.0.1-alpha-5",
+    },
+  }}
 />
 
 ### Non-solid Trigger Hitboxes
@@ -387,59 +410,59 @@ This sandbox shows objects whose visible shape and collision shape do not have t
 This sandbox shows sensor behavior: the green zone overlaps the moving box and triggers gameplay logic without physically blocking it.
 
 <SandpackExample
-	files={{
-		"/index.ts": {
-			code: sandpack4IndexTs,
-			readOnly: true,
-		},
-		"/enclosureDimensions.ts": {
-			code: sandpack4EnclosureDimensionsTs,
-			readOnly: true,
-		},
-		"/createBounds.ts": {
-			code: sandpack4CreateBoundsTs,
-			readOnly: true,
-		},
-		"/TriggerZone.ts": sandpack4TriggerZoneTs,
-		"/MovingBoxBase.ts": {
-			code: sandpack4MovingBoxBaseTs,
-			readOnly: true,
-		},
-		"/TeleportingBox.ts": {
-			code: sandpack4TeleportingBoxTs,
-			readOnly: true,
-		},
-		"/main.ts": {
-			code: sandpack4MainTs,
-			readOnly: true,
-		},
-	}}
-	visibleFiles={["/TriggerZone.ts"]}
-	activeFile="/TriggerZone.ts"
-	layout="editor-first"
-	previewHeight={380}
-	editorHeight={300}
-	showRunButton
-	hiddenFiles={[
-		"/index.html",
-		"/styles.css",
-		"/package.json",
-		"/index.ts",
-		"/main.ts",
-		"/MovingBoxBase.ts",
-		"/TeleportingBox.ts",
-	]}
-	options={{
-		autoReload: false,
-		showNavigator: true,
-		showRefreshButton: true,
-		showTabs: true,
-		showLineNumbers: true,
-		wrapContent: false,
-	}}
-	customSetup={{
-		dependencies: {
-			"sliver-engine": "0.0.1-alpha-5",
-		},
-	}}
+  files={{
+    "/index.ts": {
+      code: sandpack4IndexTs,
+      readOnly: true,
+    },
+    "/enclosureDimensions.ts": {
+      code: sandpack4EnclosureDimensionsTs,
+      readOnly: true,
+    },
+    "/createBounds.ts": {
+      code: sandpack4CreateBoundsTs,
+      readOnly: true,
+    },
+    "/TriggerZone.ts": sandpack4TriggerZoneTs,
+    "/MovingBoxBase.ts": {
+      code: sandpack4MovingBoxBaseTs,
+      readOnly: true,
+    },
+    "/TeleportingBox.ts": {
+      code: sandpack4TeleportingBoxTs,
+      readOnly: true,
+    },
+    "/main.ts": {
+      code: sandpack4MainTs,
+      readOnly: true,
+    },
+  }}
+  visibleFiles={["/TriggerZone.ts"]}
+  activeFile="/TriggerZone.ts"
+  layout="editor-first"
+  previewHeight={380}
+  editorHeight={300}
+  showRunButton
+  hiddenFiles={[
+    "/index.html",
+    "/styles.css",
+    "/package.json",
+    "/index.ts",
+    "/main.ts",
+    "/MovingBoxBase.ts",
+    "/TeleportingBox.ts",
+  ]}
+  options={{
+    autoReload: false,
+    showNavigator: true,
+    showRefreshButton: true,
+    showTabs: true,
+    showLineNumbers: true,
+    wrapContent: false,
+  }}
+  customSetup={{
+    dependencies: {
+      "sliver-engine": "0.0.1-alpha-5",
+    },
+  }}
 />

@@ -31,16 +31,19 @@ type Direction = "down" | "up" | "left" | "right";
 export class SpriteHero extends GameObject {
 	private moving = false;
 	private facing: Direction = "down";
+	private pendingVelocity = Vector.zero();
 
 	constructor(position: Vector) {
 		super("hero", position.clone());
-		this.setPhisics({ immovable: true, affectedByGravity: false });
+		this.setPhisics({
+			immovable: false,
+			affectedByGravity: false,
+			friction: 0,
+			restitution: 0,
+		});
 	}
 
 	override tick(): void {
-		this.moving = false;
-		super.tick();
-
 		const pos = this.getPosition();
 		this.setPosition(
 			new Vector(
@@ -48,28 +51,33 @@ export class SpriteHero extends GameObject {
 				Math.max(MIN_Y, Math.min(MAX_Y, pos.y)),
 			),
 		);
+		this.pendingVelocity = Vector.zero();
+		this.moving = false;
+		super.tick();
+		this.speed = this.pendingVelocity.clone();
+		this.moving = this.pendingVelocity.squaredMagnitude() > 0;
 	}
 
 	@onKeyHold<SpriteHero>("ArrowLeft", (obj) =>
-		obj.moveBy(new Vector(-HERO_SPEED, 0), "left"),
+		obj.queueVelocity(new Vector(-HERO_SPEED, 0), "left"),
 	)
 	@onKeyHold<SpriteHero>("ArrowRight", (obj) =>
-		obj.moveBy(new Vector(HERO_SPEED, 0), "right"),
+		obj.queueVelocity(new Vector(HERO_SPEED, 0), "right"),
 	)
 	@onKeyHold<SpriteHero>("ArrowUp", (obj) =>
-		obj.moveBy(new Vector(0, -HERO_SPEED), "up"),
+		obj.queueVelocity(new Vector(0, -HERO_SPEED), "up"),
 	)
 	@onKeyHold<SpriteHero>("ArrowDown", (obj) =>
-		obj.moveBy(new Vector(0, HERO_SPEED), "down"),
+		obj.queueVelocity(new Vector(0, HERO_SPEED), "down"),
 	)
 	@onKeyHold<SpriteHero>("a", (obj) =>
-		obj.moveBy(new Vector(-HERO_SPEED, 0), "left"),
+		obj.queueVelocity(new Vector(-HERO_SPEED, 0), "left"),
 	)
 	@onKeyHold<SpriteHero>("d", (obj) =>
-		obj.moveBy(new Vector(HERO_SPEED, 0), "right"),
+		obj.queueVelocity(new Vector(HERO_SPEED, 0), "right"),
 	)
-	@onKeyHold<SpriteHero>("w", (obj) => obj.moveBy(new Vector(0, -HERO_SPEED), "up"))
-	@onKeyHold<SpriteHero>("s", (obj) => obj.moveBy(new Vector(0, HERO_SPEED), "down"))
+	@onKeyHold<SpriteHero>("w", (obj) => obj.queueVelocity(new Vector(0, -HERO_SPEED), "up"))
+	@onKeyHold<SpriteHero>("s", (obj) => obj.queueVelocity(new Vector(0, HERO_SPEED), "down"))
 	override handleEvent(event: GameEvent): void {
 		super.handleEvent(event);
 	}
@@ -89,9 +97,8 @@ export class SpriteHero extends GameObject {
 		super.render(canvas, scene);
 	}
 
-	private moveBy(delta: Vector, facing: Direction): void {
-		this.translate(delta);
-		this.moving = true;
+	private queueVelocity(delta: Vector, facing: Direction): void {
+		this.pendingVelocity.add(delta);
 		this.facing = facing;
 	}
 

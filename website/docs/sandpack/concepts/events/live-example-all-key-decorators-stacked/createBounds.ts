@@ -39,7 +39,7 @@ class Bound extends GameObject {
     super(config.name, config.position.clone());
     this.addHitbox(
       new SquareHitbox(Vector.zero(), config.size.clone(), this, {
-        solid: false,
+        solid: true,
         debug: false,
       }),
     );

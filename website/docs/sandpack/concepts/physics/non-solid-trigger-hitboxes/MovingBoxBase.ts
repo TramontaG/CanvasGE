@@ -7,9 +7,13 @@ import {
 
 const BOX_SIZE = scaleEnclosureSize(24, 24);
 export const MOVING_BOX_START = mapEnclosurePoint(56, 126);
-const FIXED_SPEED = scaleEnclosureVector(72, 0);
+const FIXED_SPEED = scaleEnclosureVector(120, 0);
+const TELEPORT_COOLDOWN_TICKS = 30;
 
 export class MovingBoxBase extends GameObject {
+	protected pendingTeleportTo: Vector | null = null;
+	protected teleportCooldown: number = 0;
+
 	constructor(name: string = "moving-box") {
 		super(name, MOVING_BOX_START.clone());
 		this.addHitbox(
@@ -26,6 +30,15 @@ export class MovingBoxBase extends GameObject {
 			mass: 1,
 		});
 		this.setTickFunction(() => {
+			if (this.pendingTeleportTo) {
+				this.setPosition(this.pendingTeleportTo.clone());
+				this.speed = Vector.zero();
+				this.pendingTeleportTo = null;
+				this.teleportCooldown = TELEPORT_COOLDOWN_TICKS;
+			}
+			if (this.teleportCooldown > 0) {
+				this.teleportCooldown--;
+			}
 			this.speed = FIXED_SPEED.clone();
 		});
 		this.setRenderFunction((obj, canvas) => {

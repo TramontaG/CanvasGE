@@ -8,19 +8,22 @@ import {
 } from "sliver-engine";
 import { KeyboardDecoratorsObjectBase } from "./KeyboardDecoratorsObject.base";
 
-const BOX_MIN_X = 40;
-const BOX_MAX_X = 520 - 64 - 40;
-const BOX_MIN_Y = 44;
-const BOX_MAX_Y = 228 - 64 - 4;
-const HOLD_STEP_X = 1.4;
-const HOLD_STEP_Y = 1.4;
-const COMBO_HOLD_STEP_X = 0.7;
+const HOLD_SPEED = 120;
 const SPACE_KEY = " ";
 
 export class KeyboardDecoratorsObject extends KeyboardDecoratorsObjectBase {
+	private pendingVelocity = Vector.zero();
+
 	constructor() {
 		super("keyboard-decorators-demo");
 	}
+
+	override tick(): void {
+		this.pendingVelocity = Vector.zero();
+		super.tick();
+		this.speed = this.pendingVelocity.clone();
+	}
+
 	@onKeyComboHold<KeyboardDecoratorsObject>(["Shift", "A"], (obj) => {
 		obj.rotation -= 0.08;
 	})
@@ -28,16 +31,16 @@ export class KeyboardDecoratorsObject extends KeyboardDecoratorsObjectBase {
 		obj.rotation += 0.08;
 	})
 	@onKeyHold<KeyboardDecoratorsObject>("w", (obj) => {
-		obj.translate(new Vector(0, -HOLD_STEP_Y));
+		obj.queueVelocity(new Vector(0, -HOLD_SPEED));
 	})
 	@onKeyHold<KeyboardDecoratorsObject>("a", (obj) => {
-		obj.translate(new Vector(-HOLD_STEP_X, 0));
+		obj.queueVelocity(new Vector(-HOLD_SPEED, 0));
 	})
 	@onKeyHold<KeyboardDecoratorsObject>("s", (obj) => {
-		obj.translate(new Vector(0, HOLD_STEP_Y));
+		obj.queueVelocity(new Vector(0, HOLD_SPEED));
 	})
 	@onKeyHold<KeyboardDecoratorsObject>("d", (obj) => {
-		obj.translate(new Vector(HOLD_STEP_X, 0));
+		obj.queueVelocity(new Vector(HOLD_SPEED, 0));
 	})
 	@onKeyComboPressed<KeyboardDecoratorsObject>(["Shift", SPACE_KEY], (obj) => {
 		obj.rotation = 0;
@@ -47,5 +50,9 @@ export class KeyboardDecoratorsObject extends KeyboardDecoratorsObjectBase {
 	})
 	override handleEvent(event: GameEvent): void {
 		super.handleEvent(event);
+	}
+
+	private queueVelocity(delta: Vector): void {
+		this.pendingVelocity.add(delta);
 	}
 }
