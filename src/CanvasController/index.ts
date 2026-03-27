@@ -23,6 +23,8 @@ type DrawTextOptions = {
   baseline?: CanvasTextBaseline;
 };
 
+const DEFAULT_STROKE_WIDTH = 2;
+
 class ShapeDrawer {
   private defaultFont: string = "Arial";
 
@@ -74,15 +76,18 @@ class ShapeDrawer {
     filled: boolean = true,
     opacity: number = 1
   ): void {
+    this.context.save();
     this.withOpacity(opacity, () => {
       this.context.fillStyle = color;
       if (filled) {
         this.context.fillRect(x, y, width, height);
       } else {
+        this.context.lineWidth = DEFAULT_STROKE_WIDTH;
         this.context.strokeStyle = color;
         this.context.strokeRect(x, y, width, height);
       }
     });
+    this.context.restore();
   }
 
   /**
@@ -126,6 +131,7 @@ class ShapeDrawer {
     color = "red",
     lineCap: CanvasLineCap = "round"
   ) {
+    this.context.save();
     this.context.beginPath();
     this.context.lineWidth = width;
     this.context.strokeStyle = color;
@@ -134,6 +140,7 @@ class ShapeDrawer {
     this.context.lineTo(end.x, end.y);
     this.context.stroke();
     this.context.closePath();
+    this.context.restore();
   }
 
   /**
@@ -170,12 +177,14 @@ class ShapeDrawer {
     centerDotColor: string = "red",
     centerDotRadius: number = 2
   ): void {
+    this.context.save();
     this.context.beginPath();
     this.context.arc(x, y, radius, 0, Math.PI * 2);
     if (filled) {
       this.context.fillStyle = color;
       this.context.fill();
     } else {
+      this.context.lineWidth = DEFAULT_STROKE_WIDTH;
       this.context.strokeStyle = color;
       this.context.stroke();
     }
@@ -188,6 +197,7 @@ class ShapeDrawer {
     }
 
     this.context.closePath();
+    this.context.restore();
   }
 
   /**

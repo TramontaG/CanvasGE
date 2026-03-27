@@ -15,7 +15,7 @@ export const createWalker = (character: GameObject): Walker => {
 		new Vector(56, 248),
 	];
 
-	const speed = 2.1;
+	const speed = 126;
 	const debug = true;
 	const cyclic = true;
 

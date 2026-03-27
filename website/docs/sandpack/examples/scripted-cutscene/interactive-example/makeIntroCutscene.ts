@@ -56,7 +56,7 @@ export const makeIntroCutscene = (
 	const elderWalker = new Walker(
 		elder,
 		[elder.getScenePosition().toAdded(new Vector(64, 0))],
-		1.4,
+		84,
 		false,
 		false,
 	);

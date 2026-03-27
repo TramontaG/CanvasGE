@@ -81,7 +81,7 @@ const makeIntroCutscene = (opts: { elder: GameObject; hero: GameObject }) => {
   const elderWalker = new Walker(
     elder,
     [elder.getScenePosition().toAdded(new Vector(60, 0))],
-    1.5,
+    90,
     false,
     false
   );
@@ -158,6 +158,7 @@ This sandbox runs a small scripted cutscene with state + combinators.
 - press `Space` to advance text boxes
 - watch the elder walk in and optionally award coins
 - edit `makeIntroCutscene.ts` to tweak sequence logic
+- walker speeds are authored in pixels per second
 
 <SandpackExample
 	files={{

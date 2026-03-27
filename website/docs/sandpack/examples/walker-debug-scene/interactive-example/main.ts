@@ -1,18 +1,14 @@
 import {
 	CanvasController,
 	Game,
-	GameObject,
-	Scene,
 	SceneManager,
 	SoundManager,
-	Vector,
 } from "sliver-engine";
-import { createCharacter } from "./createCharacter";
-import { createObstacles } from "./createObstacles";
-
-const CANVAS_WIDTH = 520;
-const CANVAS_HEIGHT = 320;
-const BACKGROUND_COLOR = "#0f172a";
+import {
+	CANVAS_HEIGHT,
+	CANVAS_WIDTH,
+	createWalkerDebugScene,
+} from "./scene";
 
 const canvas = new CanvasController(CANVAS_WIDTH, CANVAS_HEIGHT);
 const canvasElement = canvas.getCanvas();
@@ -27,7 +23,7 @@ document.body.style.overflow = "hidden";
 document.body.style.display = "flex";
 document.body.style.alignItems = "center";
 document.body.style.justifyContent = "center";
-document.body.style.background = BACKGROUND_COLOR;
+document.body.style.background = "#0f172a";
 
 const syncCanvasSize = (): void => {
 	const scale = Math.min(
@@ -38,42 +34,14 @@ const syncCanvasSize = (): void => {
 	canvasElement.style.display = "block";
 	canvasElement.style.width = CANVAS_WIDTH * scale + "px";
 	canvasElement.style.height = CANVAS_HEIGHT * scale + "px";
+	canvasElement.style.background = "#0f172a";
 };
 
 syncCanvasSize();
 window.addEventListener("resize", syncCanvasSize);
 
-const mainScene = new Scene("walker-demo", BACKGROUND_COLOR);
-mainScene.setGravity(Vector.zero());
-
-const character = createCharacter();
-const obstacles = createObstacles();
-const hud = new GameObject("walker-demo-hud", new Vector(CANVAS_WIDTH / 2, 20));
-hud.setPhisics({ immovable: true, affectedByGravity: false });
-hud.setRenderFunction((obj, controller) => {
-	const pos = obj.getPosition();
-	const drawer = controller.getShapeDrawer();
-	drawer.drawText(
-		"Drag the walls to invalidate the route",
-		pos.x,
-		pos.y,
-		"#e2e8f0",
-		"14px",
-		"center",
-	);
-	drawer.drawText(
-		"Edit createCharacter.ts to change walker behavior",
-		pos.x,
-		pos.y + 18,
-		"#94a3b8",
-		"11px",
-		"center",
-	);
-});
-
-mainScene.addGameObject([hud, character, ...obstacles]);
-
-const scenes = new SceneManager({ main: mainScene }, mainScene);
+const scene = createWalkerDebugScene();
+const scenes = new SceneManager({ main: scene }, scene);
 const game = new Game({
 	canvas,
 	scenes,
@@ -82,4 +50,3 @@ const game = new Game({
 });
 
 game.start();
-character.walker?.start();

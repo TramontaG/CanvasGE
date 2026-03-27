@@ -27,7 +27,7 @@ class PatrollingEnemy extends GameObject {
     const walker = new Walker(
       this,
       [new Vector(100, 100), new Vector(300, 100), new Vector(300, 220)],
-      1.5,   // movement speed
+      90,    // movement speed in pixels per second
       true,  // debug
       true,  // cyclic
       {
@@ -50,6 +50,8 @@ mainScene.addGameObject(new PatrollingEnemy(new Vector(100, 100)));
 ```
 
 If you don’t want pathfinding, remove the `pathfindingOptions` (or set `avoidObstacles: false`).
+
+`Walker` speed is time-based, so author it in pixels per second.
 
 ## Interactive example
 

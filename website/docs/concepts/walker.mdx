@@ -16,7 +16,7 @@ import sandpack1MainTs from "../sandpack/concepts/walker/live-example/main.ts?ra
 - optionally do simple grid-based pathfinding to avoid solid obstacles
 - draw debug visuals for waypoints and the computed path
 
-Under the hood, `Walker.tick()` updates `gameObject.speed` every tick, and the scene physics step integrates that velocity afterward.
+Under the hood, `Walker.tick()` updates `gameObject.speed` every tick, and the scene physics step integrates that velocity as world units per second afterward.
 
 ## Attaching a Walker
 
@@ -30,7 +30,7 @@ const npc = new GameObject("npc", new Vector(100, 100));
 const walker = new Walker(
   npc,
   [new Vector(100, 100), new Vector(300, 100), new Vector(300, 300)],
-  2,        // movement speed
+  120,      // movement speed in pixels per second
   true,     // debug
   true      // cyclic (loop)
 );
@@ -41,7 +41,7 @@ walker.start();
 
 Notes:
 - Waypoints are interpreted in **scene/world space** (they’re compared to `getScenePosition()`).
-- Tune `speed` together with your scene scale and tick rate until the pathing feels right for your game.
+- `speed` is expressed in pixels per second, so values around `80` to `140` are a more typical starting point than `1` or `2`.
 - Debug drawing respects the scene offset (so it stays aligned if the camera moves).
 
 ## Starting, stopping, and resetting
@@ -124,7 +124,7 @@ walker.setPathfindingOptions({
 
 - `throw`: throw an error when no path is found.
 - `stop`: stop the walker and leave the object in place.
-- `snap`: if the waypoint is near the edge of a solid hitbox, snap to that edge and path to it instead.
+- `snap`: if the waypoint is blocked, search for the nearest free target position within `snapTargetToEdgeDistance` and path to that instead.
 - `continue`: skip pathfinding and walk straight toward the waypoint.
 
 For custom handling, use `onPathNotFound`:
@@ -160,6 +160,22 @@ If `debug` is `true`, the walker draws:
 
 Walker debug rendering is called from the owning object’s render path, but it intentionally cancels object rotation so the path is drawn in world space.
 
+If you want a full obstacle-avoidance playground with draggable blockers and live behavior switching, see [`Walker debug scene`](../examples/walker-debug-scene).
+
+## Pathfinding control
+
+When obstacle avoidance is enabled, you can temporarily pause or cancel path updates without removing the walker:
+
+```ts
+walker.pausePathfinding();
+walker.resumePathfinding();
+walker.abortPathfinding();
+```
+
+- `pausePathfinding()`: keep the current routed path, but stop recalculating new ones.
+- `resumePathfinding()`: re-enable pathfinding and request a fresh recalculation.
+- `abortPathfinding()`: clear the current path, zero movement, and leave pathfinding paused until you resume it.
+
 ## Interaction with physics
 
 Since `Walker` sets `gameObject.speed`, it composes naturally with Sliver physics:
@@ -174,8 +190,9 @@ For physics details (hitboxes, solid vs trigger, impulses), see [`Physics`](./ph
 This sandbox is split into multiple files:
 
 - `Character.ts` defines the character object with a hardcoded start position and hitbox.
-- `createObstacles.ts` defines obstacle objects with hardcoded positions and hitboxes.
+- `createObstacles.ts` defines draggable obstacle objects with hardcoded positions and hitboxes.
 - Only `createCharacter.ts` is visible, so you can focus on editing walker creation.
+- Drag the walls in the preview to invalidate the current route and watch the walker replan.
 - Press **Run** to apply your changes.
 
 <SandpackExample

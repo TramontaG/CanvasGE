@@ -74,17 +74,13 @@ class GameEventsdispatcher {
 
     // Mouse events
     this.canvasElement.addEventListener("mousemove", (e) => {
-      const rect = this.canvasElement.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = this.getCanvasCoordinates(e.clientX, e.clientY);
       const event: MouseMovedEvent = { type: "mouseMoved", x, y };
       this.dispatchEvent(event);
     });
 
     this.canvasElement.addEventListener("mousedown", (e) => {
-      const rect = this.canvasElement.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = this.getCanvasCoordinates(e.clientX, e.clientY);
       const event: MouseButtonPressedEvent = {
         type: "mouseButtonPressed",
         button: e.button,
@@ -95,9 +91,7 @@ class GameEventsdispatcher {
     });
 
     this.canvasElement.addEventListener("mouseup", (e) => {
-      const rect = this.canvasElement.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = this.getCanvasCoordinates(e.clientX, e.clientY);
       const event: MouseButtonReleasedEvent = {
         type: "mouseButtonReleased",
         button: e.button,
@@ -111,9 +105,7 @@ class GameEventsdispatcher {
       "wheel",
       (e) => {
         e.preventDefault();
-        const rect = this.canvasElement.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const { x, y } = this.getCanvasCoordinates(e.clientX, e.clientY);
         const event: MouseWheelScrolledEvent = {
           type: "mouseWheelScrolled",
           deltaX: e.deltaX,
@@ -125,6 +117,21 @@ class GameEventsdispatcher {
       },
       { passive: false }
     );
+  }
+
+  private getCanvasCoordinates(
+    clientX: number,
+    clientY: number
+  ): { x: number; y: number } {
+    const rect = this.canvasElement.getBoundingClientRect();
+    const scaleX = rect.width === 0 ? 1 : this.canvasElement.width / rect.width;
+    const scaleY =
+      rect.height === 0 ? 1 : this.canvasElement.height / rect.height;
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
   }
 
   dispatchEvent(event: GameEvent): void {

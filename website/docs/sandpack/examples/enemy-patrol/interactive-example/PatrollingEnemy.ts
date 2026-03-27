@@ -28,7 +28,7 @@ export class PatrollingEnemy extends GameObject {
 				new Vector(398, 220),
 				new Vector(92, 220),
 			],
-			1.6,
+			96,
 			true,
 			true,
 			{

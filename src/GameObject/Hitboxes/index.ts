@@ -56,6 +56,8 @@ type ObbData = {
   halfY: number;
 };
 
+const DEBUG_STROKE_WIDTH = 2;
+
 const getObbData = (
   vertices: [Vector, Vector, Vector, Vector],
   size: Vector
@@ -293,7 +295,12 @@ class CircleHitbox {
       const pos = this.getAbsolutePosition();
       const drawer = canvas.getShapeDrawer();
       drawer.drawCircle(pos.x, pos.y, this.radius, "red", false);
-      drawer.drawLine(pos, pos.toAdded(new Vector(this.radius, 0)), 2, "red");
+      drawer.drawLine(
+        pos,
+        pos.toAdded(new Vector(this.radius, 0)),
+        DEBUG_STROKE_WIDTH,
+        "red"
+      );
     }
   }
 }
