@@ -98,7 +98,7 @@ Physics settings:
 
 - `speed` is a linear velocity in world units (pixels) per second.
 - `angularVelocity` is a rotational velocity per second in the same angle unit as `rotation`.
-- under ideal circustances, the dt is always 1 tick. If the tick rate starts to fall (due to lag), you should absolutely consider to decrease lag. Physics won´t immediately break, but you can face some issues like objects falling through thin floors or clipping through walls.
+- `dt` is a fixed `1 / tickRate` in seconds. The physics step does not increase `dt` to compensate for lag; if the game falls behind, ticks are skipped instead. That means heavy lag can still lead to issues like thin-floor tunneling or noticeable clipping.
 
 Example:
 

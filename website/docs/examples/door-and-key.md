@@ -13,7 +13,7 @@ This example shows a common pattern:
 
 - a “key” pickup is a non-solid trigger
 - the key sends a message when collected
-- the “door” listens and changes its behavior at runtime by swapping its `tickFn` (`setTickFunction`)
+- the door listens for that message, swings open, and becomes passable
 
 ## Key pickup (trigger)
 
@@ -41,51 +41,50 @@ class KeyPickup extends GameObject {
 ## Door (locks until key obtained)
 
 ```ts
-import { GameObject, SquareHitbox, Vector, renderTile } from "sliver-engine";
-import type { CanvasController, GameContext, Scene } from "sliver-engine";
+import { GameObject, SquareHitbox, Vector } from "sliver-engine";
+import type { GameContext, Scene } from "sliver-engine";
 
-// indexes of the sprites in the spritesheet
-const DoorSprites = {
-  open: 0,
-  closed: 1,
-};
+const SIZE = new Vector(16, 64);
+const OPEN_SPEED = 3;
 
 class Door extends GameObject {
-  public open: boolean = false;
+  public open = false;
+  private opening = false;
+  private openProgress = 0;
 
-  constructor() {
-    super("door", new Vector(400, 160));
-    this.addHitbox(new SquareHitbox(Vector.zero(), new Vector(24, 48), this)); // solid
+  constructor(position: Vector) {
+    super("door", position.clone());
+    this.addHitbox(new SquareHitbox(Vector.zero(), SIZE.clone(), this)); // solid
     this.setPhisics({ immovable: true });
   }
 
   override onAddedToScene(_scene: Scene, _context: GameContext): void {
     this.onceOnMessage<{ id: string }>("player:key_obtained", ({ id }) => {
       if (id !== "gold") return;
-
-      // Make the door non-solid for the player to pass through it
-      this.getHitboxes().forEach((h) => (h.solid = false));
+      this.opening = true;
     });
   }
 
-  // change the rendering of the door depending on if it's open or closed.
-  @renderTile<Door>(
-    "interactive_objects", // spritesheet name
-    DoorSprites.open, // sprite index
-    { when: (door) => door.open }
-  )
-  @renderTile<Door>(
-    "interactive_objects", // spritesheet name
-    DoorSprites.closed, // sprite index
-    { when: (door) => !door.open }
-  )
-  override render(canvas: CanvasController, scene: Scene): void {}
+  override tick(): void {
+    const dt = 1 / (this.getContext()?.getTickRate() ?? 60);
+    if (!this.opening || this.open) return;
+
+    this.openProgress = Math.min(1, this.openProgress + OPEN_SPEED * dt);
+    if (this.openProgress >= 0.5) {
+      this.getHitboxes().forEach((hitbox) => {
+        hitbox.solid = false;
+      });
+    }
+    if (this.openProgress >= 1) this.open = true;
+  }
 }
 ```
 
+The live example renders the door with `withRotation(...)`, so the panel visibly swings open before the passage becomes fully clear.
+
 This keeps coupling low: the key doesn’t need to know where the door is.
 
-In the interactive example, the player is driven by velocity through the scene physics step, so the closed door and the arena walls block movement physically instead of relying on manual position checks.
+In the interactive example, the player is driven by velocity through the scene physics step, so the closed door and the arena walls block movement physically instead of relying on manual position checks. The preview also draws simple labels under the player, key, and door because it does not load sprites.
 
 ## Interactive example
 

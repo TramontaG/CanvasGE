@@ -4,11 +4,13 @@ sidebar_position: 2
 ---
 
 ## Install
+
 ```bash
 npm install sliver-engine
 ```
 
 ## Minimal example
+
 ```ts
 import {
   CanvasController,
@@ -35,6 +37,7 @@ game.start();
 
 Sliver Engine appends the `<canvas>` to `#canvas-container` if present, otherwise to `document.body`.
 
-## Decorators (optional)
-If you use the event decorators (like `@onClick`), enable `experimentalDecorators: true` in your `tsconfig.json`.
+## Decorators
 
+To use event decorators (like `@onClick`), enable `experimentalDecorators: true` in your `tsconfig.json`.
+This is the intended way to use Sliver Engine. Directly calling the decorators is not officially supported.

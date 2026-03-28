@@ -76,14 +76,14 @@ import type { GameEvent } from "sliver-engine";
 import { onClick, onHover, onStopHovering } from "sliver-engine";
 
 class StartButton extends GameObject {
-  @onClick<StartButton>(() => {
-    this.getContext()?.setCurrentScene("main");
+  @onClick<StartButton>((obj) => {
+    obj.getContext()?.setCurrentScene("main");
   })
-  @onHover<StartButton>(() => {
-    this.setOpacity(0.8);
+  @onHover<StartButton>((obj) => {
+    obj.setOpacity(0.8);
   })
-  @onStopHovering<StartButton>(() => {
-    this.setOpacity(1);
+  @onStopHovering<StartButton>((obj) => {
+    obj.setOpacity(1);
   })
   override handleEvent(event: GameEvent): void {
     super.handleEvent(event);
@@ -292,7 +292,7 @@ Try these key inputs:
 
 - Hold `W/A/S/D` to move the box
 - Hold `Shift + A` or `Shift + D` to rotate the box
-- Tap `Shift + Space` to restore it's rotation
+- Tap `Shift + Space` to restore its rotation
 - Tap `Space` to make it have a random opacity
 
 Only `KeyboardDecoratorsObject.ts` is editable. The base class (`KeyboardDecoratorsObject.base.ts`) contains the box state and rendering boilerplate.

@@ -283,6 +283,8 @@ Collision flow is:
 - `beforeColision(other)` (return `false` to ignore)
 - `onColision(other, penetration)` (react to overlap)
 
+Note: the public API uses the single-`l` spellings `beforeColision` and `onColision`. If you write `beforeCollision` / `onCollision`, those hooks will not run.
+
 See [`Physics`](./physics) for hitbox creation, triggers (`solid: false`), and how velocity-based collision response is applied.
 
 ## Scene control from a GameObject

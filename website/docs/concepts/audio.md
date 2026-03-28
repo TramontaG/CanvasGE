@@ -46,10 +46,10 @@ window.addEventListener("pointerdown", async () => {
 });
 ```
 
-I suggest you to integrate this unlock on your game in the following way
+I recommend integrating this unlock into your game in the following way:
 
 - Your start scene has nothing but a button for `start game`
-- Clicking on this button transition to a scene and unlocks the audio
+- Clicking that button transitions to the next scene and unlocks the audio
 
 ```ts
 class MyButton extends GameObject {

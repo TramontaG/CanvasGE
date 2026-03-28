@@ -48,8 +48,10 @@ export class Player extends GameObject {
 
 	override render(canvas: CanvasController, _scene: Scene): void {
 		const pos = this.getPosition();
-		canvas
-			.getShapeDrawer()
-			.drawRectangle(pos.x, pos.y, SIZE.x, SIZE.y, "#38bdf8", true);
+		const drawer = canvas.getShapeDrawer();
+		drawer.drawRectangle(pos.x, pos.y, SIZE.x, SIZE.y, "#38bdf8", true);
+		drawer.drawRectangle(pos.x + 4, pos.y + 4, 4, 4, "#e0f2fe", true);
+		drawer.drawRectangle(pos.x + 12, pos.y + 4, 4, 4, "#e0f2fe", true);
+		drawer.drawText("player", pos.x + SIZE.x / 2, pos.y + SIZE.y + 16, "#cbd5e1", "12px");
 	}
 }

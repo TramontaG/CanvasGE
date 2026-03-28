@@ -7,10 +7,11 @@ import sandpack1PatrollingEnemyTs from "../sandpack/examples/enemy-patrol/intera
 import sandpack1CreateArenaTs from "../sandpack/examples/enemy-patrol/interactive-example/createArena.ts?raw";
 import sandpack1MainTs from "../sandpack/examples/enemy-patrol/interactive-example/main.ts?raw";
 
-This example shows a basic enemy patrol using `Walker`:
+This example shows a patrolling enemy using `Walker` with draggable obstacles in the preview:
 
 - move along waypoints
-- optional obstacle avoidance
+- obstacle avoidance
+- live route invalidation by dragging blockers
 - optional debug rendering
 
 ## Enemy with a walker
@@ -34,6 +35,8 @@ class PatrollingEnemy extends GameObject {
         avoidObstacles: true,
         gridCellSize: 16,
         recalculateEveryTicks: 30,
+        pathNotFoundBehavior: "snap",
+        snapTargetToEdgeDistance: 32,
       }
     );
 
@@ -58,6 +61,7 @@ If you don’t want pathfinding, remove the `pathfindingOptions` (or set `avoidO
 This sandbox runs a patrolling enemy with `Walker`.
 
 - Edit `PatrollingEnemy.ts` to tweak waypoints and walker options.
+- Drag the darker walls in the preview to invalidate the current path.
 - Press **Run** to apply changes.
 
 <SandpackExample

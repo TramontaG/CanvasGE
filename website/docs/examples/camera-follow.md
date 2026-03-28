@@ -49,7 +49,7 @@ mainScene.addGameObject(new CameraFollower(player));
 ## Tips
 
 - Clamp the offset if you want camera bounds (so it won’t show outside the level).
-- If you want “smooth” camera, interpolate towards the desired offset instead of snapping.
+- If you want "smooth" camera, interpolate towards the desired offset instead of snapping.
 
 ## Interactive example
 

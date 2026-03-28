@@ -82,7 +82,7 @@ class PauseScene extends Scene {
 You can reuse the same class and “swap” behavior per instance by applying mixins to different methods.
 
 ```ts
-import { GameObject, mixin } from "sliver-engine";
+import { GameObject, Vector, mixin } from "sliver-engine";
 
 const after = mixin.after<GameObject>();
 
@@ -108,8 +108,8 @@ class BurningEnemy extends Enemy {
   }
 }
 
-const grunt = new Enemy("grunt");
-const burner = new BurningEnemy("burner");
+const grunt = new Enemy("grunt", new Vector(0, 0));
+const burner = new BurningEnemy("burner", new Vector(64, 0));
 ```
 
 This lets you keep a shared base while layering extra behavior using mixins on specific subclasses.

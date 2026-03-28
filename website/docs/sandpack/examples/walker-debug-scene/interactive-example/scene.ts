@@ -47,14 +47,17 @@ const createPathfindingOptions = (
 });
 
 class WalkerDebugObstacle extends GameObject {
+	protected readonly draggable: boolean;
+
 	constructor(
 		name: string,
 		position: Vector,
 		private readonly size: Vector,
 		private readonly color: string,
-		private readonly draggable: boolean = false,
+		draggable: boolean = false,
 	) {
 		super(name, position.clone());
+		this.draggable = draggable;
 		this.setPhisics({
 			immovable: true,
 			affectedByGravity: false,
@@ -100,8 +103,10 @@ class WalkerDebugObstacle extends GameObject {
 			}
 		});
 	}
+}
 
-	@grabbable<WalkerDebugObstacle>()
+class DraggableWalkerDebugObstacle extends WalkerDebugObstacle {
+	@grabbable<DraggableWalkerDebugObstacle>()
 	override handleEvent(event: GameEvent): void {
 		super.handleEvent(event);
 	}
@@ -328,28 +333,28 @@ const createArena = (): GameObject[] => {
 			new Vector(WALL_THICKNESS, CANVAS_HEIGHT),
 			"#334155",
 		),
-		new WalkerDebugObstacle(
+		new DraggableWalkerDebugObstacle(
 			"obstacle-top-left",
 			new Vector(154, 52),
 			new Vector(40, 120),
 			DRAGGABLE_COLOR,
 			true,
 		),
-		new WalkerDebugObstacle(
+		new DraggableWalkerDebugObstacle(
 			"obstacle-center-column",
 			new Vector(356, 96),
 			new Vector(44, 120),
 			DRAGGABLE_COLOR,
 			true,
 		),
-		new WalkerDebugObstacle(
+		new DraggableWalkerDebugObstacle(
 			"obstacle-bottom-bar",
 			new Vector(140, 228),
 			new Vector(156, 40),
 			DRAGGABLE_COLOR,
 			true,
 		),
-		new WalkerDebugObstacle(
+		new DraggableWalkerDebugObstacle(
 			"obstacle-left-column",
 			new Vector(52, 116),
 			new Vector(44, 120),

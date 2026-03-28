@@ -2,12 +2,6 @@
 title: Walker
 sidebar_position: 5
 ---
-import sandpack1IndexTs from "../sandpack/concepts/walker/live-example/index.ts?raw";
-import sandpack1CharacterTs from "../sandpack/concepts/walker/live-example/Character.ts?raw";
-import sandpack1CreateCharacterBaseTs from "../sandpack/concepts/walker/live-example/createCharacter.base.ts?raw";
-import sandpack1CreateCharacterTs from "../sandpack/concepts/walker/live-example/createCharacter.ts?raw";
-import sandpack1CreateObstaclesTs from "../sandpack/concepts/walker/live-example/createObstacles.ts?raw";
-import sandpack1MainTs from "../sandpack/concepts/walker/live-example/main.ts?raw";
 
 `Walker` is an optional movement helper for `GameObject`s. It can:
 
@@ -160,7 +154,7 @@ If `debug` is `true`, the walker draws:
 
 Walker debug rendering is called from the owning object’s render path, but it intentionally cancels object rotation so the path is drawn in world space.
 
-If you want a full obstacle-avoidance playground with draggable blockers and live behavior switching, see [`Walker debug scene`](../examples/walker-debug-scene).
+If you want a larger obstacle-avoidance playground with draggable blockers, see [`Enemy patrol (Walker)`](../examples/enemy-patrol).
 
 ## Pathfinding control
 
@@ -185,65 +179,6 @@ Since `Walker` sets `gameObject.speed`, it composes naturally with Sliver physic
 
 For physics details (hitboxes, solid vs trigger, impulses), see [`Physics`](./physics).
 
-## Live example
+## Example
 
-This sandbox is split into multiple files:
-
-- `Character.ts` defines the character object with a hardcoded start position and hitbox.
-- `createObstacles.ts` defines draggable obstacle objects with hardcoded positions and hitboxes.
-- Only `createCharacter.ts` is visible, so you can focus on editing walker creation.
-- Drag the walls in the preview to invalidate the current route and watch the walker replan.
-- Press **Run** to apply your changes.
-
-<SandpackExample
-	files={{
-		"/index.ts": {
-			code: sandpack1IndexTs,
-			readOnly: true,
-		},
-		"/Character.ts": {
-			code: sandpack1CharacterTs,
-			readOnly: true,
-		},
-		"/createCharacter.base.ts": {
-			code: sandpack1CreateCharacterBaseTs,
-			readOnly: true,
-		},
-		"/createCharacter.ts": sandpack1CreateCharacterTs,
-		"/createObstacles.ts": {
-			code: sandpack1CreateObstaclesTs,
-			readOnly: true,
-		},
-		"/main.ts": {
-			code: sandpack1MainTs,
-			readOnly: true,
-		},
-	}}
-	visibleFiles={["/createCharacter.ts"]}
-	activeFile="/createCharacter.ts"
-	editorHeight={320}
-	showRunButton
-	hiddenFiles={[
-		"/index.html",
-		"/styles.css",
-		"/package.json",
-		"/index.ts",
-		"/main.ts",
-		"/Character.ts",
-		"/createCharacter.base.ts",
-		"/createObstacles.ts",
-	]}
-	options={{
-		autoReload: false,
-		showNavigator: true,
-		showRefreshButton: true,
-		showTabs: true,
-		showLineNumbers: true,
-		wrapContent: false,
-	}}
-	customSetup={{
-		dependencies: {
-			"sliver-engine": "0.0.1-alpha-5",
-		},
-	}}
-/>
+For a full interactive walker demo with moving patrols, obstacle avoidance, and draggable blockers, see [`Enemy patrol (Walker)`](../examples/enemy-patrol).

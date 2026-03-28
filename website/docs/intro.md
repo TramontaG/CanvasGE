@@ -8,14 +8,12 @@ _It's SLiver, with SL, not Silver with SI._
 
 ## What is Sliver?
 
-Sliver is a zero-dependency game engine for code-based developers. Designed for 2D games running on HTML Canvas, it's currently in pre-alpha. While basic, it provides foundational building blocks for your game.
+Sliver is a lightweight game engine for code-based developers. Designed for 2D games running on HTML Canvas, it's currently in pre-alpha. While basic, it provides foundational building blocks for your game.
 
 ## What’s Included
 
 - **Getting Started**: Installation and a minimal game loop.
-- **Core Concepts**: Scenes, game objects, input/events, saves, rendering, and audio.
-- **Advanced**: Custom rendering, game objects, and scenes.
-- **API Reference**: All available classes and methods.
+- **Core Concepts**: Scenes, game objects, input/events, saves, rendering, audio, sprites, and scripted events.
 - **Examples**: A collection of examples to help you get started.
 
 ## Versioned Documentation

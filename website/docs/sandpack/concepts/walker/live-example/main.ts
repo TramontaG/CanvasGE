@@ -1,7 +1,6 @@
 import {
 	CanvasController,
 	Game,
-	GameObject,
 	Scene,
 	SceneManager,
 	SoundManager,
@@ -48,30 +47,8 @@ mainScene.setGravity(Vector.zero());
 
 const character = createCharacter();
 const obstacles = createObstacles();
-const hud = new GameObject("walker-demo-hud", new Vector(CANVAS_WIDTH / 2, 20));
-hud.setPhisics({ immovable: true, affectedByGravity: false });
-hud.setRenderFunction((obj, controller) => {
-	const pos = obj.getPosition();
-	const drawer = controller.getShapeDrawer();
-	drawer.drawText(
-		"Drag the walls to invalidate the route",
-		pos.x,
-		pos.y,
-		"#e2e8f0",
-		"14px",
-		"center",
-	);
-	drawer.drawText(
-		"Edit createCharacter.ts to change walker behavior",
-		pos.x,
-		pos.y + 18,
-		"#94a3b8",
-		"11px",
-		"center",
-	);
-});
 
-mainScene.addGameObject([hud, character, ...obstacles]);
+mainScene.addGameObject([character, ...obstacles]);
 
 const scenes = new SceneManager({ main: mainScene }, mainScene);
 const game = new Game({

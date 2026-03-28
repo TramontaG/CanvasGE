@@ -157,7 +157,7 @@ sprites.loadSpriteDefinitions(spriteManifest);
 
 ## Rendering definitions
 
-Use the decorator (preferred) or call `drawSpriteDefinition` directly (discoraged)
+Use the decorator (preferred) or call `drawSpriteDefinition` directly (discouraged)
 
 ```ts
 import { GameObject, renderSprite } from "sliver-engine";

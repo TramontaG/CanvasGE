@@ -35,6 +35,8 @@ export class PatrollingEnemy extends GameObject {
 				avoidObstacles: true,
 				gridCellSize: 16,
 				recalculateEveryTicks: 20,
+				pathNotFoundBehavior: "snap",
+				snapTargetToEdgeDistance: 32,
 			},
 		);
 

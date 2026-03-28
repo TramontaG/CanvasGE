@@ -1,7 +1,5 @@
 import { GameObject, Vector } from "sliver-engine";
 
-const SMOOTHING = 1;
-
 export class CameraFollower extends GameObject {
 	constructor(private target: GameObject) {
 		super("camera:follower", Vector.zero(), false, true);
@@ -14,15 +12,12 @@ export class CameraFollower extends GameObject {
 
 		const canvasEl = ctx.getCanvas().getCanvas();
 		const center = new Vector(canvasEl.width / 2, canvasEl.height / 2);
-		const targetPos = this.target.getScenePosition();
-		const desiredOffset = center.toSubtracted(targetPos);
-		const currentOffset = scene.getOffset();
 
-		scene.setOffset(
-			new Vector(
-				currentOffset.x + (desiredOffset.x - currentOffset.x) * SMOOTHING,
-				currentOffset.y + (desiredOffset.y - currentOffset.y) * SMOOTHING,
-			),
-		);
+		// Read the target in scene space so we can align it to the canvas center.
+		const targetPos = this.target.getScenePosition();
+
+		// Scene offset is added at render time, so centering the target is just
+		// the delta between the canvas center and the target position.
+		scene.setOffset(center.toSubtracted(targetPos));
 	}
 }

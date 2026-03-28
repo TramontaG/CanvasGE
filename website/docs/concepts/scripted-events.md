@@ -7,8 +7,10 @@ Scripted events are Sliver’s way to build **composable async sequences** (dial
 
 At the core is a `ScriptEvent<TState>`:
 
-- `run(ctx, state): Promise<TState>` executes the event and returns the next state
+- `run(ctx, state): Promise<ScriptState<TState>>` executes the event and returns the next state with `done` / `aborted` / `error` merged in
 - `abort(reason)` requests cancellation (events/combinators typically propagate the aborted state)
+
+The input state is `ScriptInputState<TState>`, so you can call `run(...)` with just your own fields or include `BaseTState` fields explicitly when needed.
 
 ## BaseTState (done/aborted/error)
 
@@ -78,7 +80,7 @@ Common patterns:
 - `conditional(predicate, thenEv, elseEv)`: branch based on state
 - `waitTicks(n)`: delay by a number of game ticks
 - `waitUntil(predicate)`: poll a condition on the game tick loop
-- `waitForKeyPress(" ")`: wait until a key is held (uses `GameContext.getPressedKeys()`)
+- `waitForKeyPress(" ")`: wait until a key is down (polled via `GameContext.getPressedKeys()`)
 
 ## Dialog: `TextBoxSequence` and `DisplayTextBox`
 

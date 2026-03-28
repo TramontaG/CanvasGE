@@ -68,7 +68,7 @@ Use `onSetup()` to initialize game state that depends on saves being loaded.
 
 ### Tick loop (game logic)
 
-Ticks run on a `setInterval`, and the engine checks elapsed time using `performance.now()` to decide whether to process the next tick.
+Ticks run on a `setInterval`-driven polling loop, and the engine checks elapsed time using `performance.now()` to decide whether to process the next tick.
 
 On each tick:
 
@@ -94,9 +94,12 @@ const dt = 1 / game.getTickRate(); // seconds per tick
 Example: move at 120 pixels/second:
 
 ```ts
+const ctx = this.getContext();
+if (!ctx) return;
+
 const speed = 120; // px/s
-const dt = 1 / this.getContext()!.getTickRate();
-this.position.add(new Vector(speed * dt, 0));
+const dt = 1 / ctx.getTickRate();
+this.translate(new Vector(speed * dt, 0));
 ```
 
 For fixed-step gameplay code, derive motion from the scene tick rate and keep your velocities expressed in consistent world units per second.
@@ -152,7 +155,7 @@ When a `Game` is constructed, it creates a `GameEventsdispatcher` that:
 - updates the internal `KeyAccumulator` on key presses/releases
 - forwards events into the game via `game.handleEvent(event)`
 
-Mouse positions (`x`, `y`) are computed from the canvas element’s bounding rect (client coordinates mapped into the canvas’ top-left origin). If you scale the canvas with CSS (avoid doing that), you may want to account for that in your own code when comparing to world coordinates.
+Mouse positions (`x`, `y`) are computed from the canvas element’s bounding rect and mapped back into canvas pixel coordinates. CSS scaling is already accounted for by the engine. The main thing you still need to account for in gameplay code is scene/world space, for example a scene offset acting as a camera.
 
 ### Event delivery order
 

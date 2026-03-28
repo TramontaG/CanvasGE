@@ -39,7 +39,5 @@
     "docs:version": "cd website && bun docusaurus docs:version",
     "release": "bun scripts/release.js"
   },
-  "dependencies": {
-    "matter-js": "^0.20.0"
-  }
+  "dependencies": {}
 }

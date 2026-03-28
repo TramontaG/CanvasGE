@@ -113,7 +113,7 @@ A scene has a gravity vector:
 ```ts
 import { Vector } from "sliver-engine";
 
-scene.setGravity(new Vector(0, 0.4));
+scene.setGravity(new Vector(0, 1200));
 ```
 
 Gravity is applied by the scene physics world when:
@@ -121,7 +121,7 @@ Gravity is applied by the scene physics world when:
 - `phisics.immovable === false`
 - the object isn’t being dragged (`beingGrabbed === false`)
 
-Gravity is integrated with `dt`, so treat it as acceleration in world units per second squared.
+Gravity is integrated with `dt`, so treat it as acceleration in world units per second squared. Values in the hundreds or low thousands are a more realistic starting point than tiny fractional values.
 
 ### Collisions
 

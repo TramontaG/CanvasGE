@@ -83,4 +83,4 @@ canvas.getShapeDrawer().setDefaultFont("Roboto");
 
 ## Sprites and sprite sheets
 
-See [`Working With Sprites`](./working-with-sprites.md) for sprite loading, rendering, definitions, manifests, and animation setup.
+See [`Working With Sprites`](./working-with-sprites) for sprite loading, rendering, definitions, manifests, and animation setup.
